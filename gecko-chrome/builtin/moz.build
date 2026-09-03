@@ -1,0 +1,11 @@
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+if CONFIG["MOZ_WEBEXTENSIONS_RUNTIME"]:
+    # The registry is a collection. Each reviewed artifact remains explicit in
+    # the build graph, while the installer and verifier handle the full set.
+    FINAL_TARGET_FILES["builtin-extensions"] += ["extensions.json"]
+    FINAL_TARGET_FILES.extensions += [
+        "ublock-origin/uBlock0@raymondhill.net.xpi",
+    ]

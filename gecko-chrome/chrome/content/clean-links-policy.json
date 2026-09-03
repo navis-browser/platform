@@ -1,0 +1,96 @@
+{
+  "schemaVersion": 1,
+  "revision": "2026-09-03.1",
+  "provenance": [
+    {
+      "id": "mozilla-query-stripping-snapshot-2026-09-03",
+      "kind": "provider-snapshot",
+      "source": "https://firefox.settings.services.mozilla.com/v1/buckets/main/collections/query-stripping/records",
+      "retrievedAt": "2026-09-03"
+    },
+    {
+      "id": "navis-alibaba-spm-2026-09-03",
+      "kind": "product-rule",
+      "sources": [
+        "https://developer.alibaba.com/docs/doc.htm?articleId=118937&docType=1&treeId=776",
+        "https://developer.alibaba.com/docs/doc.htm?articleId=101782&docType=1&treeId=1",
+        "https://www.alibabagroup.com/en-US/about-alibaba/about-alibaba-business"
+      ]
+    }
+  ],
+  "allowDomains": [
+    "googleadservices.com"
+  ],
+  "rules": [
+    {
+      "id": "mozilla-query-stripping-snapshot-2026-09-03",
+      "scope": "global",
+      "queryParameters": [
+        "__hsfp",
+        "__hssc",
+        "__hstc",
+        "__s",
+        "_hsenc",
+        "_openstat",
+        "dclid",
+        "fbclid",
+        "gbraid",
+        "gclid",
+        "hsctatracking",
+        "mc_eid",
+        "mkt_tok",
+        "msclkid",
+        "oly_anon_id",
+        "oly_enc_id",
+        "twclid",
+        "vero_id",
+        "wbraid",
+        "wickedid",
+        "yclid",
+        "ysclid"
+      ]
+    },
+    {
+      "id": "navis-alibaba-spm-2026-09-03",
+      "scope": "registrable-domain",
+      "domains": [
+        "1688.com",
+        "alibaba.com",
+        "alibabacloud.com",
+        "alibabagroup.com",
+        "aliexpress.com",
+        "alihealth.cn",
+        "aliyun.com",
+        "amap.com",
+        "cainiao.com",
+        "damai.cn",
+        "damaiholdings.com",
+        "daraz.com",
+        "dingtalk.com",
+        "ele.me",
+        "fliggy.com",
+        "freshhema.com",
+        "freshippo.com",
+        "goofish.com",
+        "lazada.cn",
+        "lazada.co.id",
+        "lazada.com.my",
+        "lazada.com.ph",
+        "lazada.sg",
+        "lazada.vn",
+        "lingxigames.com",
+        "myquark.cn",
+        "quark.cn",
+        "taobao.com",
+        "tmall.com",
+        "tmall.hk",
+        "trendyol.com",
+        "uc.cn",
+        "youku.com"
+      ],
+      "queryParameters": [
+        "spm"
+      ]
+    }
+  ]
+}

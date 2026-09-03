@@ -1,0 +1,945 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- This Source Code Form is subject to the terms of the Mozilla Public
+   - License, v. 2.0. If a copy of the MPL was not distributed with this
+   - file, You can obtain one at http://mozilla.org/MPL/2.0/. -->
+<!DOCTYPE html>
+<html
+  xmlns="http://www.w3.org/1999/xhtml"
+  xmlns:xul="http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul"
+  id="navis-window"
+  windowtype="navis:browser"
+  customtitlebar="true"
+  data-l10n-ready="false"
+  width="1180"
+  height="760"
+>
+  <head>
+    <meta charset="utf-8" />
+    <!-- Toolkit's trusted SelectParent actor creates a scoped stylesheet in
+         this chrome document for the current page's computed option styles.
+         DateTimePickerPanel hosts its trusted chrome:// picker in an iframe. -->
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'none'; img-src data: moz-extension:; style-src chrome: 'unsafe-inline'; script-src chrome:; frame-src chrome:"
+    />
+    <title>Navis</title>
+    <link rel="stylesheet" href="chrome://global/skin/global.css" />
+    <link rel="stylesheet" href="chrome://navis/content/design-system.css" />
+    <link rel="stylesheet" href="chrome://navis/content/main.css" />
+    <script type="module" src="chrome://navis/content/bootstrap.mjs"></script>
+  </head>
+  <body>
+    <nav
+      id="session-strip"
+      aria-label="Tabs"
+      data-l10n-aria-label="chrome.tabs"
+    >
+      <div id="tab-strip-content">
+        <div
+          id="session-tabs"
+          role="tablist"
+          aria-label="Open tabs"
+          data-l10n-aria-label="chrome.openTabs"
+        ></div>
+        <button
+          id="new-session"
+          class="ui-icon-button"
+          type="button"
+          title="New tab"
+          aria-label="New tab"
+          data-l10n-title="chrome.newTab"
+          data-l10n-aria-label="chrome.newTab"
+        ></button>
+      </div>
+      <span
+        id="private-indicator"
+        class="toolbar-chip"
+        role="status"
+        aria-label="Private browsing"
+        data-l10n-id="chrome.privateIndicator"
+        data-l10n-aria-label="chrome.privateBrowsing"
+        hidden="hidden"
+        >Private</span
+      >
+      <div
+        id="window-controls"
+        role="group"
+        aria-label="Window controls"
+        data-l10n-aria-label="chrome.windowControls"
+      >
+        <button
+          id="window-minimize"
+          class="window-control"
+          data-platform-icon="minimize"
+          type="button"
+          title="Minimize"
+          aria-label="Minimize window"
+          data-l10n-title="chrome.minimize"
+          data-l10n-aria-label="chrome.minimizeWindow"
+        ></button>
+        <button
+          id="window-maximize"
+          class="window-control"
+          data-platform-icon="maximize"
+          type="button"
+          title="Maximize"
+          aria-label="Maximize window"
+          data-l10n-title="chrome.maximize"
+          data-l10n-aria-label="chrome.maximizeWindow"
+        ></button>
+        <button
+          id="window-close"
+          class="window-control window-close"
+          data-platform-icon="close"
+          type="button"
+          title="Close"
+          aria-label="Close window"
+          data-l10n-title="common.close"
+          data-l10n-aria-label="chrome.closeWindow"
+        ></button>
+      </div>
+    </nav>
+
+    <header
+      id="toolbar"
+      aria-label="Navigation toolbar"
+      data-l10n-aria-label="chrome.navigationToolbar"
+    >
+      <div
+        id="navigation-controls"
+        role="group"
+        aria-label="Navigation"
+        data-l10n-aria-label="chrome.navigation"
+      >
+        <button
+          id="back"
+          class="ui-icon-button"
+          type="button"
+          title="Back"
+          aria-label="Back"
+          data-l10n-title="common.back"
+          data-l10n-aria-label="common.back"
+        ></button>
+        <button
+          id="forward"
+          class="ui-icon-button"
+          type="button"
+          title="Forward"
+          aria-label="Forward"
+          data-l10n-title="chrome.forward"
+          data-l10n-aria-label="chrome.forward"
+        ></button>
+        <button
+          id="reload"
+          class="ui-icon-button"
+          type="button"
+          title="Reload"
+          aria-label="Reload"
+          data-l10n-title="chrome.reload"
+          data-l10n-aria-label="chrome.reload"
+        ></button>
+      </div>
+
+      <div id="omnibox-shell">
+        <div id="omnibox">
+          <button
+            id="security"
+            class="omnibox-identity"
+            data-state="unknown"
+            data-identity="unknown"
+            type="button"
+            title="Connection security unknown"
+            aria-label="Connection security unknown"
+            data-l10n-title="siteInfo.unknown.toolbarTitle"
+            data-l10n-aria-label="siteInfo.unknown.toolbarTitle"
+            aria-expanded="false"
+            aria-controls="site-info-panel"
+          >
+            <span id="security-label"></span>
+          </button>
+          <input
+            id="url"
+            class="omnibox-input"
+            type="text"
+            role="combobox"
+            aria-label="Address"
+            data-l10n-aria-label="chrome.address"
+            aria-autocomplete="list"
+            aria-controls="omnibox-suggestions"
+            aria-expanded="false"
+            autocomplete="off"
+            autocapitalize="none"
+            spellcheck="false"
+          />
+          <span
+            id="extension-page-actions"
+            role="group"
+            aria-label="Page actions"
+            data-l10n-aria-label="extensions.pageActions"
+          ></span>
+        </div>
+        <div
+          id="omnibox-suggestions"
+          role="listbox"
+          aria-label="Extension suggestions"
+          data-l10n-aria-label="extensions.omniboxSuggestions"
+          hidden="hidden"
+        ></div>
+      </div>
+
+      <div
+        id="toolbar-actions"
+        role="group"
+        aria-label="Toolbar actions"
+        data-l10n-aria-label="chrome.toolbarActions"
+      >
+        <span
+          id="media-indicator"
+          class="toolbar-chip"
+          role="status"
+          aria-live="polite"
+          hidden="hidden"
+        ></span>
+        <button
+          id="bookmark-current"
+          class="ui-icon-button"
+          type="button"
+          title="Bookmark this page"
+          aria-label="Bookmark this page"
+          data-l10n-title="chrome.bookmarkPage"
+          data-l10n-aria-label="chrome.bookmarkPage"
+        ></button>
+        <button
+          id="password-toggle"
+          class="ui-icon-button"
+          type="button"
+          title="Passwords for this site"
+          aria-label="Passwords for this site"
+          data-l10n-title="chrome.passwordsForSite"
+          data-l10n-aria-label="chrome.passwordsForSite"
+          aria-expanded="false"
+          aria-controls="library-panel"
+          hidden="hidden"
+        ></button>
+        <span
+          id="extension-action-buttons"
+          role="group"
+          aria-label="Pinned extension actions"
+          data-l10n-aria-label="extensions.pinnedActions"
+        ></span>
+        <button
+          id="extensions-menu-toggle"
+          class="ui-icon-button"
+          type="button"
+          title="Extensions"
+          aria-label="Extensions"
+          data-l10n-title="extensions.toolbarTitle"
+          data-l10n-aria-label="extensions.toolbarTitle"
+          aria-expanded="false"
+          aria-controls="extensions-menu"
+        ></button>
+        <button
+          id="downloads-toggle"
+          class="ui-icon-button"
+          type="button"
+          title="Downloads"
+          aria-label="Downloads"
+          data-l10n-title="downloads.title"
+          data-l10n-aria-label="downloads.title"
+          aria-expanded="false"
+          aria-controls="downloads-panel"
+        >
+          <svg
+            id="download-toolbar-progress"
+            class="download-toolbar-progress"
+            viewBox="0 0 36 36"
+            aria-hidden="true"
+            hidden="hidden"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <circle cx="18" cy="18" r="16" pathLength="100"></circle>
+          </svg>
+          <span id="download-count" class="toolbar-badge" hidden="hidden"
+            >0</span
+          >
+        </button>
+        <button
+          id="library-toggle"
+          class="ui-icon-button"
+          type="button"
+          title="History and bookmarks"
+          aria-label="History and bookmarks"
+          data-l10n-title="chrome.historyAndBookmarks"
+          data-l10n-aria-label="chrome.historyAndBookmarks"
+          aria-expanded="false"
+          aria-controls="library-panel"
+        ></button>
+        <button
+          id="app-menu-toggle"
+          class="ui-icon-button"
+          type="button"
+          title="Customize and control Navis"
+          aria-label="Customize and control Navis"
+          data-l10n-title="chrome.customize"
+          data-l10n-aria-label="chrome.customize"
+          aria-expanded="false"
+          aria-controls="app-menu"
+        ></button>
+      </div>
+    </header>
+
+    <aside id="tab-hover-card" role="tooltip" hidden="hidden">
+      <strong id="tab-hover-title"></strong>
+      <span id="tab-hover-domain"></span>
+      <span id="tab-hover-memory"></span>
+    </aside>
+
+    <nav
+      id="bookmark-bar"
+      aria-label="Bookmarks bar"
+      data-l10n-aria-label="chrome.bookmarksBar"
+      hidden="hidden"
+    >
+      <span
+        id="bookmark-bar-empty"
+        role="status"
+        aria-label="Add bookmarks to see them here."
+        data-l10n-id="chrome.bookmarksBarEmpty"
+        data-l10n-aria-label="chrome.bookmarksBarEmpty"
+        aria-live="polite"
+      >
+        Add bookmarks to see them here.
+      </span>
+      <div id="bookmark-bar-items"></div>
+      <button
+        id="bookmark-bar-overflow"
+        class="ui-icon-button"
+        type="button"
+        title="More bookmarks"
+        aria-label="More bookmarks"
+        data-l10n-title="chrome.moreBookmarks"
+        data-l10n-aria-label="chrome.moreBookmarks"
+        aria-expanded="false"
+        aria-controls="bookmark-bar-popup"
+        hidden="hidden"
+      ></button>
+    </nav>
+
+    <main id="view-stack">
+      <div id="session-host"></div>
+
+      <div id="fullscreen-hint" role="status" hidden="hidden">
+        <span id="fullscreen-origin"></span>
+        <span id="fullscreen-instruction" data-l10n-id="chrome.fullscreenEsc"
+          >Press Esc to exit full screen</span
+        >
+      </div>
+
+      <section
+        id="crash-panel"
+        hidden="hidden"
+        role="alert"
+        aria-labelledby="crash-title"
+        aria-describedby="crash-message"
+      >
+        <div class="crash-card">
+          <span id="crash-icon" class="crash-icon" aria-hidden="true"></span>
+          <h1 id="crash-title" data-l10n-id="chrome.pageCrashedTitle">
+            Page process crashed
+          </h1>
+          <p id="crash-message" data-l10n-id="chrome.pageCrashedDescription">
+            Navis is still running. Restore this tab to reload its last URL.
+          </p>
+          <button
+            id="restore-session"
+            class="ui-button primary"
+            type="button"
+            data-l10n-id="chrome.restoreTab"
+          >
+            Restore tab
+          </button>
+        </div>
+      </section>
+
+      <section
+        id="site-info-panel"
+        class="ui-card"
+        hidden="hidden"
+        role="dialog"
+        aria-labelledby="site-info-title"
+        aria-describedby="site-info-description"
+      >
+        <header>
+          <span id="site-info-icon" aria-hidden="true"></span>
+          <div>
+            <h1 id="site-info-title" data-l10n-id="siteInfo.title">
+              Site information
+            </h1>
+            <p id="site-info-subtitle"></p>
+          </div>
+          <button
+            id="close-site-info"
+            class="panel-close ui-icon-button"
+            type="button"
+            title="Close site information"
+            aria-label="Close site information"
+            data-l10n-title="siteInfo.close"
+            data-l10n-aria-label="siteInfo.close"
+          ></button>
+        </header>
+        <div id="site-info-summary">
+          <strong
+            id="site-info-status"
+            role="status"
+            aria-live="polite"
+          ></strong>
+          <p id="site-info-description"></p>
+          <section id="site-data-section" aria-labelledby="site-data-title">
+            <div>
+              <strong id="site-data-title" data-l10n-id="siteInfo.cookiesTitle"
+                >Cookies and site data</strong
+              >
+              <small id="site-data-summary" data-l10n-id="siteInfo.unavailable"
+                >Unavailable for this page.</small
+              >
+            </div>
+            <button
+              id="clear-site-data"
+              class="ui-button"
+              type="button"
+              disabled="disabled"
+              data-l10n-id="siteInfo.clearData"
+            >
+              Clear data
+            </button>
+          </section>
+          <button
+            id="certificate-details"
+            class="menu-item site-info-action"
+            type="button"
+            hidden="hidden"
+          >
+            <span data-l10n-id="siteInfo.certificateDetails"
+              >Certificate details</span
+            >
+          </button>
+        </div>
+        <section
+          id="certificate-panel"
+          hidden="hidden"
+          role="region"
+          aria-labelledby="certificate-title"
+        >
+          <header>
+            <button
+              id="certificate-back"
+              class="ui-icon-button"
+              type="button"
+              title="Back to site information"
+              aria-label="Back to site information"
+              data-l10n-title="siteInfo.back"
+              data-l10n-aria-label="siteInfo.back"
+            ></button>
+            <h2
+              id="certificate-title"
+              data-l10n-id="siteInfo.certificateDetails"
+            >
+              Certificate details
+            </h2>
+          </header>
+          <dl id="certificate-fields"></dl>
+          <div id="certificate-chain"></div>
+        </section>
+      </section>
+
+      <section
+        id="permission-panel"
+        hidden="hidden"
+        role="alertdialog"
+        aria-labelledby="permission-title"
+        aria-describedby="permission-message"
+      >
+        <div class="permission-card ui-card">
+          <button
+            id="dismiss-permission"
+            class="panel-close ui-icon-button"
+            type="button"
+            title="Dismiss"
+            aria-label="Dismiss"
+            data-l10n-title="common.dismiss"
+            data-l10n-aria-label="common.dismiss"
+          ></button>
+          <p id="permission-origin"></p>
+          <h1 id="permission-title" data-l10n-id="permission.title">
+            Permission request
+          </h1>
+          <p id="permission-message"></p>
+          <p id="permission-detail" hidden="hidden"></p>
+          <div class="permission-actions">
+            <button
+              id="block-permission"
+              class="ui-button"
+              type="button"
+              data-l10n-id="permission.block"
+            >
+              Block
+            </button>
+            <button
+              id="allow-always"
+              class="ui-button"
+              type="button"
+              data-l10n-id="permission.alwaysAllow"
+            >
+              Always allow
+            </button>
+            <button
+              id="allow-session"
+              class="ui-button primary"
+              type="button"
+              data-l10n-id="permission.allowSession"
+            >
+              Allow for session
+            </button>
+          </div>
+        </div>
+      </section>
+
+      <section
+        id="prompt-panel"
+        hidden="hidden"
+        role="alertdialog"
+        aria-labelledby="prompt-title"
+        aria-describedby="prompt-message"
+      >
+        <div class="prompt-card ui-card">
+          <button
+            id="dismiss-prompt"
+            class="panel-close ui-icon-button"
+            type="button"
+            title="Dismiss prompt"
+            aria-label="Dismiss prompt"
+            data-l10n-title="prompt.dismiss"
+            data-l10n-aria-label="prompt.dismiss"
+          ></button>
+          <p id="prompt-origin"></p>
+          <h1 id="prompt-title" data-l10n-id="prompt.title">Page prompt</h1>
+          <p id="prompt-message"></p>
+          <div id="prompt-inputs">
+            <label id="prompt-text-label" hidden="hidden">
+              <span data-l10n-id="prompt.response">Response</span>
+              <input id="prompt-text" class="ui-field" type="text" />
+            </label>
+            <label id="prompt-username-label" hidden="hidden">
+              <span data-l10n-id="prompt.username">Username</span>
+              <input
+                id="prompt-username"
+                class="ui-field"
+                type="text"
+                autocomplete="username"
+              />
+            </label>
+            <label id="prompt-password-label" hidden="hidden">
+              <span
+                id="prompt-password-label-text"
+                data-l10n-id="prompt.password"
+                >Password</span
+              >
+              <input
+                id="prompt-password"
+                class="ui-field"
+                type="password"
+                autocomplete="current-password"
+              />
+            </label>
+            <label id="prompt-choice-label" hidden="hidden">
+              <span data-l10n-id="prompt.choice">Choice</span>
+              <select id="prompt-choice" class="ui-field"></select>
+            </label>
+            <label id="prompt-checkbox-label" hidden="hidden">
+              <input id="prompt-checkbox" type="checkbox" />
+              <span id="prompt-checkbox-text"></span>
+            </label>
+          </div>
+          <div id="prompt-actions"></div>
+        </div>
+      </section>
+
+      <section
+        id="extensions-menu"
+        class="ui-card"
+        hidden="hidden"
+        aria-labelledby="extensions-menu-title"
+      >
+        <header>
+          <div>
+            <h1 id="extensions-menu-title" data-l10n-id="extensions.toolbarTitle">
+              Extensions
+            </h1>
+            <p data-l10n-id="extensions.toolbarDescription">
+              Actions available on this page
+            </p>
+          </div>
+          <button
+            id="close-extensions-menu"
+            class="panel-close ui-icon-button"
+            type="button"
+            title="Close extensions"
+            aria-label="Close extensions"
+            data-l10n-title="extensions.closeToolbar"
+            data-l10n-aria-label="extensions.closeToolbar"
+          ></button>
+        </header>
+        <div
+          id="extension-action-list"
+          role="list"
+          aria-label="Extension actions"
+          data-l10n-aria-label="extensions.availableActions"
+        ></div>
+        <p id="extension-actions-empty" data-l10n-id="extensions.noActions">
+          No extension actions are available on this page.
+        </p>
+        <footer>
+          <button
+            id="manage-extensions"
+            class="ui-button"
+            type="button"
+            data-l10n-id="extensions.manage"
+          >
+            Manage extensions
+          </button>
+        </footer>
+      </section>
+
+      <section
+        id="downloads-panel"
+        class="ui-card"
+        hidden="hidden"
+        aria-labelledby="downloads-title"
+      >
+        <header>
+          <h1 id="downloads-title" data-l10n-id="downloads.title">Downloads</h1>
+          <button
+            id="close-downloads"
+            class="panel-close ui-icon-button"
+            type="button"
+            title="Close downloads"
+            aria-label="Close downloads"
+            data-l10n-title="downloads.close"
+            data-l10n-aria-label="downloads.close"
+          ></button>
+        </header>
+        <div
+          id="download-list"
+          role="list"
+          aria-label="Downloaded files"
+          data-l10n-aria-label="downloads.files"
+        ></div>
+        <p id="downloads-empty" data-l10n-id="downloads.empty">
+          No downloads yet.
+        </p>
+      </section>
+
+      <section
+        id="app-menu"
+        class="ui-card"
+        hidden="hidden"
+        role="menu"
+        aria-label="Navis menu"
+        data-l10n-aria-label="menu.navis"
+      >
+        <button
+          id="new-private-window"
+          class="menu-item"
+          role="menuitem"
+          aria-label="New private window"
+          data-l10n-aria-label="menu.newPrivateWindow"
+        >
+          <span data-l10n-id="menu.newPrivateWindow">New private window</span>
+          <kbd>Ctrl+Shift+N</kbd>
+        </button>
+        <button
+          id="menu-history"
+          class="menu-item"
+          role="menuitem"
+          aria-label="History"
+          data-l10n-aria-label="menu.history"
+        >
+          <span data-l10n-id="menu.history">History</span>
+          <kbd>Ctrl+H</kbd>
+        </button>
+        <button
+          id="menu-bookmarks"
+          class="menu-item"
+          role="menuitem"
+          aria-label="Bookmarks"
+          data-l10n-aria-label="menu.bookmarks"
+        >
+          <span data-l10n-id="menu.bookmarks">Bookmarks</span>
+          <kbd>Ctrl+Shift+O</kbd>
+        </button>
+        <button
+          id="menu-passwords"
+          class="menu-item"
+          role="menuitem"
+          aria-label="Password manager"
+          data-l10n-aria-label="menu.passwordManager"
+        >
+          <span data-l10n-id="menu.passwordManager">Password manager</span>
+        </button>
+        <button
+          id="menu-downloads"
+          class="menu-item"
+          role="menuitem"
+          aria-label="Downloads"
+          data-l10n-aria-label="downloads.title"
+        >
+          <span data-l10n-id="downloads.title">Downloads</span>
+        </button>
+        <button
+          id="menu-toggle-bookmark-bar"
+          class="menu-item"
+          role="menuitemcheckbox"
+          aria-label="Show bookmarks bar"
+          data-l10n-aria-label="menu.showBookmarksBar"
+          aria-checked="false"
+        >
+          <span
+            id="menu-toggle-bookmark-bar-label"
+            data-l10n-id="menu.showBookmarksBar"
+            >Show bookmarks bar</span
+          >
+          <kbd>Ctrl+Shift+B</kbd>
+        </button>
+        <hr />
+        <button
+          id="menu-settings"
+          class="menu-item"
+          role="menuitem"
+          aria-label="Settings"
+          data-l10n-aria-label="menu.settings"
+        >
+          <span data-l10n-id="menu.settings">Settings</span>
+        </button>
+      </section>
+
+      <section
+        id="bookmark-bar-popup"
+        class="ui-card bookmark-popup"
+        hidden="hidden"
+        role="menu"
+        aria-label="Bookmark folder"
+        data-l10n-aria-label="menu.bookmarkFolder"
+      ></section>
+
+      <xul:popupset id="navis-popupset">
+        <xul:menupopup
+          id="context-menu"
+          class="navis-context-menu"
+          nonnative="true"
+          aria-label="Context menu"
+          data-l10n-aria-label="menu.context"
+        />
+      </xul:popupset>
+
+      <aside
+        id="library-panel"
+        hidden="hidden"
+        aria-labelledby="library-title"
+      >
+        <header>
+          <h1 id="library-title" data-l10n-id="library.history">History</h1>
+          <div class="library-header-actions">
+            <button
+              id="open-library-page"
+              class="ui-icon-button"
+              type="button"
+              title="Open history page"
+              aria-label="Open history page"
+              data-l10n-title="library.openHistoryPage"
+              data-l10n-aria-label="library.openHistoryPage"
+            ></button>
+            <button
+              id="close-library"
+              class="panel-close ui-icon-button"
+              type="button"
+              title="Close library"
+              aria-label="Close library"
+              data-l10n-title="library.close"
+              data-l10n-aria-label="library.close"
+            ></button>
+          </div>
+        </header>
+        <section id="history-view" class="library-view">
+          <label
+            class="sr-only"
+            for="history-search"
+            data-l10n-id="history.search"
+            >Search history</label
+          >
+          <input
+            id="history-search"
+            class="ui-field"
+            type="search"
+            placeholder="Search history"
+            data-l10n-placeholder="history.search"
+            autocomplete="off"
+          />
+          <div id="history-list" class="library-list"></div>
+          <p
+            id="history-empty"
+            class="library-empty"
+            role="status"
+            aria-label="No history yet"
+            data-l10n-id="history.empty"
+            data-l10n-aria-label="history.empty"
+          >
+            No history yet.
+          </p>
+          <button
+            id="clear-history"
+            class="ui-button"
+            type="button"
+            data-l10n-id="history.clear"
+          >
+            Clear browsing history
+          </button>
+        </section>
+
+        <section
+          id="bookmarks-view"
+          class="library-view"
+          hidden="hidden"
+        >
+          <div id="bookmark-toolbar">
+            <button
+              id="bookmark-up"
+              class="ui-button"
+              type="button"
+              disabled="disabled"
+              data-l10n-id="bookmarks.root"
+            >
+              Root
+            </button>
+            <button
+              id="add-current-bookmark"
+              class="ui-button"
+              type="button"
+              data-l10n-id="bookmarks.addCurrent"
+            >
+              Add current page
+            </button>
+            <button
+              id="add-bookmark-folder"
+              class="ui-button"
+              type="button"
+              data-l10n-id="bookmarks.newFolder"
+            >
+              New folder
+            </button>
+          </div>
+          <form id="bookmark-editor" class="ui-card" hidden="hidden">
+            <h2
+              id="bookmark-editor-title"
+              data-l10n-id="bookmarks.editBookmark"
+            >
+              Edit bookmark
+            </h2>
+            <input id="bookmark-edit-id" type="hidden" />
+            <input id="bookmark-edit-type" type="hidden" />
+            <label>
+              <span data-l10n-id="bookmarks.name">Name</span>
+              <input id="bookmark-edit-title" class="ui-field" type="text" />
+            </label>
+            <label id="bookmark-edit-url-label">
+              <span data-l10n-id="bookmarks.url">URL</span>
+              <input id="bookmark-edit-url" class="ui-field" type="text" />
+            </label>
+            <div>
+              <button
+                id="cancel-bookmark-edit"
+                class="ui-button"
+                type="button"
+                data-l10n-id="common.cancel"
+              >
+                Cancel
+              </button>
+              <button
+                class="ui-button primary"
+                type="submit"
+                data-l10n-id="common.save"
+              >
+                Save
+              </button>
+            </div>
+          </form>
+          <div id="bookmarks-list" class="library-list"></div>
+          <p
+            id="bookmarks-empty"
+            class="library-empty"
+            role="status"
+            aria-label="No bookmarks yet"
+            data-l10n-id="bookmarks.empty"
+            data-l10n-aria-label="bookmarks.empty"
+          >
+            No bookmarks yet.
+          </p>
+        </section>
+
+        <section
+          id="passwords-view"
+          class="library-view"
+          hidden="hidden"
+        >
+          <p
+            id="passwords-private-note"
+            class="library-empty"
+            hidden="hidden"
+            data-l10n-id="passwords.privateUnavailable"
+          >
+            Saved passwords are unavailable in private windows.
+          </p>
+          <div id="passwords-list" class="library-list"></div>
+          <p
+            id="passwords-empty"
+            class="library-empty"
+            role="status"
+            aria-label="No saved passwords"
+            data-l10n-id="passwords.empty"
+            data-l10n-aria-label="passwords.none"
+          >
+            No saved passwords yet.
+          </p>
+          <button
+            id="clear-passwords"
+            class="ui-button"
+            type="button"
+            data-l10n-id="passwords.clear"
+          >
+            Clear saved passwords
+          </button>
+        </section>
+      </aside>
+
+      <div id="platform-status-layer">
+        <span
+          id="loading-state"
+          class="status-toast"
+          data-loading="false"
+          data-visible="false"
+          role="status"
+          aria-live="polite"
+          data-l10n-id="common.ready"
+          >Ready</span
+        >
+        <span
+          id="session-count"
+          class="sr-only"
+          role="status"
+          aria-live="polite"
+          data-l10n-id="tabs.zero"
+          >0 tabs</span
+        >
+      </div>
+    </main>
+  </body>
+</html>

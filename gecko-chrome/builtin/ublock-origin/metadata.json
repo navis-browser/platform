@@ -1,0 +1,27 @@
+{
+  "schema": 1,
+  "id": "uBlock0@raymondhill.net",
+  "name": "uBlock Origin",
+  "version": "1.74.0",
+  "artifact": "uBlock0@raymondhill.net.xpi",
+  "size": 4617614,
+  "sha256": "175756d74468c9ba45863f7fc333d3be670f82d5b066314e915814dd547d1652",
+  "release": "https://github.com/gorhill/uBlock/releases/tag/1.74.0",
+  "download": "https://addons.mozilla.org/firefox/downloads/file/4981431/ublock_origin-1.74.0.xpi",
+  "source_repository": "https://github.com/gorhill/uBlock",
+  "source_commit": "6dd2d95e50d134a477a4e183343c0b26e9147123",
+  "license": "GPL-3.0-or-later",
+  "required_permissions": [
+    "alarms",
+    "dns",
+    "menus",
+    "privacy",
+    "storage",
+    "tabs",
+    "unlimitedStorage",
+    "webNavigation",
+    "webRequest",
+    "webRequestBlocking",
+    "<all_urls>"
+  ]
+}

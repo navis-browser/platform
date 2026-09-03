@@ -1,0 +1,500 @@
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/. */
+
+@namespace xul url("http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul");
+
+:root {
+  box-sizing: border-box;
+  color-scheme: light dark;
+  font-family:
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    sans-serif;
+
+  /* Semantic colors: Chrome 152 desktop density translated into Navis roles. */
+  --navis-color-frame: #f6f5f4;
+  --navis-color-toolbar: #f6f5f4;
+  --navis-color-tab-active: #f3f2f1;
+  --navis-color-field: #ffffff;
+  --navis-color-surface: #ffffff;
+  --navis-color-surface-raised: #ffffff;
+  --navis-color-content-underlay: #ffffff;
+  --navis-color-text: #1f1f1f;
+  --navis-color-text-secondary: #5f6368;
+  --navis-color-text-disabled: #9aa0a6;
+  --navis-color-icon: #444746;
+  --navis-color-outline: #c7c7c7;
+  --navis-color-divider: #d8d8d8;
+  --navis-color-state-hover: rgb(31 31 31 / 8%);
+  --navis-color-state-pressed: rgb(31 31 31 / 12%);
+  --navis-color-accent: #0b57d0;
+  --navis-color-accent-container: #d3e3fd;
+  --navis-color-on-accent: #ffffff;
+  --navis-color-danger: #b3261e;
+  --navis-color-warning: #8a4f00;
+  --navis-color-success: #146c2e;
+  --navis-color-window-close: #c42b1c;
+  --navis-color-on-window-close: #ffffff;
+  --navis-color-scrim: rgb(31 31 31 / 16%);
+  --navis-color-shadow: rgb(31 31 31 / 24%);
+  --navis-color-fullscreen-underlay: #000000;
+  --navis-color-fullscreen-hint: rgb(32 33 36 / 94%);
+  --navis-color-on-fullscreen-hint: #ffffff;
+
+  /* Typography roles. */
+  --navis-font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  --navis-font-label: 500 12px/16px var(--navis-font-family);
+  --navis-font-body: 400 14px/20px var(--navis-font-family);
+  --navis-font-tab: 400 13px/20px var(--navis-font-family);
+  --navis-font-omnibox: 400 14px/20px var(--navis-font-family);
+  --navis-font-badge: 600 9px/11px var(--navis-font-family);
+  --navis-font-title: 500 16px/24px var(--navis-font-family);
+  --navis-font-headline: 600 24px/32px var(--navis-font-family);
+
+  /* Desktop density from the pinned Chromium layout constants. */
+  --navis-size-tab-strip: 40px;
+  --navis-size-tab: 34px;
+  --navis-size-tab-standard: 232px;
+  --navis-size-tab-compact: 180px;
+  --navis-size-toolbar-control: 34px;
+  --navis-size-icon: 20px;
+  --navis-size-icon-small: 16px;
+  --navis-size-field: 34px;
+  --navis-space-1: 2px;
+  --navis-space-2: 4px;
+  --navis-space-3: 6px;
+  --navis-space-4: 8px;
+  --navis-space-5: 12px;
+  --navis-space-6: 16px;
+  --navis-space-7: 20px;
+  --navis-space-8: 24px;
+  --navis-radius-tab-top: 10px;
+  --navis-radius-tab-bottom: 12px;
+  --navis-radius-toolbar: 8px;
+  --navis-radius-field: 17px;
+  --navis-radius-control: 17px;
+  --navis-radius-card: 12px;
+  --navis-radius-content: 10px;
+  --navis-elevation-1: 0 1px 2px rgb(31 31 31 / 18%);
+  --navis-elevation-3: 0 8px 24px var(--navis-color-shadow);
+  --navis-focus-ring: 0 0 0 2px var(--navis-color-accent);
+  --navis-motion-fast: 120ms;
+  --navis-motion-standard: 200ms;
+  --navis-menu-surface-padding: var(--navis-space-3) 0;
+  --navis-menu-row-min-height: 36px;
+  --navis-menu-row-padding: var(--navis-space-4) var(--navis-space-5);
+  --navis-menu-row-radius: 0;
+  --navis-context-menu-surface-padding: var(--navis-space-2) 0;
+  --navis-context-menu-row-min-height: 30px;
+  --navis-context-menu-row-padding: 3px var(--navis-space-5);
+  --navis-picker-menu-row-min-height: 34px;
+  --navis-picker-menu-row-padding: var(--navis-space-2) var(--navis-space-5);
+}
+
+/* Author-level display rules win over the HTML user-agent rule for `hidden`.
+ * Keep the attribute authoritative even on flex/grid Material components. */
+[hidden] {
+  display: none !important;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: inherit;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --navis-color-frame: #202326;
+    --navis-color-toolbar: #292c30;
+    --navis-color-tab-active: #292c30;
+    --navis-color-field: #1f1f1f;
+    --navis-color-surface: #292c30;
+    --navis-color-surface-raised: #303338;
+    --navis-color-content-underlay: #1c1f21;
+    --navis-color-text: #e3e3e3;
+    --navis-color-text-secondary: #a9b0b7;
+    --navis-color-text-disabled: #73777d;
+    --navis-color-icon: #c4c7c5;
+    --navis-color-outline: #5f6368;
+    --navis-color-divider: #44474b;
+    --navis-color-state-hover: rgb(227 227 227 / 10%);
+    --navis-color-state-pressed: rgb(227 227 227 / 16%);
+    --navis-color-accent: #a8c7fa;
+    --navis-color-accent-container: #284777;
+    --navis-color-on-accent: #062e6f;
+    --navis-color-danger: #ffb4ab;
+    --navis-color-warning: #ffb95c;
+    --navis-color-success: #7ddc91;
+    --navis-color-window-close: #c42b1c;
+    --navis-color-on-window-close: #ffffff;
+    --navis-color-scrim: rgb(0 0 0 / 32%);
+    --navis-color-shadow: rgb(0 0 0 / 52%);
+  }
+}
+
+:root[data-theme="private"] {
+  --navis-color-frame: #25202e;
+  --navis-color-toolbar: #31283d;
+  --navis-color-tab-active: #3a3047;
+  --navis-color-field: #211c29;
+  --navis-color-surface: #31283d;
+  --navis-color-surface-raised: #3a3047;
+  --navis-color-content-underlay: #1f1a26;
+  --navis-color-text: #f1eafb;
+  --navis-color-text-secondary: #cfc2dc;
+  --navis-color-text-disabled: #776d82;
+  --navis-color-icon: #ded2e9;
+  --navis-color-outline: #746682;
+  --navis-color-divider: #51445e;
+  --navis-color-state-hover: rgb(241 234 251 / 10%);
+  --navis-color-state-pressed: rgb(241 234 251 / 16%);
+  --navis-color-accent: #d9b8ff;
+  --navis-color-accent-container: #573d73;
+  --navis-color-on-accent: #32174d;
+  --navis-color-scrim: rgb(0 0 0 / 38%);
+  --navis-color-shadow: rgb(0 0 0 / 58%);
+}
+
+button,
+input,
+select {
+  font: var(--navis-font-body);
+}
+
+button {
+  color: inherit;
+}
+
+.navis-icon {
+  width: var(--navis-size-icon);
+  height: var(--navis-size-icon);
+  flex: 0 0 auto;
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 1.7;
+}
+
+.navis-icon .icon-fill {
+  fill: currentColor;
+  stroke: none;
+}
+
+.ui-icon-button {
+  position: relative;
+  display: inline-grid;
+  width: var(--navis-size-toolbar-control);
+  height: var(--navis-size-toolbar-control);
+  flex: 0 0 auto;
+  padding: 7px;
+  border: 0;
+  border-radius: var(--navis-radius-control);
+  background: transparent;
+  color: var(--navis-color-icon);
+  place-items: center;
+  transition:
+    background-color var(--navis-motion-fast) ease,
+    color var(--navis-motion-fast) ease;
+}
+
+.ui-icon-button:hover:not(:disabled) {
+  background: var(--navis-color-state-hover);
+}
+
+.ui-icon-button:active:not(:disabled),
+.ui-icon-button[aria-expanded="true"] {
+  background: var(--navis-color-state-pressed);
+}
+
+.ui-icon-button:disabled {
+  opacity: 0.38;
+}
+
+.ui-icon-button:focus-visible,
+.ui-button:focus-visible,
+.ui-field:focus-visible,
+[role="tab"]:focus-visible {
+  outline: 2px solid var(--navis-color-accent);
+  outline-offset: 1px;
+}
+
+.ui-button {
+  min-height: 36px;
+  padding-inline: var(--navis-space-6);
+  border: 1px solid var(--navis-color-outline);
+  border-radius: 18px;
+  background: transparent;
+  color: var(--navis-color-accent);
+  font-weight: 600;
+}
+
+.ui-button:hover:not(:disabled) {
+  background: var(--navis-color-state-hover);
+}
+
+.ui-button:active:not(:disabled) {
+  background: var(--navis-color-state-pressed);
+}
+
+.ui-button.primary {
+  border-color: transparent;
+  background: var(--navis-color-accent);
+  color: var(--navis-color-on-accent);
+}
+
+.ui-field {
+  min-height: 36px;
+  padding-inline: var(--navis-space-5);
+  border: 1px solid var(--navis-color-outline);
+  border-radius: var(--navis-space-2);
+  background: var(--navis-color-field);
+  color: var(--navis-color-text);
+}
+
+.ui-field:focus {
+  border-color: var(--navis-color-accent);
+  outline: 1px solid var(--navis-color-accent);
+}
+
+.ui-switch {
+  position: relative;
+  width: 36px;
+  height: 20px;
+  flex: 0 0 auto;
+  margin: 0;
+  border: 2px solid var(--navis-color-outline);
+  border-radius: 10px;
+  appearance: none;
+  background: transparent;
+  transition:
+    background-color var(--navis-motion-fast) ease,
+    border-color var(--navis-motion-fast) ease;
+}
+
+.ui-switch::before {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--navis-color-outline);
+  content: "";
+  transition:
+    background-color var(--navis-motion-fast) ease,
+    transform var(--navis-motion-fast) ease;
+}
+
+.ui-switch:checked {
+  border-color: var(--navis-color-accent);
+  background: var(--navis-color-accent);
+}
+
+.ui-switch:checked::before {
+  background: var(--navis-color-on-accent);
+  transform: translateX(16px);
+}
+
+.ui-switch:focus-visible {
+  outline: 2px solid var(--navis-color-accent);
+  outline-offset: 2px;
+}
+
+.ui-switch:disabled {
+  opacity: 0.38;
+}
+
+.ui-card {
+  border: 1px solid var(--navis-color-divider);
+  border-radius: var(--navis-radius-card);
+  background: var(--navis-color-surface-raised);
+  box-shadow: var(--navis-elevation-3);
+  color: var(--navis-color-text);
+}
+
+:is(
+  .ui-button,
+  .ui-icon-button:not(.window-control),
+  .menu-item,
+  .extension-menu-primary,
+  .bookmark-bar-item,
+  .library-primary
+) {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+}
+
+.navis-ripple {
+  position: absolute;
+  z-index: 0;
+  border-radius: 50%;
+  background: currentColor;
+  opacity: 0;
+  pointer-events: none;
+  transform: scale(0);
+  animation: navis-ripple 480ms cubic-bezier(0.2, 0, 0, 1);
+}
+
+@keyframes navis-ripple {
+  20% {
+    opacity: 0.12;
+  }
+
+  100% {
+    opacity: 0;
+    transform: scale(1);
+  }
+}
+
+xul|menupopup:is(.navis-context-menu, #ContentSelectDropdownPopup) {
+  --panel-background-color: var(--navis-color-surface-raised);
+  --panel-text-color: var(--navis-color-text);
+  --panel-border-color: var(--navis-color-divider);
+  --panel-border-radius: var(--navis-radius-card);
+  --panel-box-shadow: none;
+  --panel-box-shadow-margin: var(--navis-space-6);
+  --menuitem-border-radius: var(--navis-menu-row-radius);
+  --menuitem-margin: 0;
+
+  min-width: 224px;
+  max-width: 360px;
+  appearance: none;
+  -moz-default-appearance: none;
+  -moz-window-shadow: none;
+  background: transparent;
+  font: var(--navis-font-tab);
+}
+
+xul|menupopup.navis-context-menu {
+  --panel-padding: var(--navis-context-menu-surface-padding);
+  --menuitem-padding: var(--navis-context-menu-row-padding);
+}
+
+xul|menupopup#ContentSelectDropdownPopup {
+  --panel-padding: var(--navis-menu-surface-padding);
+  --menuitem-padding: var(--navis-picker-menu-row-padding);
+}
+
+xul|menupopup:is(.navis-context-menu, #ContentSelectDropdownPopup)::part(content) {
+  overflow: clip;
+  border: 1px solid var(--navis-color-divider);
+  border-radius: var(--navis-radius-card);
+  background: var(--navis-color-surface-raised);
+  background-clip: padding-box;
+  box-shadow: 0 8px 12px var(--navis-color-shadow);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .navis-ripple {
+    animation-duration: 1ms;
+  }
+}
+
+xul|menupopup:is(.navis-context-menu, #ContentSelectDropdownPopup)
+  > :is(xul|menuitem, xul|menu) {
+  box-sizing: border-box;
+  color: var(--navis-color-text);
+}
+
+xul|menupopup.navis-context-menu > :is(xul|menuitem, xul|menu) {
+  min-height: var(--navis-context-menu-row-min-height);
+}
+
+xul|menupopup#ContentSelectDropdownPopup > :is(xul|menuitem, xul|menu) {
+  min-height: var(--navis-picker-menu-row-min-height);
+}
+
+xul|menupopup:is(.navis-context-menu, #ContentSelectDropdownPopup)
+  > :is(xul|menuitem, xul|menu)[disabled] {
+  color: var(--navis-color-text-disabled);
+  opacity: 1;
+}
+
+xul|menupopup:is(.navis-context-menu, #ContentSelectDropdownPopup)
+  > :is(xul|menuitem, xul|menu)[disabled]
+  > .menu-accel {
+  color: var(--navis-color-text-disabled);
+}
+
+xul|menupopup:is(.navis-context-menu, #ContentSelectDropdownPopup)
+  > :is(xul|menuitem, xul|menu)[_moz-menuactive]:not([disabled]) {
+  background-color: var(--navis-color-state-hover);
+  color: var(--navis-color-text);
+}
+
+xul|menupopup:is(.navis-context-menu, #ContentSelectDropdownPopup)
+  > :is(xul|menuitem, xul|menu)
+  > .menu-accel {
+  margin-inline-start: var(--navis-space-7);
+  color: var(--navis-color-text-secondary);
+}
+
+xul|menupopup:is(.navis-context-menu, #ContentSelectDropdownPopup)
+  > xul|menuseparator::before {
+  border-color: var(--navis-color-divider);
+}
+
+xul|menupopup.navis-context-menu > xul|menuseparator {
+  padding-block: var(--navis-space-1);
+}
+
+.ui-list-row {
+  border-bottom: 1px solid var(--navis-color-divider);
+  background: var(--navis-color-surface);
+}
+
+.sr-only {
+  position: absolute !important;
+  width: 1px !important;
+  height: 1px !important;
+  padding: 0 !important;
+  overflow: hidden !important;
+  clip: rect(0, 0, 0, 0) !important;
+  white-space: nowrap !important;
+  border: 0 !important;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --navis-motion-fast: 0ms;
+    --navis-motion-standard: 0ms;
+  }
+}
+
+@media (forced-colors: active) {
+  :root {
+    --navis-color-frame: Canvas;
+    --navis-color-toolbar: Canvas;
+    --navis-color-tab-active: Canvas;
+    --navis-color-field: Field;
+    --navis-color-surface: Canvas;
+    --navis-color-surface-raised: Canvas;
+    --navis-color-content-underlay: Canvas;
+    --navis-color-text: CanvasText;
+    --navis-color-text-secondary: GrayText;
+    --navis-color-text-disabled: GrayText;
+    --navis-color-icon: ButtonText;
+    --navis-color-outline: ButtonBorder;
+    --navis-color-divider: ButtonBorder;
+    --navis-color-accent: Highlight;
+    --navis-color-on-accent: HighlightText;
+    --navis-color-danger: Mark;
+    --navis-color-warning: Mark;
+    --navis-color-success: CanvasText;
+    --navis-color-window-close: Highlight;
+    --navis-color-on-window-close: HighlightText;
+    --navis-color-state-hover: Highlight;
+    --navis-color-state-pressed: Highlight;
+    --navis-color-scrim: transparent;
+    --navis-color-shadow: transparent;
+    --navis-color-fullscreen-underlay: Canvas;
+    --navis-color-fullscreen-hint: Canvas;
+    --navis-color-on-fullscreen-hint: CanvasText;
+  }
+}

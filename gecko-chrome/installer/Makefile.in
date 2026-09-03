@@ -1,0 +1,85 @@
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+STANDALONE_MAKEFILE := 1
+
+include $(topsrcdir)/config/rules.mk
+
+MOZ_PKG_MANIFEST = $(srcdir)/package-manifest.in
+MOZ_PKG_FATAL_WARNINGS = 1
+
+DEFINES += \
+	-DMOZ_APP_NAME=$(MOZ_APP_NAME) \
+	-DPREF_DIR=$(PREF_DIR) \
+	-DPKG_LOCALE_MANIFEST=$(topobjdir)/navis/installer/locale-manifest.in \
+	$(NULL)
+
+MOZ_CHROME_LOCALE_ENTRIES = @RESPATH@/chrome/
+
+ifeq ($(MOZ_WIDGET_TOOLKIT),gtk)
+DEFINES += -DMOZ_GTK=1
+endif
+
+ifdef MOZ_SYSTEM_NSPR
+DEFINES += -DMOZ_SYSTEM_NSPR=1
+endif
+
+ifdef MOZ_SYSTEM_NSS
+DEFINES += -DMOZ_SYSTEM_NSS=1
+endif
+
+DEFINES += -DJAREXT=
+
+ifdef MOZ_ANGLE_RENDERER
+DEFINES += -DMOZ_ANGLE_RENDERER=$(MOZ_ANGLE_RENDERER)
+endif
+
+DEFINES += -DMOZ_CHILD_PROCESS_NAME=$(MOZ_CHILD_PROCESS_NAME)
+
+ifdef MOZ_NO_DEBUG_RTL
+ifdef WIN32_REDIST_DIR
+DEFINES += -DMOZ_PACKAGE_MSVC_DLLS=1
+DEFINES += -DMSVC_C_RUNTIME_DLL=$(MSVC_C_RUNTIME_DLL)
+ifdef MSVC_C_RUNTIME_1_DLL
+DEFINES += -DMSVC_C_RUNTIME_1_DLL=$(MSVC_C_RUNTIME_1_DLL)
+endif
+DEFINES += -DMSVC_CXX_RUNTIME_DLL=$(MSVC_CXX_RUNTIME_DLL)
+DEFINES += -DMSVC_CXX_RUNTIME_ATOMIC_WAIT_DLL=$(MSVC_CXX_RUNTIME_ATOMIC_WAIT_DLL)
+endif
+endif
+
+ifdef MOZ_NOTIFICATION_SERVER
+DEFINES += -DMOZ_NOTIFICATION_SERVER=1
+endif
+
+ifneq (,$(filter WINNT Darwin Android,$(OS_TARGET)))
+DEFINES += -DMOZ_SHARED_MOZGLUE=1
+endif
+
+include $(topsrcdir)/toolkit/mozapps/installer/packager.mk
+
+ifneq (,$(MOZ_PKG_BINPATH))
+BINPATH = $(MOZ_PKG_BINPATH)
+else ifeq (Darwin,$(OS_TARGET))
+BINPATH = $(_BINPATH)
+else
+BINPATH = bin
+endif
+
+ifneq (,$(MOZ_PKG_RESPATH))
+RESPATH = $(MOZ_PKG_RESPATH)
+else ifeq (cocoa,$(MOZ_WIDGET_TOOLKIT))
+RESPATH = $(_RESPATH)
+else
+RESPATH = $(BINPATH)
+endif
+DEFINES += -DBINPATH='$(BINPATH)' -DRESPATH='$(RESPATH)'
+
+ifdef LLVM_SYMBOLIZER
+DEFINES += -DLLVM_SYMBOLIZER=$(notdir $(LLVM_SYMBOLIZER))
+endif
+
+ifdef MOZ_CLANG_RT_ASAN_LIB_PATH
+DEFINES += -DMOZ_CLANG_RT_ASAN_LIB=$(notdir $(MOZ_CLANG_RT_ASAN_LIB_PATH))
+endif

@@ -1,0 +1,21 @@
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, You can obtain one at http://mozilla.org/MPL/2.0/.
+
+imply_option("--with-app-basename", "Navis")
+imply_option("--with-app-name", "navis")
+imply_option("MOZ_APP_VENDOR", "Navis")
+imply_option("MOZ_APP_ID", "{3f72b8df-6865-4f75-9f26-fd8e39e954de}")
+imply_option("MOZ_APP_PROFILE", "navis")
+imply_option("BROWSER_CHROME_URL", "chrome://navis/content/main.xhtml")
+imply_option("MOZ_DEDICATED_PROFILES", True)
+imply_option("MOZ_BLOCK_PROFILE_DOWNGRADE", True)
+imply_option("--enable-desktop-embedder", True)
+imply_option(
+    "--with-desktop-embedder-remote-settings-collections",
+    "blocklists/addons,blocklists/addons-bloomfilters,blocklists/gfx,main/moz-essential-domain-fallbacks,main/password-recipes,main/password-rules,main/url-parser-default-unknown-schemes-interventions,security-state/cert-revocations,security-state/intermediates,security-state/onecrl",
+)
+set_config("MOZ_DESKTOP_EMBEDDER_INTERNAL_SCHEME", "navis")
+set_define("MOZ_DESKTOP_EMBEDDER_INTERNAL_SCHEME", '"navis"')
+
+include("../toolkit/moz.configure")

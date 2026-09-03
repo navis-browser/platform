@@ -1,0 +1,10 @@
+{
+  "schema": 3,
+  "extensions": [
+    {
+      "required": true,
+      "default_toolbar_pinned": true,
+      "metadata": "ublock-origin/metadata.json"
+    }
+  ]
+}
