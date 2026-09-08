@@ -1,0 +1,12 @@
+# Android/Gradle local state
+/.gradle/
+/**/.gradle/
+/**/build/
+local.properties
+
+# Editor and generated files
+**/__pycache__/
+**/.ruff_cache/
+*.py[cod]
+.DS_Store
+*.swp
