@@ -10,3 +10,13 @@ local.properties
 *.py[cod]
 .DS_Store
 *.swp
+
+# Private local configuration and signing material
+.env
+.env.*
+!.env.example
+*.key
+*.keystore
+*.jks
+*.p12
+*.pfx
