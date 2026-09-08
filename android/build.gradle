@@ -11,9 +11,12 @@ plugins {
 
 apply plugin: 'com.android.application'
 
-def navisSourceRoot = project.projectDir.canonicalFile.parentFile
+def navisWorkspaceRoot = project.projectDir.canonicalFile.parentFile.parentFile
 def readProductVersion = { String fileName ->
-    def versionFile = new File(navisSourceRoot, "product/config/${fileName}")
+    def versionFile = new File(
+        navisWorkspaceRoot,
+        "platform/gecko-chrome/config/${fileName}",
+    )
     if (!versionFile.isFile()) {
         throw new GradleException("Missing Navis product version: ${versionFile}")
     }
@@ -119,8 +122,8 @@ android {
 }
 
 def ublockPackage = new File(
-    navisSourceRoot,
-    'product/builtin/ublock-origin/uBlock0@raymondhill.net.xpi',
+    navisWorkspaceRoot,
+    'platform/gecko-chrome/builtin/ublock-origin/uBlock0@raymondhill.net.xpi',
 )
 def generatedBuiltIns = layout.buildDirectory.dir('generated/navis-built-ins')
 def prepareNavisBuiltIns = tasks.register('prepareNavisBuiltIns', Sync) {
