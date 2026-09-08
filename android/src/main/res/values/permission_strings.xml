@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="permission_allow_session">Allow for this session</string>
+    <string name="permission_allow_always">Always allow</string>
+    <string name="permission_session_explanation">Temporary access ends when Navis is closed. Always allow remembers this choice for this site.</string>
+    <string name="permission_save_failed">The permission could not be saved. No new access was granted. Please try again.</string>
+</resources>

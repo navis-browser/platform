@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="settings_appearance">Appearance</string>
+    <string name="settings_theme">Theme</string>
+    <string name="settings_history_button">Show history button</string>
+    <string name="settings_history_button_summary">Add a toolbar shortcut to open browsing history in a bottom sheet. Closing the sheet keeps the shortcut available.</string>
+    <string name="settings_theme_system">Follow system</string>
+    <string name="settings_theme_light">Light</string>
+    <string name="settings_theme_dark">Dark</string>
+    <string name="settings_accent">Accent color</string>
+    <string name="settings_accent_format">Use a color such as #0b57d0.</string>
+    <string name="settings_save">Save</string>
+    <string name="settings_provider_add">Add search engine</string>
+    <string name="settings_provider_default">Default search provider</string>
+    <string name="settings_provider_manage">Manage search providers</string>
+    <string name="settings_provider_edit">Edit search engine</string>
+    <string name="settings_provider_name">Name</string>
+    <string name="settings_provider_url">Search URL</string>
+    <string name="settings_provider_template">Use an HTTP(S) URL with {searchTerms} in the path or query.</string>
+    <string name="settings_provider_invalid">Enter a name and a valid search URL.</string>
+    <string name="settings_provider_up">Move up</string>
+    <string name="settings_provider_down">Move down</string>
+    <string name="settings_provider_remove">Remove search engine</string>
+    <string name="settings_provider_remove_confirm">Remove %1$s? If it is the default, Google will be used.</string>
+    <string name="settings_provider_actions">Actions for %1$s</string>
+    <string name="settings_download_directory">Download location</string>
+    <string name="settings_download_default">System Downloads</string>
+    <string name="settings_download_system_summary">Save to the system Downloads folder without granting folder access. Android 8–9 may still ask for storage permission when downloading.</string>
+    <string name="settings_download_choose">Choose folder…</string>
+    <string name="settings_download_restore_default">Restore default</string>
+    <string name="settings_download_other_summary">Confirm a folder in the Android file picker to grant access; no separate storage permission dialog is needed. Android 11+ does not allow storage roots or the Downloads root; choose an allowed folder.</string>
+    <string name="settings_download_current">Selected: %1$s</string>
+    <string name="settings_download_internal_storage">Internal storage</string>
+    <string name="settings_download_external_storage">External storage</string>
+    <string name="settings_download_custom_folder">Custom folder</string>
+    <string name="settings_download_ask">Ask where to save each file</string>
+    <string name="settings_download_ask_summary">Choose a location in the Android file picker before downloading.</string>
+    <string name="settings_download_private">Delete private downloads on exit</string>
+    <string name="settings_download_private_summary">Delete downloaded files when the final private tab closes. Private download history is always cleared.</string>
+    <string name="settings_download_open">Open files when downloads finish</string>
+    <string name="settings_download_open_summary">Open completed files with their Android app.</string>
+</resources>

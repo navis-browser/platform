@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="page_search_clear">清空搜索</string>
+    <string name="history_open_full_page">打开完整历史记录页面</string>
+</resources>

@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="download_notification_unavailable">无法打开此下载。文件可能已不可用、隐私会话已结束，或没有应用能打开此类文件。请查看下载列表。</string>
+    <string name="download_notification_profile_unavailable">此下载所属的个人资料已不可用或无法打开。</string>
+</resources>

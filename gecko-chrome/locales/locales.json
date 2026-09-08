@@ -1,0 +1,9 @@
+{
+  "schema": 1,
+  "locales": [
+    {
+      "required": true,
+      "metadata": "zh-CN/metadata.json"
+    }
+  ]
+}

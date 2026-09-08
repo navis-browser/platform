@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="notifications_enable_android_settings">Android 设置已关闭 Navis 的通知。请先在那里启用通知，再允许网站发送通知。</string>
+</resources>

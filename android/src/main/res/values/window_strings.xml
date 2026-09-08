@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="window_attention_channel">Window reminders</string>
+    <string name="window_attention_generic">A Navis window needs your attention. Tap to return to it.</string>
+    <string name="window_attention_extension">%1$s needs your attention. Tap to return to its Navis window.</string>
+    <string name="window_attention_extension_fallback">An extension</string>
+</resources>

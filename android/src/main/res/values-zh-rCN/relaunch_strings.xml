@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="relaunch_in_progress">正在重新启动 Navis…</string>
+    <string name="relaunch_failed">Navis 无法重新启动。设置已保存，请关闭并重新打开 Navis 以应用更改。</string>
+</resources>

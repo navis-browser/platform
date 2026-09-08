@@ -1,0 +1,26 @@
+{
+  "host": "linux",
+  "mode": "descriptor",
+  "overlay_base": "../gecko-chrome",
+  "purpose": "linux host integration contract",
+  "scope": [
+    "package_metadata",
+    "launcher_entry",
+    "deploy_manifest",
+    "policy_overrides"
+  ],
+  "integration": {
+    "inherits_from": "../gecko-chrome",
+    "override_policy": "descriptor-first",
+    "open_items": [
+      "distro-specific install/deploy assets",
+      "host window-system policy integration",
+      "distribution packaging metadata"
+    ]
+  },
+  "status": {
+    "descriptor_ready": true,
+    "concrete_host_ui": false,
+    "acceptance_dependent": true
+  }
+}

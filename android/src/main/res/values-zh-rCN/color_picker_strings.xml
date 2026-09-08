@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="color_picker_preview">已选颜色</string>
+    <string name="color_picker_presets">预设颜色</string>
+    <string name="color_picker_preset">颜色 %1$s</string>
+    <string name="color_picker_custom">自定义颜色</string>
+    <string name="color_picker_hide_custom">收起自定义颜色</string>
+    <string name="color_picker_hue_saturation">色相与饱和度色盘</string>
+    <string name="color_picker_hsv_state">色相 %1$d 度，饱和度百分之 %2$d</string>
+    <string name="color_picker_hue_less">降低色相</string>
+    <string name="color_picker_hue_more">提高色相</string>
+    <string name="color_picker_saturation_less">降低饱和度</string>
+    <string name="color_picker_saturation_more">提高饱和度</string>
+    <string name="color_picker_brightness">亮度</string>
+    <string name="color_picker_brightness_value">亮度 · %1$d%%</string>
+    <string name="color_picker_show_hex">高级：颜色代码</string>
+    <string name="color_picker_hide_hex">隐藏颜色代码</string>
+    <string name="color_picker_hex">十六进制颜色</string>
+    <string name="color_picker_hex_help">可选：#rrggbb。请修正无效代码或重新选色后再保存。</string>
+</resources>

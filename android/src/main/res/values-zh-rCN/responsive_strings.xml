@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="devtools_responsive_mode">切换响应式设计模式</string>
+    <string name="devtools_viewport_zoom_out">缩小被检查页面的视口</string>
+    <string name="devtools_viewport_zoom_in">放大被检查页面的视口</string>
+    <string name="devtools_viewport_failed">视口操作未完成，请重试。</string>
+</resources>

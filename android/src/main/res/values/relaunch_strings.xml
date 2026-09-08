@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="relaunch_in_progress">Restarting Navis…</string>
+    <string name="relaunch_failed">Navis could not restart. Your settings are saved; close and reopen Navis to apply them.</string>
+</resources>

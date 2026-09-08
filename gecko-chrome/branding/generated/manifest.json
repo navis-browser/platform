@@ -1,0 +1,116 @@
+{
+  "schemaVersion": 1,
+  "source": "gecko-chrome/branding/navis-mark.json",
+  "sourceSha256": "5e3d639ea87d7877b33912c0cc5db38d039539179046b49b2002c6f7a015771d",
+  "renderer": "rsvg-convert version 2.62.3\n\nlibraries used:\n  cairo 1.18.4\n  pango 1.58.2\n  harfbuzz 14.4.0\n  fontconfig 2.18.3",
+  "files": {
+    "gecko-chrome/branding/generated/VisualElements_150.png": {
+      "sha256": "ae92a67676b0e8eb71af288319526102c394be16ee68971674a0a93491127886",
+      "size": 17981
+    },
+    "gecko-chrome/branding/generated/VisualElements_70.png": {
+      "sha256": "75e2f688bb1f3e533e733bfae0007be50639347c27c3bf493981725001c07d2f",
+      "size": 5302
+    },
+    "gecko-chrome/branding/generated/default128.png": {
+      "sha256": "9bc11ab5b8d91ca979a00480b0219ed9d696d65ef1b2ba9f96229184e0eeb16a",
+      "size": 14174
+    },
+    "gecko-chrome/branding/generated/default16.png": {
+      "sha256": "4f5f6c57c7d89bec9d8097c65f4b92e512f1eccfff510bcce74b86f84e03d7ba",
+      "size": 667
+    },
+    "gecko-chrome/branding/generated/default256.png": {
+      "sha256": "af5a62a57eed39b22436186a1ee06618191e216ff795e65b183cf3dd26043b82",
+      "size": 41007
+    },
+    "gecko-chrome/branding/generated/default32.png": {
+      "sha256": "821a66ff773806731eac8845c03f4de81a1943fc05d9ed1064158a6dead540f0",
+      "size": 1612
+    },
+    "gecko-chrome/branding/generated/default48.png": {
+      "sha256": "f2692b43fb2c0b3a3521bd4049c44079b0d8dc492677c52a6a760247b9456e4d",
+      "size": 3102
+    },
+    "gecko-chrome/branding/generated/default64.png": {
+      "sha256": "1208a08ffa9ace346af60b4dd5f19100cc85f6551349e4a9200450febcfd1144",
+      "size": 4744
+    },
+    "gecko-chrome/branding/generated/navis-128.png": {
+      "sha256": "9bc11ab5b8d91ca979a00480b0219ed9d696d65ef1b2ba9f96229184e0eeb16a",
+      "size": 14174
+    },
+    "gecko-chrome/branding/generated/navis-150.png": {
+      "sha256": "ae92a67676b0e8eb71af288319526102c394be16ee68971674a0a93491127886",
+      "size": 17981
+    },
+    "gecko-chrome/branding/generated/navis-16.png": {
+      "sha256": "4f5f6c57c7d89bec9d8097c65f4b92e512f1eccfff510bcce74b86f84e03d7ba",
+      "size": 667
+    },
+    "gecko-chrome/branding/generated/navis-20.png": {
+      "sha256": "dcee384784d253187b7bcaadf56c8896de4fe655394c1669180f75ecc96f49f1",
+      "size": 784
+    },
+    "gecko-chrome/branding/generated/navis-24.png": {
+      "sha256": "52aec146c722c0561a7ebef9b7f6e4514b4db194671a3009077f7e6a2d1e2570",
+      "size": 1106
+    },
+    "gecko-chrome/branding/generated/navis-256.png": {
+      "sha256": "af5a62a57eed39b22436186a1ee06618191e216ff795e65b183cf3dd26043b82",
+      "size": 41007
+    },
+    "gecko-chrome/branding/generated/navis-32.png": {
+      "sha256": "821a66ff773806731eac8845c03f4de81a1943fc05d9ed1064158a6dead540f0",
+      "size": 1612
+    },
+    "gecko-chrome/branding/generated/navis-40.png": {
+      "sha256": "a06d36735375d81a0652ee2fbecaf4d3868fbf7420d62a7136f3122ff678f9f1",
+      "size": 2222
+    },
+    "gecko-chrome/branding/generated/navis-48.png": {
+      "sha256": "f2692b43fb2c0b3a3521bd4049c44079b0d8dc492677c52a6a760247b9456e4d",
+      "size": 3102
+    },
+    "gecko-chrome/branding/generated/navis-512.png": {
+      "sha256": "d2d88a71dc171722212c1ec22d5c3a3d5ceb01c9dcb4e0c2f2cc355f9d653c51",
+      "size": 108054
+    },
+    "gecko-chrome/branding/generated/navis-64.png": {
+      "sha256": "1208a08ffa9ace346af60b4dd5f19100cc85f6551349e4a9200450febcfd1144",
+      "size": 4744
+    },
+    "gecko-chrome/branding/generated/navis-70.png": {
+      "sha256": "75e2f688bb1f3e533e733bfae0007be50639347c27c3bf493981725001c07d2f",
+      "size": 5302
+    },
+    "gecko-chrome/branding/generated/navis-96.png": {
+      "sha256": "6096751163da610fa93b90ea411fd4c87550554639a9a0a052fc3539355409c6",
+      "size": 9076
+    },
+    "gecko-chrome/branding/generated/navis-brand.rc": {
+      "sha256": "67b854519bd4d575fdd56a83ffef6bf60da4e686f2f97f0ab38d6739b35f11ee",
+      "size": 256
+    },
+    "gecko-chrome/branding/generated/navis-mark-circle.svg": {
+      "sha256": "1ff16481fa6be49aa9dfb4123daedc2947b424a26cb3c9883168b80f8090192b",
+      "size": 4177
+    },
+    "gecko-chrome/branding/generated/navis-mark-mono.svg": {
+      "sha256": "92b77a2dc59c124338bcc84fccf4da7ca37a8aa2452a7adb8792ac404007fed0",
+      "size": 885
+    },
+    "gecko-chrome/branding/generated/navis-mark.svg": {
+      "sha256": "8f52ea75e496788a93a0afd3bae576107876be4252715c5767401e8128e9f6d4",
+      "size": 4177
+    },
+    "gecko-chrome/branding/generated/navis.ico": {
+      "sha256": "55883a4f67514217d5c12c80c63810c46719f87500c4f59402c3a75ddf1d8ee5",
+      "size": 69568
+    },
+    "gecko-chrome/chrome/content/brand-geometry.mjs": {
+      "sha256": "9b0dfb4fa3cac4b2d4589442684f547941de840a001605fa990a815954ea41ff",
+      "size": 9327
+    }
+  }
+}

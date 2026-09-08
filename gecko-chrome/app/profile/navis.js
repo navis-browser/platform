@@ -105,13 +105,12 @@ pref("extensions.formautofill.useml", false, locked);
 pref("places.semanticHistory.featureGate", false, locked);
 pref("browser.translations.enable", false, locked);
 
-// Navis accepts only this reviewed subset of Mozilla Remote Settings. The
-// matching configure allowlist controls packaged bootstrap data; this locked
-// runtime policy also prevents excluded clients from synchronizing or reading
-// stale profile data. Test builds bypass it so Gecko's arbitrary-collection
-// unit tests can continue to exercise the complete signature implementation.
+// Navis accepts only the signed Remote Settings policy selected at configure
+// time. AppConstants carries its collection allowlist into the runtime; these
+// locked preferences retain the reviewed provider endpoint and keep preview
+// data out of production. Test builds bypass the policy so Gecko's arbitrary-
+// collection tests can continue to exercise the signature implementation.
 #ifndef ENABLE_TESTS
-pref("services.settings.desktop_embedder_allowed_collections", "blocklists/addons,blocklists/addons-bloomfilters,blocklists/gfx,main/moz-essential-domain-fallbacks,main/password-recipes,main/password-rules,main/url-parser-default-unknown-schemes-interventions,security-state/cert-revocations,security-state/intermediates,security-state/onecrl", locked);
 pref("services.settings.server", "https://firefox.settings.services.mozilla.com/v1", locked);
 pref("services.settings.preview_enabled", false, locked);
 #endif
@@ -121,7 +120,7 @@ pref("services.settings.preview_enabled", false, locked);
 // profile only by the authenticated navis://extensions manager. Directory
 // scanning, Web/MIME install, autonomous code updates and native hosts remain
 // outside the Navis product surface.
-pref("extensions.applicationBuiltins.allowedIds", "uBlock0@raymondhill.net", locked);
+pref("extensions.applicationBuiltins.allowedIds", "uBlock0@raymondhill.net,langpack-zh-CN@firefox.mozilla.org", locked);
 pref("xpinstall.enabled", false, locked);
 pref("xpinstall.signatures.required", true, locked);
 pref("extensions.install.requireBuiltInCerts", true, locked);

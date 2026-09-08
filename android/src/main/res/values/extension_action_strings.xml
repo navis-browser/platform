@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="extension_action_failed_title">Extension could not open</string>
+    <string name="extension_action_invoke_failed">The extension could not handle this action. Try again, or check whether it is enabled and allowed in this window.</string>
+    <string name="extension_popup_load_failed">The extension popup could not load. Close this message and try opening the extension again.</string>
+    <string name="extension_popup_loading">Opening extension…</string>
+</resources>

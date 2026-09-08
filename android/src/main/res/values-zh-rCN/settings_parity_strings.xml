@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="settings_appearance">外观</string>
+    <string name="settings_theme">主题</string>
+    <string name="settings_history_button">显示历史记录按钮</string>
+    <string name="settings_history_button_summary">在工具栏添加快捷入口，点击后以底部面板打开历史记录。关闭面板后仍保留此入口。</string>
+    <string name="settings_theme_system">跟随系统</string>
+    <string name="settings_theme_light">浅色</string>
+    <string name="settings_theme_dark">深色</string>
+    <string name="settings_accent">强调色</string>
+    <string name="settings_accent_format">输入颜色，例如 #0b57d0。</string>
+    <string name="settings_save">保存</string>
+    <string name="settings_provider_add">添加搜索引擎</string>
+    <string name="settings_provider_default">默认搜索提供商</string>
+    <string name="settings_provider_manage">管理搜索提供商</string>
+    <string name="settings_provider_edit">编辑搜索引擎</string>
+    <string name="settings_provider_name">名称</string>
+    <string name="settings_provider_url">搜索网址</string>
+    <string name="settings_provider_template">使用 HTTP(S) 网址，在路径或查询中加入 {searchTerms}。</string>
+    <string name="settings_provider_invalid">请输入名称和有效的搜索网址。</string>
+    <string name="settings_provider_up">上移</string>
+    <string name="settings_provider_down">下移</string>
+    <string name="settings_provider_remove">删除搜索引擎</string>
+    <string name="settings_provider_remove_confirm">删除 %1$s？如果它是默认搜索引擎，将改用 Google。</string>
+    <string name="settings_provider_actions">%1$s 的操作</string>
+    <string name="settings_download_directory">下载位置</string>
+    <string name="settings_download_default">系统 Downloads</string>
+    <string name="settings_download_system_summary">保存到系统 Downloads 文件夹，无需授予文件夹访问权。Android 8–9 在下载时仍可能请求存储权限。</string>
+    <string name="settings_download_choose">选择文件夹…</string>
+    <string name="settings_download_restore_default">恢复默认</string>
+    <string name="settings_download_other_summary">在 Android 文件选择器中确认文件夹即授予访问权，无需另弹存储权限框。Android 11 及以上不允许授权存储根目录或 Downloads 根目录，请选择允许的文件夹。</string>
+    <string name="settings_download_current">已选择：%1$s</string>
+    <string name="settings_download_internal_storage">内部存储</string>
+    <string name="settings_download_external_storage">外部存储</string>
+    <string name="settings_download_custom_folder">自定义文件夹</string>
+    <string name="settings_download_ask">每次询问保存位置</string>
+    <string name="settings_download_ask_summary">下载前通过 Android 文件选择器指定位置。</string>
+    <string name="settings_download_private">退出时删除隐私下载文件</string>
+    <string name="settings_download_private_summary">关闭最后一个隐私标签页时删除下载的文件。隐私下载记录始终会清除。</string>
+    <string name="settings_download_open">下载完成后自动打开</string>
+    <string name="settings_download_open_summary">使用对应的 Android 应用打开已下载文件。</string>
+</resources>

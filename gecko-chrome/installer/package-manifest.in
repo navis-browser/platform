@@ -47,11 +47,19 @@
 @BINPATH@/@DLL_PREFIX@Microsoft.UI.Windowing@DLL_SUFFIX@
 #ifdef MOZ_NOTIFICATION_SERVER
 @BINPATH@/@DLL_PREFIX@notificationserver@DLL_SUFFIX@
-@BINPATH@/VisualElements/VisualElements_70.png
 #endif
+@BINPATH@/navis.VisualElementsManifest.xml
+@BINPATH@/VisualElements/VisualElements_70.png
+@BINPATH@/VisualElements/VisualElements_150.png
 #endif
 
 #ifdef MOZ_GTK
+@RESPATH@/chrome/icons/default/default16.png
+@RESPATH@/chrome/icons/default/default32.png
+@RESPATH@/chrome/icons/default/default48.png
+@RESPATH@/chrome/icons/default/default64.png
+@RESPATH@/chrome/icons/default/default128.png
+@RESPATH@/chrome/icons/default/default256.png
 @BINPATH@/glxtest
 @BINPATH@/@DLL_PREFIX@mozgtk@DLL_SUFFIX@
 #ifdef MOZ_WAYLAND
@@ -102,6 +110,15 @@
 @RESPATH@/chrome/remote.manifest
 #endif
 
+#ifdef MOZ_DESKTOP_EMBEDDER_DEVTOOLS
+@RESPATH@/chrome/devtools-startup@JAREXT@
+@RESPATH@/chrome/devtools-startup.manifest
+@RESPATH@/chrome/devtools@JAREXT@
+@RESPATH@/chrome/devtools.manifest
+@RESPATH@/@PREF_DIR@/debugger.js
+@RESPATH@/@PREF_DIR@/navis-devtools.js
+#endif
+
 #ifdef MOZ_WEBEXTENSIONS_RUNTIME
 @RESPATH@/extensions/*.xpi
 @RESPATH@/builtin-extensions/extensions.json
@@ -118,6 +135,8 @@
 
 @RESPATH@/chrome/navis@JAREXT@
 @RESPATH@/chrome/navis.manifest
+@RESPATH@/chrome/navis-branding@JAREXT@
+@RESPATH@/chrome/navis-branding.manifest
 #ifdef MOZ_WEBEXTENSIONS_RUNTIME
 @RESPATH@/chrome/navis-extensions@JAREXT@
 @RESPATH@/chrome/navis-extensions.manifest

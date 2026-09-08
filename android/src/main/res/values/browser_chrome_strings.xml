@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="browser_cancel_address">Cancel editing address</string>
+    <string name="browser_edit_address">Edit address</string>
+    <string name="site_organization_action">%1$s — Site information</string>
+    <string name="browser_clear_address">Clear address</string>
+    <string name="browser_new_regular_tab">New regular tab</string>
+    <string name="browser_private_tab_label">Private tab</string>
+    <string name="browser_tab_actions">Tab actions</string>
+    <string name="browser_tabs_count">Tabs: %1$d</string>
+</resources>

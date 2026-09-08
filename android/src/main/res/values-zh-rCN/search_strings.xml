@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="settings_remote_suggestions">搜索建议</string>
+    <string name="settings_remote_suggestions_summary">输入时向所选搜索引擎发送搜索词。默认关闭，隐私标签页中始终关闭。本地书签、历史记录和已打开的标签页仅保存在此设备上。</string>
+    <string name="settings_provider_suggestion_url">搜索建议网址（可选）</string>
+    <string name="settings_provider_suggestion_template">使用包含 {searchTerms} 的 HTTP(S) 网址，返回 JSON 数组 [query, [suggestions]]。留空时仅显示本地建议。</string>
+    <string name="omnibox_search_with">使用%1$s搜索</string>
+    <string name="omnibox_suggestion_tab">切换到标签页</string>
+    <string name="omnibox_suggestion_search">搜索建议</string>
+</resources>

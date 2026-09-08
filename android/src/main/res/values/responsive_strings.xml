@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="devtools_responsive_mode">Toggle responsive design mode</string>
+    <string name="devtools_viewport_zoom_out">Zoom out the inspected viewport</string>
+    <string name="devtools_viewport_zoom_in">Zoom in the inspected viewport</string>
+    <string name="devtools_viewport_failed">The viewport operation did not complete. Try again.</string>
+</resources>

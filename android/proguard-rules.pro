@@ -1,0 +1,1 @@
+-keep class org.navis.browser.core.NativeCoreBridge { *; }

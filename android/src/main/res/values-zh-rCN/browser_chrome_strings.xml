@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="browser_cancel_address">取消编辑地址</string>
+    <string name="browser_edit_address">编辑地址</string>
+    <string name="site_organization_action">%1$s — 站点信息</string>
+    <string name="browser_clear_address">清空地址</string>
+    <string name="browser_new_regular_tab">新建普通标签页</string>
+    <string name="browser_private_tab_label">隐私标签页</string>
+    <string name="browser_tab_actions">标签页操作</string>
+    <string name="browser_tabs_count">标签页：%1$d</string>
+</resources>

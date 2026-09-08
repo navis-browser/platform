@@ -7,9 +7,23 @@ import {
   createNavisLocalizer,
   normalizeNavisLocale,
 } from "./localization-core.mjs";
+import { renderAdditionalSupport, renderAdditionalProductPage, PRODUCT_PAGES_STYLE, PRODUCT_PAGES_SCRIPT } from "./internal-product-pages.mjs";
+import { renderProfilesPage, profilesPageScript } from "./profile-page.mjs";
+import { renderNavisMark, NAVIS_BRAND_STYLE, NAVIS_BRAND_SCRIPT } from "./brand.mjs";
 
 const MOZILLA_QUERY_STRIPPING_DOCUMENTATION =
   "https://firefox-source-docs.mozilla.org/toolkit/components/antitracking/anti-tracking/query-stripping/index.html";
+
+const PROVIDER_ICON_PATHS = Object.freeze({
+  add: "M10 4v12M4 10h12",
+  edit: "m12.5 3.5 4 4M3 17l1-5L13 3a1.4 1.4 0 0 1 2 0l2 2a1.4 1.4 0 0 1 0 2l-9 9-5 1Z",
+  remove: "M3 5h14M7 5V3h6v2M5 5l1 12h8l1-12M8 8v6M12 8v6",
+  drag: "M7 4h.01M13 4h.01M7 10h.01M13 10h.01M7 16h.01M13 16h.01",
+});
+
+function providerIconMarkup(name) {
+  return `<svg viewBox="0 0 20 20" aria-hidden="true" focusable="false"><path d="${PROVIDER_ICON_PATHS[name]}"/></svg>`;
+}
 
 const MATERIAL_INTERACTION_SCRIPT = String.raw`
 (() => {
@@ -35,6 +49,26 @@ const MATERIAL_INTERACTION_SCRIPT = String.raw`
     target.append(ripple);
     ripple.addEventListener("animationend", () => ripple.remove(), { once: true });
   }, true);
+})();`;
+
+const APPEARANCE_SCRIPT = String.raw`
+(() => {
+  "use strict";
+  window.addEventListener("NavisAppearanceState", event => {
+    const appearance = event.detail?.appearance;
+    if (!appearance || !["system", "light", "dark"].includes(appearance.theme) ||
+        !/^#[0-9a-f]{6}$/i.test(appearance.accent)) return;
+    const root = document.documentElement;
+    root.dataset.theme = appearance.theme;
+    root.style.colorScheme = appearance.theme === "system" ? "light dark" : appearance.theme;
+    root.style.setProperty("--accent", appearance.accent);
+    root.style.setProperty("--focus", appearance.accent);
+  });
+  window.addEventListener("pageshow", () => {
+    document.dispatchEvent(new CustomEvent("NavisAppearanceCommand", {
+      detail: { command: "appearance:get" }, bubbles: true,
+    }));
+  });
 })();`;
 
 function clientLocalizationScript(locale) {
@@ -92,6 +126,7 @@ const SETTINGS_SCRIPT = String.raw`
   const status = document.getElementById("settings-status");
   const clearButton = document.getElementById("clear-site-data");
   const searchProvider = document.getElementById("search-provider");
+  const remoteSuggestionsToggle = document.getElementById("remote-suggestions-toggle");
   const language = document.getElementById("display-language");
   const languageDetail = document.getElementById("display-language-detail");
   const languageRelaunch = document.getElementById(
@@ -108,12 +143,34 @@ const SETTINGS_SCRIPT = String.raw`
     "process-isolation-relaunch"
   );
   const cleanLinksToggle = document.getElementById("clean-links-toggle");
+  const sections = [...document.querySelectorAll("[data-settings-section]")];
+  const routeLinks = [...document.querySelectorAll("[data-settings-route]")];
+  const providerList = document.getElementById("search-provider-list");
+  const providerDialog = document.getElementById("provider-dialog");
+  const providerForm = document.getElementById("provider-form");
+  const providerAdd = document.getElementById("provider-add");
+  const theme = document.getElementById("appearance-theme");
+  const accent = document.getElementById("appearance-accent");
+  const accentReset = document.getElementById("appearance-accent-reset");
+  const bookmarkBar = document.getElementById("bookmark-bar-mode");
+  const directory = document.getElementById("download-directory");
+  const chooseDirectory = document.getElementById("choose-download-directory");
+  const settingToggles = [...document.querySelectorAll("[data-setting-key]")];
+  let editingProviderId = null;
+  let selectedSection = "search";
   const processIsolationLabelIds = Object.freeze({
     full: "settings.processIsolationFull",
     selective: "settings.processIsolationSelective",
     shared: "settings.processIsolationShared",
   });
   let busy = false;
+  let settingsLoaded = false;
+  let activeRequest = null;
+  const pendingWrites = [];
+  let accentDraft = null;
+  let accentVersion = 0;
+  let confirmedAccent = null;
+  let defaultAccent = null;
   let requestTimer = null;
   let clearConfirmationTimer = null;
   let pageShown = false;
@@ -128,58 +185,100 @@ const SETTINGS_SCRIPT = String.raw`
   };
 
   const renderControls = () => {
+    const writing = activeRequest?.command !== "settings:get" && busy || pendingWrites.length > 0;
+    const disabled = !settingsLoaded || writing;
+    for (const control of [providerAdd, remoteSuggestionsToggle, theme, bookmarkBar, chooseDirectory, ...settingToggles]) {
+      if (control) {
+        control.disabled = disabled;
+      }
+    }
+    accent.disabled = !settingsLoaded;
+    accentReset.disabled = disabled || !defaultAccent ||
+      (accentDraft?.value ?? confirmedAccent) === defaultAccent;
+    for (const control of providerList?.querySelectorAll("button") || []) {
+      control.disabled = disabled || control.dataset.unavailable === "true";
+    }
+    if (providerForm) {
+      for (const control of providerForm.elements) {
+        control.disabled = disabled;
+      }
+    }
     if (clearButton) {
-      clearButton.disabled = busy;
+      clearButton.disabled = disabled;
     }
     if (searchProvider) {
-      searchProvider.disabled = busy;
+      searchProvider.disabled = disabled;
     }
     if (language) {
-      language.disabled = busy;
+      language.disabled = disabled;
     }
     if (languageRelaunch) {
-      languageRelaunch.disabled = busy;
+      languageRelaunch.disabled = disabled;
     }
     if (processIsolation) {
-      processIsolation.disabled = busy;
+      processIsolation.disabled = disabled;
     }
     if (processIsolationRelaunch) {
-      processIsolationRelaunch.disabled = busy;
+      processIsolationRelaunch.disabled = disabled;
     }
     if (cleanLinksToggle) {
-      cleanLinksToggle.disabled = busy;
+      cleanLinksToggle.disabled = disabled;
     }
   };
 
-  const dispatchCommand = (command, value) => {
-    if (busy) {
-      return;
-    }
+  const startRequest = request => {
+    activeRequest = request;
     busy = true;
     renderControls();
-    setStatus(window.NavisL10n.text("settings.applying"), true);
+    if (!settingsLoaded || request.command !== "settings:get") {
+      setStatus(window.NavisL10n.text("settings.applying"), true);
+    }
     clearTimeout(requestTimer);
     requestTimer = setTimeout(() => {
+      activeRequest = null;
       busy = false;
       renderControls();
       setStatus(window.NavisL10n.text("settings.failed"));
+      drainWrites();
     }, 10000);
     document.dispatchEvent(
       new CustomEvent("NavisSettingsCommand", {
-        detail: { command, value },
+        detail: { command: request.command, value: request.value },
         bubbles: true,
       })
     );
   };
 
-  if (search) {
-    search.addEventListener("input", () => {
+  const drainWrites = () => {
+    if (!busy && pendingWrites.length) {
+      startRequest(pendingWrites.shift());
+    }
+  };
+
+  const dispatchCommand = (command, value, draftVersion = null) => {
+    const request = { command, value, draftVersion };
+    if (busy) {
+      if (command === "settings:get") return;
+      const replace = command === "settings:set-appearance"
+        ? pendingWrites.findIndex(item => item.command === command && item.value.key === value.key) : -1;
+      if (replace < 0) pendingWrites.push(request);
+      else pendingWrites[replace] = request;
+      renderControls();
+      return;
+    }
+    startRequest(request);
+  };
+
+  const filterSettings = () => {
       const query = search.value.trim().toLocaleLowerCase();
       let visible = 0;
+      for (const section of sections) {
+        section.hidden = !query && section.dataset.settingsSection !== selectedSection;
+      }
       for (const card of cards) {
         const matches =
           !query ||
-          (card.dataset.search || card.textContent)
+          ((card.dataset.search || "") + " " + card.textContent)
             .toLocaleLowerCase()
             .includes(query);
         card.hidden = !matches;
@@ -189,7 +288,260 @@ const SETTINGS_SCRIPT = String.raw`
       if (noResults) {
         noResults.hidden = !query || visible !== 0;
       }
+  };
+  search?.addEventListener("input", filterSettings);
+
+  const showRoute = () => {
+    const route = location.pathname.replace(/^\//, "").replace(/\/$/, "") || "search";
+    selectedSection = sections.some(section => section.dataset.settingsSection === route) ? route : "search";
+    for (const link of routeLinks) {
+      const selected = link.dataset.settingsRoute === selectedSection;
+      if (selected) {
+        link.setAttribute("aria-current", "page");
+        document.title = link.textContent.trim() + " — Navis";
+      } else {
+        link.removeAttribute("aria-current");
+      }
+    }
+    document.documentElement.dataset.pageKey = "settings/" + selectedSection;
+    filterSettings();
+  };
+  for (const link of routeLinks) {
+    link.addEventListener("click", event => {
+      if (event.button !== 0 || event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) {
+        return;
+      }
+      event.preventDefault();
+      try {
+        if (location.href !== link.href) {
+          history.pushState(null, "", link.href);
+        }
+      } catch {
+        setStatus(window.NavisL10n.text("settings.failed"));
+        return;
+      }
+      search.value = "";
+      showRoute();
+      window.scrollTo(0, 0);
+      dispatchCommand("settings:get");
     });
+  }
+  document.querySelector(".settings-brand")?.addEventListener("click", event => {
+    if (!event.ctrlKey && !event.metaKey && event.button === 0) {
+      event.preventDefault();
+      routeLinks[0].click();
+    }
+  });
+  window.addEventListener("popstate", () => {
+    search.value = "";
+    showRoute();
+    dispatchCommand("settings:get");
+  });
+  showRoute();
+
+  const editProvider = provider => {
+    editingProviderId = provider?.id || null;
+    providerForm.elements.name.value = provider?.name || "";
+    providerForm.elements.template.value = provider?.template || "";
+    providerForm.elements.suggestionTemplate.value = provider?.suggestionTemplate || "";
+    providerDialog.showModal();
+    providerForm.elements.name.focus();
+  };
+  providerAdd?.addEventListener("click", () => editProvider(null));
+  document.getElementById("provider-cancel")?.addEventListener("click", () => providerDialog.close());
+  providerForm?.addEventListener("submit", event => {
+    event.preventDefault();
+    const value = {
+      name: providerForm.elements.name.value,
+      template: providerForm.elements.template.value,
+      suggestionTemplate: providerForm.elements.suggestionTemplate.value,
+    };
+    if (editingProviderId) {
+      value.id = editingProviderId;
+    }
+    dispatchCommand(editingProviderId ? "settings:search-update" : "settings:search-add", value);
+  });
+  const providerIconPaths = ${JSON.stringify(PROVIDER_ICON_PATHS)};
+  let providerDrag = null;
+  let providerPointer = null;
+  let providerSnapshot = null;
+  let providerFocusId = null;
+  const providersBusy = () => busy || !settingsLoaded || pendingWrites.length > 0;
+  const clearProviderIndicators = () => {
+    for (const row of providerList.children) delete row.dataset.drop;
+  };
+  const clearProviderDrag = () => {
+    providerDrag = null;
+    providerPointer = null;
+    clearProviderIndicators();
+    for (const row of providerList.children) delete row.dataset.dragging;
+  };
+  const providerIconButton = (icon, label, handler) => {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "settings-provider-icon";
+    button.title = label;
+    button.setAttribute("aria-label", label);
+    button.disabled = providersBusy();
+    const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+    svg.setAttribute("viewBox", "0 0 20 20");
+    svg.setAttribute("aria-hidden", "true");
+    svg.setAttribute("focusable", "false");
+    const path = document.createElementNS("http://www.w3.org/2000/svg", "path");
+    path.setAttribute("d", providerIconPaths[icon]);
+    svg.append(path);
+    button.append(svg);
+    if (handler) button.addEventListener("click", () => {
+      if (!providersBusy()) handler();
+    });
+    return button;
+  };
+  document.addEventListener("keydown", event => {
+    if (event.key === "Escape" && providerDrag) {
+      event.preventDefault();
+      clearProviderDrag();
+    }
+  });
+  const finishProviderPointer = event => {
+    // Native HTML dragging sends pointercancel before dragend/drop.
+    if (!providerDrag && event.pointerId === providerPointer) providerPointer = null;
+  };
+  window.addEventListener("pointerup", finishProviderPointer, true);
+  window.addEventListener("pointercancel", finishProviderPointer, true);
+  window.addEventListener("blur", () => {
+    if (!providerDrag) clearProviderDrag();
+  });
+  window.addEventListener("pagehide", clearProviderDrag);
+  const renderProviders = providers => {
+    const snapshot = JSON.stringify(providers);
+    if (snapshot === providerSnapshot) return;
+    providerSnapshot = snapshot;
+    const focusedId = providerFocusId || providerList.querySelector(":focus")?.dataset.providerId;
+    providerFocusId = null;
+    clearProviderDrag();
+    providerList.replaceChildren();
+    const move = (id, position) => {
+      if (providersBusy() || position < 0 || position >= providers.length ||
+          providers[position].id === id) return;
+      providerFocusId = id;
+      clearProviderDrag();
+      dispatchCommand("settings:search-move", { id, position });
+    };
+    providers.forEach((provider, index) => {
+      const row = document.createElement("div");
+      row.className = "settings-provider-row";
+      row.setAttribute("role", "listitem");
+      const handle = providerIconButton("drag", window.NavisL10n.text("settings.reorderProvider", { name: provider.name }));
+      handle.classList.add("settings-provider-handle");
+      handle.dataset.providerId = provider.id;
+      handle.draggable = true;
+      handle.setAttribute("aria-describedby", "provider-reorder-help");
+      handle.setAttribute("aria-keyshortcuts", "ArrowUp ArrowDown");
+      handle.addEventListener("pointerdown", event => {
+        if (event.button === 0 && !providersBusy()) providerPointer = event.pointerId;
+      });
+      handle.addEventListener("keydown", event => {
+        if (event.key !== "ArrowUp" && event.key !== "ArrowDown") return;
+        event.preventDefault();
+        move(provider.id, index + (event.key === "ArrowUp" ? -1 : 1));
+      });
+      handle.addEventListener("dragstart", event => {
+        if (providersBusy() || !event.dataTransfer) {
+          event.preventDefault();
+          return;
+        }
+        clearProviderDrag();
+        providerDrag = { id: provider.id, index };
+        event.dataTransfer.effectAllowed = "move";
+        event.dataTransfer.setData("text/plain", provider.id);
+        row.dataset.dragging = "true";
+      });
+      handle.addEventListener("dragend", clearProviderDrag);
+      row.addEventListener("dragover", event => {
+        if (!providerDrag || providersBusy()) {
+          clearProviderIndicators();
+          return;
+        }
+        event.preventDefault();
+        const bounds = row.getBoundingClientRect();
+        const side = event.clientY < bounds.top + bounds.height / 2 ? "before" : "after";
+        clearProviderIndicators();
+        row.dataset.drop = side;
+        if (event.dataTransfer) event.dataTransfer.dropEffect = "move";
+      });
+      row.addEventListener("dragleave", event => {
+        if (!row.contains(event.relatedTarget)) delete row.dataset.drop;
+      });
+      row.addEventListener("drop", event => {
+        if (!providerDrag) return;
+        event.preventDefault();
+        const source = providerDrag;
+        const bounds = row.getBoundingClientRect();
+        const insertion = index + Number(event.clientY >= bounds.top + bounds.height / 2);
+        clearProviderDrag();
+        move(source.id, insertion - Number(source.index < insertion));
+      });
+      const copy = document.createElement("div");
+      copy.className = "settings-provider-copy";
+      const name = document.createElement("strong");
+      name.textContent = provider.name;
+      const url = document.createElement("small");
+      url.textContent = provider.template;
+      copy.append(name, url);
+      row.append(handle, copy);
+      const actions = document.createElement("div");
+      actions.className = "settings-provider-actions";
+      actions.append(providerIconButton("edit", window.NavisL10n.text("settings.editNamedProvider", { name: provider.name }), () => editProvider(provider)));
+      if (!provider.builtIn) {
+        actions.append(providerIconButton("remove", window.NavisL10n.text("settings.removeNamedProvider", { name: provider.name }),
+          () => dispatchCommand("settings:search-remove", { id: provider.id })));
+      }
+      row.append(actions);
+      providerList.append(row);
+      if (provider.id === focusedId) handle.focus({ preventScroll: true });
+    });
+  };
+  for (const choice of document.querySelectorAll('input[name="appearance-theme"]')) {
+    choice.addEventListener("change", () => {
+      if (choice.checked) {
+        dispatchCommand("settings:set-appearance", { key: "theme", value: choice.value });
+      }
+    });
+  }
+  const captureAccent = () => {
+    const value = accent.value.toLowerCase();
+    const writingAccent = [activeRequest, ...pendingWrites].some(request =>
+      request?.command === "settings:set-appearance" && request.value.key === "accent");
+    if (value === confirmedAccent && !writingAccent) {
+      accentDraft = null;
+    } else if (accentDraft?.value !== value) {
+      accentDraft = { value, version: ++accentVersion };
+    }
+    renderControls();
+  };
+  const commitAccent = (force = false) => {
+    captureAccent();
+    if (force && !accentDraft) {
+      accentDraft = { value: accent.value.toLowerCase(), version: ++accentVersion };
+    }
+    if (accentDraft) {
+      dispatchCommand("settings:set-appearance", { key: "accent", value: accentDraft.value }, accentDraft.version);
+    }
+  };
+  accent.addEventListener("input", captureAccent);
+  accent.addEventListener("change", () => commitAccent());
+  accentReset.addEventListener("click", () => {
+    if (accentReset.disabled || !defaultAccent) return;
+    accent.value = defaultAccent;
+    commitAccent(true);
+  });
+  bookmarkBar?.addEventListener("change", () => dispatchCommand("settings:set-appearance", { key: "bookmarkBar", value: bookmarkBar.value }));
+  chooseDirectory?.addEventListener("click", () => dispatchCommand("settings:choose-download-directory"));
+  for (const toggle of settingToggles) {
+    toggle.addEventListener("click", () => dispatchCommand("settings:set-" + toggle.dataset.settingGroup, {
+      key: toggle.dataset.settingKey,
+      value: toggle.getAttribute("aria-checked") !== "true",
+    }));
   }
 
   searchProvider?.addEventListener("change", () => {
@@ -223,6 +575,13 @@ const SETTINGS_SCRIPT = String.raw`
     );
   });
 
+  remoteSuggestionsToggle?.addEventListener("click", () => {
+    if (!remoteSuggestionsToggle.disabled) {
+      dispatchCommand("settings:set-remote-suggestions",
+        remoteSuggestionsToggle.getAttribute("aria-checked") !== "true");
+    }
+  });
+
   clearButton?.addEventListener("click", () => {
     if (clearButton.dataset.confirm !== "true") {
       clearButton.dataset.confirm = "true";
@@ -246,17 +605,26 @@ const SETTINGS_SCRIPT = String.raw`
 
   window.addEventListener("NavisSettingsState", event => {
     const state = event.detail;
-    if (!state || state.pageKey !== "settings") {
+    if (!state || !(state.pageKey === "settings" || state.pageKey?.startsWith("settings/"))) {
       return;
     }
+    if (!activeRequest) return;
+    const completedRequest = activeRequest;
+    activeRequest = null;
     clearTimeout(requestTimer);
     busy = false;
     if (state.outcome === "failed") {
       renderControls();
       setStatus(window.NavisL10n.text("settings.failed"));
+      drainWrites();
       return;
     }
+    settingsLoaded = true;
+    if (remoteSuggestionsToggle && typeof state.search?.remoteSuggestionsEnabled === "boolean") {
+      remoteSuggestionsToggle.setAttribute("aria-checked", String(state.search.remoteSuggestionsEnabled));
+    }
     if (searchProvider && state.search?.providers) {
+      renderProviders(state.search.providers);
       const selected = state.search.defaultProvider;
       searchProvider.replaceChildren();
       for (const provider of state.search.providers) {
@@ -266,6 +634,31 @@ const SETTINGS_SCRIPT = String.raw`
         option.selected = provider.id === selected;
         searchProvider.append(option);
       }
+    }
+    if (state.appearance) {
+      const appearance = state.appearance;
+      for (const choice of document.querySelectorAll('input[name="appearance-theme"]')) {
+        choice.checked = choice.value === appearance.theme;
+      }
+      confirmedAccent = appearance.accent;
+      defaultAccent = appearance.defaultAccent;
+      if (accentDraft?.version === completedRequest.draftVersion &&
+          completedRequest.value?.value === confirmedAccent) {
+        accentDraft = null;
+      }
+      accent.value = accentDraft?.value ?? confirmedAccent;
+      bookmarkBar.value = appearance.bookmarkBar;
+      document.documentElement.dataset.theme = appearance.theme;
+      document.documentElement.style.colorScheme = appearance.theme === "system" ? "light dark" : appearance.theme;
+      document.documentElement.style.setProperty("--accent", appearance.accent);
+      document.documentElement.style.setProperty("--focus", appearance.accent);
+    }
+    if (directory && state.downloads) {
+      directory.textContent = state.downloads.directory;
+    }
+    for (const toggle of settingToggles) {
+      const source = toggle.dataset.settingGroup === "appearance" ? state.appearance : state.downloads;
+      toggle.setAttribute("aria-checked", String(Boolean(source?.[toggle.dataset.settingKey])));
     }
     if (language && state.locale) {
       language.value = state.locale.selected;
@@ -313,7 +706,10 @@ const SETTINGS_SCRIPT = String.raw`
     if (state.outcome === "site-data-cleared") {
       setStatus(window.NavisL10n.text("settings.siteDataCleared"));
     } else if (state.outcome === "search-provider-updated") {
+      providerDialog.close();
       setStatus(window.NavisL10n.text("settings.searchUpdated"));
+    } else if (state.outcome === "appearance-updated" || state.outcome === "downloads-updated") {
+      setStatus(window.NavisL10n.text("settings.updated"));
     } else if (state.outcome === "locale-updated") {
       setStatus(window.NavisL10n.text("settings.languageUpdated"));
     } else if (state.outcome === "locale-relaunching") {
@@ -336,10 +732,11 @@ const SETTINGS_SCRIPT = String.raw`
     } else {
       setStatus(window.NavisL10n.text("settings.ready"));
     }
+    drainWrites();
   });
 
   window.addEventListener("focus", () => {
-    if (pageShown && !busy) {
+    if (pageShown && !busy && providerPointer === null && !providerDrag) {
       dispatchCommand("settings:get");
     }
   });
@@ -370,6 +767,17 @@ const MANAGEMENT_SCRIPT = String.raw`
   let currentParent = "root";
   const folderStack = [];
   let clearConfirmationTimer = null;
+  const downloadRows = new Map();
+  const acknowledgedDownloads = new Map();
+  let downloadSnapshot = null;
+  let downloadRevision = -1;
+  let downloadRenderFrame = null;
+  let downloadAcknowledgeFrame = null;
+  let downloadCommandFailed = false;
+  let downloadVisibilityObserver = null;
+  const downloadCommandQueue = [];
+  const pendingDownloadOpens = new Set();
+  let downloadActiveCommand = null;
 
   const setStatus = (message, pending = false) => {
     if (!status) {
@@ -380,12 +788,21 @@ const MANAGEMENT_SCRIPT = String.raw`
     status.toggleAttribute("data-pending", pending);
   };
 
-  const dispatch = (command, value) => {
+  const dispatch = (command, value, quiet = false) => {
     if (busy) {
+      if (pageKey === "downloads" && ["downloads:cancel", "downloads:retry", "downloads:remove", "downloads:open"].includes(command)) {
+        if (!downloadCommandQueue.some(item => item.command === command && item.value === value)) {
+          downloadCommandQueue.push({ command, value });
+        }
+        return true;
+      }
       return false;
     }
     busy = true;
-    setStatus(window.NavisL10n.text("management.loading"), true);
+    if (pageKey === "downloads") downloadActiveCommand = { command, value };
+    if (!quiet) {
+      setStatus(window.NavisL10n.text("management.loading"), true);
+    }
     document.dispatchEvent(
       new CustomEvent("NavisManagementCommand", {
         detail: value === undefined ? { command } : { command, value },
@@ -567,17 +984,92 @@ const MANAGEMENT_SCRIPT = String.raw`
     setStatus(window.NavisL10n.text("passwords.authenticatedReveal"));
   };
 
+  const downloadsVisible = () => document.visibilityState === "visible";
+
+  const scheduleDownloadsAcknowledgement = () => {
+    if (downloadAcknowledgeFrame !== null || !downloadsVisible() || !document.hasFocus()) {
+      return;
+    }
+    // Run after the render frame, then recheck visibility/focus: merely fetching
+    // downloads or painting a background tab must not clear the unread marker.
+    downloadAcknowledgeFrame = requestAnimationFrame(() => {
+      downloadAcknowledgeFrame = null;
+      if (!downloadsVisible() || !document.hasFocus()) return;
+      const receipts = [...downloadRows.values()]
+        .filter(record => record.visible && record.item.status === "complete" &&
+          typeof record.item.attentionToken === "string" && record.item.attentionToken &&
+          acknowledgedDownloads.get(record.item.id) !== record.item.attentionToken)
+        .map(record => ({ id: record.item.id, token: record.item.attentionToken }));
+      if (!receipts.length) return;
+      for (const { id, token } of receipts) acknowledgedDownloads.set(id, token);
+      document.dispatchEvent(new CustomEvent("NavisManagementCommand", {
+        detail: { command: "downloads:acknowledge", value: receipts }, bubbles: true,
+      }));
+    });
+  };
+
+  const createDownloadRow = item => {
+    const element = row(item);
+    element.classList.add("management-download-row");
+    const copy = document.createElement("div");
+    copy.className = "management-row-copy management-download-copy";
+    const title = document.createElement("strong");
+    const detail = document.createElement("small");
+    const progress = document.createElement("div");
+    progress.className = "management-download-progress";
+    progress.setAttribute("role", "progressbar");
+    progress.setAttribute("aria-valuemin", "0");
+    progress.setAttribute("aria-valuemax", "100");
+    const fill = document.createElement("span");
+    progress.append(fill);
+    copy.append(title, detail, progress);
+    const actions = document.createElement("div");
+    actions.className = "management-row-actions";
+    const record = { element, title, detail, progress, fill, item, visible: false, buttons: {} };
+    for (const [name, label] of [["cancel", "common.cancel"], ["retry", "common.retry"], ["remove", "common.remove"], ["open", "common.open"]]) {
+      const button = action(window.NavisL10n.text(label), event => {
+        if (button.hidden || button.disabled) return;
+        if (name === "open" && event.detail > 1) return;
+        if (name === "open") {
+          pendingDownloadOpens.add(record.item.id);
+          button.disabled = true;
+        }
+        dispatch("downloads:" + name, record.item.id);
+      });
+      record.buttons[name] = button;
+      actions.append(button);
+    }
+    element.append(copy, actions);
+    downloadVisibilityObserver?.observe(element);
+    return record;
+  };
+
   const renderDownloads = state => {
-    const fragment = document.createDocumentFragment();
+    const retained = new Set();
+    let cursor = list.firstElementChild;
     for (const item of state.items || []) {
-      const element = row(item);
-      const received = item.totalBytes
+      if (!item.id || retained.has(item.id)) continue;
+      retained.add(item.id);
+      let record = downloadRows.get(item.id);
+      if (!record) {
+        record = createDownloadRow(item);
+        downloadRows.set(item.id, record);
+      }
+      record.item = item;
+      if (item.status !== "complete") acknowledgedDownloads.delete(item.id);
+      // Stable progress ticks never detach rows/buttons or disturb focus.
+      if (record.element !== cursor) list.insertBefore(record.element, cursor);
+      cursor = record.element.nextElementSibling;
+      const currentBytes = Math.max(0, Number(item.currentBytes) || 0);
+      const totalBytes = Number(item.totalBytes);
+      const hasTotal = Number.isFinite(totalBytes) && totalBytes > 0;
+      const received = hasTotal
         ? window.NavisL10n.text("management.downloadBytes", {
-            current: window.NavisL10n.number(item.currentBytes),
-            total: window.NavisL10n.number(item.totalBytes),
+            current: window.NavisL10n.number(currentBytes),
+            total: window.NavisL10n.number(totalBytes),
           })
         : window.NavisL10n.text("management.downloadBytesUnknown", {
-            current: window.NavisL10n.number(item.currentBytes),
+            current: window.NavisL10n.number(currentBytes),
           });
       const statusId =
         {
@@ -587,46 +1079,43 @@ const MANAGEMENT_SCRIPT = String.raw`
           canceled: "downloads.canceled",
           failed: "downloads.failed",
         }[item.status] || "downloads.unknown";
-      element.append(
-        details(
-          item.fileName,
-          window.NavisL10n.text("management.downloadDetail", {
-            status: window.NavisL10n.text(statusId),
-            received,
-          })
-        )
-      );
-      const actions = document.createElement("div");
-      actions.className = "management-row-actions";
-      if (item.canCancel) {
-        actions.append(
-          action(
-            window.NavisL10n.text("common.cancel"),
-            () => dispatch("downloads:cancel", item.id)
-          )
-        );
+      const active = item.status === "pending" || item.status === "downloading";
+      const determinate = hasTotal && item.status !== "pending";
+      const percentage = Math.round(Math.max(0, Math.min(100,
+        typeof item.progress === "number" && Number.isFinite(item.progress)
+          ? item.progress : currentBytes / totalBytes * 100)));
+      const progressText = determinate
+        ? window.NavisL10n.text("downloads.progressSuffix", { progress: window.NavisL10n.number(percentage) }) : "";
+      if (record.title.textContent !== item.fileName) record.title.textContent = item.fileName;
+      record.title.title = item.fileName;
+      const detailText = window.NavisL10n.text("management.downloadDetail", {
+        status: window.NavisL10n.text(statusId), received: received + progressText,
+      });
+      if (record.detail.textContent !== detailText) record.detail.textContent = detailText;
+      record.progress.hidden = !active;
+      record.progress.setAttribute("aria-label", window.NavisL10n.text("downloads.progress", { name: item.fileName }));
+      record.progress.setAttribute("aria-valuetext", record.detail.textContent);
+      record.progress.toggleAttribute("data-indeterminate", !determinate);
+      if (determinate) record.progress.setAttribute("aria-valuenow", String(percentage));
+      else record.progress.removeAttribute("aria-valuenow");
+      record.fill.style.transform = determinate ? "scaleX(" + percentage / 100 + ")" : "";
+      record.buttons.cancel.hidden = !item.canCancel;
+      record.buttons.retry.hidden = !item.canRetry;
+      record.buttons.remove.hidden = active;
+      record.buttons.open.hidden = item.status !== "complete";
+      record.buttons.open.disabled = !item.canOpen || pendingDownloadOpens.has(item.id);
+      for (const [name, button] of Object.entries(record.buttons)) {
+        button.setAttribute("aria-label", window.NavisL10n.text("downloads." + name, { name: item.fileName }));
       }
-      if (item.canRetry) {
-        actions.append(
-          action(
-            window.NavisL10n.text("common.retry"),
-            () => dispatch("downloads:retry", item.id)
-          )
-        );
-      }
-      if (item.status !== "downloading") {
-        actions.append(
-          action(
-            window.NavisL10n.text("common.remove"),
-            () => dispatch("downloads:remove", item.id)
-          )
-        );
-      }
-      element.append(actions);
-      fragment.append(element);
     }
-    list.replaceChildren(fragment);
-    setStatus(
+    for (const [id, record] of downloadRows) {
+      if (retained.has(id)) continue;
+      downloadVisibilityObserver?.unobserve(record.element);
+      record.element.remove();
+      downloadRows.delete(id);
+      acknowledgedDownloads.delete(id);
+    }
+    if (!busy && !downloadCommandFailed) setStatus(
       state.items?.length
         ? window.NavisL10n.text("management.downloadsWindow", {
             count: state.items.length,
@@ -637,6 +1126,22 @@ const MANAGEMENT_SCRIPT = String.raw`
               : "management.noDownloads"
           )
     );
+    scheduleDownloadsAcknowledgement();
+  };
+
+  const queueDownloadsRender = state => {
+    if (state) {
+      const revision = Number(state.revision);
+      if (!Number.isFinite(revision) || revision >= downloadRevision) {
+        if (Number.isFinite(revision)) downloadRevision = revision;
+        downloadSnapshot = state;
+      }
+    }
+    if (!downloadSnapshot || downloadRenderFrame !== null || !downloadsVisible()) return;
+    downloadRenderFrame = requestAnimationFrame(() => {
+      downloadRenderFrame = null;
+      if (downloadsVisible()) renderDownloads(downloadSnapshot);
+    });
   };
 
   const refresh = () => {
@@ -647,7 +1152,7 @@ const MANAGEMENT_SCRIPT = String.raw`
     } else if (pageKey === "passwords") {
       dispatch("passwords:get");
     } else if (pageKey === "downloads") {
-      dispatch("downloads:get");
+      dispatch("downloads:get", undefined, downloadRows.size > 0);
     }
   };
 
@@ -656,7 +1161,28 @@ const MANAGEMENT_SCRIPT = String.raw`
     if (!state || state.pageKey !== pageKey) {
       return;
     }
+    if (state.outcome === "acknowledged") return;
     busy = false;
+    if (pageKey === "downloads") {
+      const completed = downloadActiveCommand;
+      downloadActiveCommand = null;
+      if (completed?.command === "downloads:open") {
+        pendingDownloadOpens.delete(completed.value);
+        const record = downloadRows.get(completed.value);
+        if (record) record.buttons.open.disabled = !record.item.canOpen;
+      }
+      downloadCommandFailed = state.outcome === "failed";
+      if (downloadCommandFailed) setStatus(
+        completed?.command === "downloads:open"
+          ? window.NavisL10n.text("downloads.openFailed", { name: downloadRows.get(completed.value)?.item.fileName || "" })
+          : window.NavisL10n.text("management.operationFailed")
+      );
+      else if (Array.isArray(state.items)) queueDownloadsRender(state);
+      const next = downloadCommandQueue.shift();
+      if (next) dispatch(next.command, next.value);
+      else if (state.outcome === "updated") refresh();
+      return;
+    }
     if (state.outcome === "failed") {
       setStatus(window.NavisL10n.text("management.operationFailed"));
       return;
@@ -675,10 +1201,35 @@ const MANAGEMENT_SCRIPT = String.raw`
       renderBookmarks(state);
     } else if (pageKey === "passwords") {
       renderPasswords(state);
-    } else if (pageKey === "downloads") {
-      renderDownloads(state);
     }
   });
+
+  if (pageKey === "downloads") {
+    // Geometry is delivered asynchronously by the engine. Downloads below the
+    // viewport remain unread until the user actually brings their rows on screen.
+    downloadVisibilityObserver = new IntersectionObserver(entries => {
+      for (const entry of entries) {
+        const record = downloadRows.get(entry.target.dataset.id);
+        if (record) record.visible = entry.isIntersecting && entry.intersectionRatio > 0;
+      }
+      scheduleDownloadsAcknowledgement();
+    });
+    window.addEventListener("NavisDownloadsChanged", event => {
+      const state = event.detail;
+      if (state?.pageKey === "downloads" && Array.isArray(state.items)) queueDownloadsRender(state);
+    });
+    document.addEventListener("visibilitychange", () => {
+      if (downloadsVisible()) queueDownloadsRender();
+      else acknowledgedDownloads.clear();
+    });
+    window.addEventListener("blur", () => acknowledgedDownloads.clear());
+    window.addEventListener("pagehide", () => {
+      if (downloadRenderFrame !== null) cancelAnimationFrame(downloadRenderFrame);
+      if (downloadAcknowledgeFrame !== null) cancelAnimationFrame(downloadAcknowledgeFrame);
+      downloadRenderFrame = null;
+      downloadAcknowledgeFrame = null;
+    });
+  }
 
   homeForm?.addEventListener("submit", event => {
     event.preventDefault();
@@ -737,6 +1288,7 @@ const MANAGEMENT_SCRIPT = String.raw`
   });
 
   window.addEventListener("focus", () => {
+    if (pageKey === "downloads") queueDownloadsRender();
     if (!busy && pageKey !== "newtab") {
       refresh();
     }
@@ -1282,6 +1834,7 @@ const DIAGNOSTICS_SCRIPT = String.raw`
   "use strict";
 
   const pageKey = document.documentElement.dataset.pageKey;
+  const settingsDocument = pageKey === "settings" || pageKey.startsWith("settings/");
   const rows = new Map(
     [...document.querySelectorAll("[data-diagnostic-label]")].map(row => [
       row.dataset.diagnosticLabel,
@@ -1344,7 +1897,7 @@ const DIAGNOSTICS_SCRIPT = String.raw`
 
   window.addEventListener("NavisDiagnosticsState", event => {
     const state = event.detail;
-    if (!state || state.pageKey !== pageKey) {
+    if (!state || !(state.pageKey === pageKey || settingsDocument && (state.pageKey === "settings" || state.pageKey?.startsWith("settings/")))) {
       return;
     }
     clearTimeout(requestTimer);
@@ -1447,7 +2000,7 @@ const DIAGNOSTICS_SCRIPT = String.raw`
   });
 
   window.addEventListener("focus", () => {
-    if (pageShown) {
+    if (pageShown && !settingsDocument) {
       request();
     }
   });
@@ -1455,10 +2008,19 @@ const DIAGNOSTICS_SCRIPT = String.raw`
     "pageshow",
     () => {
       pageShown = true;
-      request();
+      if (!settingsDocument) {
+        request();
+      }
     },
     { once: true }
   );
+  if (settingsDocument) {
+    window.addEventListener("NavisSettingsState", event => {
+      if (event.detail?.outcome !== "failed") {
+        request();
+      }
+    });
+  }
 })();`;
 
 function escapeHTML(value) {
@@ -1504,6 +2066,8 @@ function diagnosticRows(entries, t) {
 }
 
 const SETTINGS_NAV_ICONS = Object.freeze({
+  search: '<circle cx="8.5" cy="8.5" r="5.5"/><path d="m12.5 12.5 4 4"/>',
+  appearance: '<path d="M10 3a7 7 0 1 0 7 7c0-2-2-1-3-1s-2-1-1-3c.6-1.3-.8-3-3-3Z"/><circle cx="6" cy="8" r=".7"/><circle cx="7" cy="12" r=".7"/>',
   privacy:
     '<path d="M10 2.8 16 5v4.6c0 3.8-2.4 6.4-6 7.8-3.6-1.4-6-4-6-7.8V5l6-2.2Z"/><path d="m7.3 10 1.8 1.8 3.7-4"/>',
   history:
@@ -1524,51 +2088,34 @@ function settingsNavIcon(iconName) {
 }
 
 function settingsNavigation(page, t) {
-  const root = page.route === "";
+  const selected = page.route || "search";
+  const sections = [
+    ["search", "settings.searchEngine"],
+    ["privacy", "settings.privacySecurity"],
+    ["appearance", "settings.appearance"],
+    ["downloads", "settings.downloadConfiguration"],
+    ["help", "internal.help.title"],
+  ];
   return `
     <nav class="settings-nav" aria-label="${escapeHTML(t("settings.sections"))}">
-      <a href="navis://settings/"${root ? ' aria-current="page"' : ""}>
-        ${settingsNavIcon("privacy")}
-        ${escapeHTML(t("settings.privacySecurity"))}
-      </a>
-      <a href="navis://history/">
-        ${settingsNavIcon("history")}
-        ${escapeHTML(t("library.history"))}
-      </a>
-      <a href="navis://bookmarks/">
-        ${settingsNavIcon("bookmarks")}
-        ${escapeHTML(t("library.bookmarks"))}
-      </a>
-      <a href="navis://passwords/">
-        ${settingsNavIcon("passwords")}
-        ${escapeHTML(t("menu.passwordManager"))}
-      </a>
-      <a href="navis://downloads/">
-        ${settingsNavIcon("downloads")}
-        ${escapeHTML(t("downloads.title"))}
-      </a>
-      <a href="navis://extensions/">
-        ${settingsNavIcon("extensions")}
-        ${escapeHTML(t("internal.extensions.title"))}
-      </a>
-      <div class="settings-nav-separator"></div>
-      <a href="navis://settings/help"${root ? "" : ' aria-current="page"'}>
-        ${settingsNavIcon("help")}
-        ${escapeHTML(t("internal.help.title"))}
-      </a>
+      ${sections.map(([route, title]) => `<a data-settings-route="${route}" href="navis://settings/${route}"${selected === route ? ' aria-current="page"' : ""}>${settingsNavIcon(route)}${escapeHTML(t(title))}</a>`).join("")}
     </nav>`;
+}
+
+function settingsToggle(key, title, description, t, group = "download") {
+  return `<div class="settings-row"><div class="settings-row-copy"><h2>${escapeHTML(t(title))}</h2><p>${escapeHTML(t(description))}</p></div><button data-setting-group="${group}" data-setting-key="${key}" class="settings-switch" type="button" role="switch" aria-checked="false" aria-label="${escapeHTML(t(title))}" disabled><span class="settings-switch-thumb"></span></button></div>`;
 }
 
 function settingsRoot(t) {
   return `
+    <section data-settings-section="search">
     <header class="settings-page-heading">
-      <h1>${escapeHTML(t("settings.privacySecurity"))}</h1>
-      <p>${escapeHTML(t("settings.capabilityDescription"))}</p>
+      <h1>${escapeHTML(t("settings.searchEngine"))}</h1>
     </header>
     <section class="settings-card" data-settings-card data-search="search engine provider google baidu bing duckduckgo omnibox">
       <div class="settings-row">
         <div class="settings-row-copy">
-          <h2>${escapeHTML(t("settings.searchEngine"))}</h2>
+          <h2>${escapeHTML(t("settings.defaultSearchProvider"))}</h2>
           <p>${escapeHTML(t("settings.searchEngineDescription"))}</p>
         </div>
         <label class="settings-select-label">
@@ -1577,26 +2124,31 @@ function settingsRoot(t) {
         </label>
       </div>
     </section>
-    <section class="settings-card" data-settings-card data-search="language locale english chinese 中文 语言">
+    <section class="settings-card" data-settings-card data-search="remote search suggestions provider privacy 远程 搜索 建议 隐私">
       <div class="settings-row">
-        <div class="settings-row-copy">
-          <h2>${escapeHTML(t("settings.language"))}</h2>
-          <p>${escapeHTML(t("settings.languageDescription"))}</p>
-          <p id="display-language-detail"></p>
-        </div>
-        <div class="settings-language-controls">
-          <label class="settings-select-label">
-            <span class="sr-only">${escapeHTML(t("settings.language"))}</span>
-            <select id="display-language" class="settings-select" aria-label="${escapeHTML(t("settings.language"))}" disabled>
-              <option value="system">${escapeHTML(t("settings.languageSystem"))}</option>
-              <option value="en-US">${escapeHTML(t("settings.languageEnglish"))}</option>
-              <option value="zh-CN">${escapeHTML(t("settings.languageChinese"))}</option>
-            </select>
-          </label>
-          <button id="display-language-relaunch" class="settings-action" type="button" hidden disabled>${escapeHTML(t("settings.languageRelaunch"))}</button>
-        </div>
+        <div class="settings-row-copy"><h2>${escapeHTML(t("settings.remoteSuggestions"))}</h2><p id="remote-suggestions-help">${escapeHTML(t("settings.remoteSuggestionsDescription"))}</p></div>
+        <button id="remote-suggestions-toggle" class="settings-switch" type="button" role="switch" aria-checked="false" aria-label="${escapeHTML(t("settings.remoteSuggestions"))}" aria-describedby="remote-suggestions-help" disabled><span class="settings-switch-thumb"></span></button>
       </div>
     </section>
+    <section class="settings-card" data-settings-card>
+      <header class="settings-provider-header"><h2>${escapeHTML(t("settings.manageProviders"))}</h2><button id="provider-add" class="settings-provider-icon" type="button" title="${escapeHTML(t("settings.addProvider"))}" aria-label="${escapeHTML(t("settings.addProvider"))}" disabled>${providerIconMarkup("add")}</button></header>
+      <p class="settings-provider-description">${escapeHTML(t("settings.providerTemplateHelp", { searchTerms: "{searchTerms}" }))}</p>
+      <p id="provider-reorder-help" class="sr-only">${escapeHTML(t("settings.reorderProviderHint"))}</p>
+      <div id="search-provider-list" class="settings-provider-list" role="list" aria-label="${escapeHTML(t("settings.manageProviders"))}"></div>
+    </section>
+    <dialog id="provider-dialog" class="settings-dialog" aria-labelledby="provider-dialog-title">
+      <form id="provider-form"><h2 id="provider-dialog-title">${escapeHTML(t("settings.editProvider"))}</h2>
+        <label>${escapeHTML(t("settings.providerName"))}<input name="name" maxlength="80" required autocomplete="off"></label>
+        <label>${escapeHTML(t("settings.providerTemplate"))}<input name="template" maxlength="4096" required autocomplete="off" placeholder="https://example.com/search?q={searchTerms}"></label>
+        <p>${escapeHTML(t("settings.providerTemplateHelp", { searchTerms: "{searchTerms}" }))}</p>
+        <label>${escapeHTML(t("settings.providerSuggestionTemplate"))}<input name="suggestionTemplate" maxlength="4096" autocomplete="off" aria-describedby="provider-suggestions-help" placeholder="https://example.com/suggest?q={searchTerms}"></label>
+        <p id="provider-suggestions-help">${escapeHTML(t("settings.providerSuggestionTemplateHelp", { searchTerms: "{searchTerms}" }))}</p>
+        <div class="settings-dialog-actions"><button id="provider-cancel" class="settings-action" type="button">${escapeHTML(t("common.cancel"))}</button><button class="settings-action" type="submit">${escapeHTML(t("common.save"))}</button></div>
+      </form>
+    </dialog>
+    </section>
+    <section data-settings-section="privacy" hidden>
+    <header class="settings-page-heading"><h1>${escapeHTML(t("settings.privacySecurity"))}</h1><p>${escapeHTML(t("settings.capabilityDescription"))}</p></header>
     <section class="settings-card" data-settings-card data-search="site process isolation security memory full selective shared performance 站点 进程 隔离 安全 内存 性能">
       <div class="settings-row settings-row-stacked">
         <div class="settings-row-copy">
@@ -1659,6 +2211,51 @@ function settingsRoot(t) {
         </div>
         <button id="clear-site-data" class="settings-action" type="button" disabled>${escapeHTML(t("settings.clearSiteData"))}</button>
       </div>
+    </section>
+    </section>
+    <section data-settings-section="appearance" hidden>
+    <header class="settings-page-heading"><h1>${escapeHTML(t("settings.appearance"))}</h1></header>
+    <section class="settings-card" data-settings-card>
+      <div class="settings-row settings-row-stacked"><div class="settings-row-copy"><h2>${escapeHTML(t("settings.theme"))}</h2></div>
+        <fieldset id="appearance-theme" class="settings-theme-choices" disabled><legend class="sr-only">${escapeHTML(t("settings.theme"))}</legend>
+          ${["system", "light", "dark"].map(mode => `<label class="settings-theme-choice"><input type="radio" name="appearance-theme" value="${mode}"><span class="settings-theme-preview" data-preview="${mode}" aria-hidden="true"><i></i><b></b><em></em></span><span>${escapeHTML(t(`settings.theme.${mode}`))}</span></label>`).join("")}
+        </fieldset>
+      </div>
+      <div class="settings-row"><label for="appearance-accent">${escapeHTML(t("settings.accentColor"))}</label><div class="settings-accent-controls"><input id="appearance-accent" type="color" value="#0b57d0" disabled><button id="appearance-accent-reset" class="settings-action" type="button" disabled>${escapeHTML(t("settings.restoreDefaultColor"))}</button></div></div>
+    </section>
+    <section class="settings-card" data-settings-card>
+      <div class="settings-row"><label for="bookmark-bar-mode">${escapeHTML(t("settings.bookmarkBar"))}</label><select id="bookmark-bar-mode" class="settings-select" disabled><option value="newtab">${escapeHTML(t("settings.bookmarkBarNewtab"))}</option><option value="always">${escapeHTML(t("settings.bookmarkBarAlways"))}</option><option value="never">${escapeHTML(t("settings.bookmarkBarNever"))}</option></select></div>
+      ${settingsToggle("historyButton", "settings.historyButton", "settings.historyButtonDescription", t, "appearance")}
+    </section>
+    <section class="settings-card" data-settings-card data-search="language locale english chinese 中文 语言">
+      <div class="settings-row">
+        <div class="settings-row-copy">
+          <h2>${escapeHTML(t("settings.language"))}</h2>
+          <p>${escapeHTML(t("settings.languageDescription"))}</p>
+          <p id="display-language-detail"></p>
+        </div>
+        <div class="settings-language-controls">
+          <label class="settings-select-label">
+            <span class="sr-only">${escapeHTML(t("settings.language"))}</span>
+            <select id="display-language" class="settings-select" aria-label="${escapeHTML(t("settings.language"))}" disabled>
+              <option value="system">${escapeHTML(t("settings.languageSystem"))}</option>
+              <option value="en-US">${escapeHTML(t("settings.languageEnglish"))}</option>
+              <option value="zh-CN">${escapeHTML(t("settings.languageChinese"))}</option>
+            </select>
+          </label>
+          <button id="display-language-relaunch" class="settings-action" type="button" hidden disabled>${escapeHTML(t("settings.languageRelaunch"))}</button>
+        </div>
+      </div>
+    </section>
+    </section>
+    <section data-settings-section="downloads" hidden>
+      <header class="settings-page-heading"><h1>${escapeHTML(t("settings.downloadConfiguration"))}</h1></header>
+      <section class="settings-card" data-settings-card>
+        <div class="settings-row"><div class="settings-row-copy"><h2>${escapeHTML(t("settings.downloadDirectory"))}</h2><p id="download-directory"></p></div><button id="choose-download-directory" class="settings-action" type="button" disabled>${escapeHTML(t("settings.change"))}</button></div>
+        ${settingsToggle("askBeforeSaving", "settings.askBeforeSaving", "settings.askBeforeSavingDescription", t)}
+        ${settingsToggle("deletePrivateOnExit", "settings.deletePrivateDownloads", "settings.deletePrivateDownloadsDescription", t)}
+        ${settingsToggle("openWhenComplete", "settings.openDownloads", "settings.openDownloadsDescription", t)}
+      </section>
     </section>`;
 }
 
@@ -1680,7 +2277,7 @@ function settingsHelp(diagnostics, t) {
     </header>
     <section class="settings-card about-card" data-settings-card data-search="about navis version build application">
       <div class="about-product">
-        <div class="about-mark" aria-hidden="true">N</div>
+        <div class="about-mark">${renderNavisMark("navis-about", { animated: true })}</div>
         <div>
           <h2>${escapeHTML(t("app.name"))}</h2>
           <p>${escapeHTML(diagnostics.application[1]?.[1] || t("common.unavailable"))}</p>
@@ -1702,15 +2299,19 @@ function settingsHelp(diagnostics, t) {
         <span><strong>${escapeHTML(t("internal.urls.title"))}</strong><small>${escapeHTML(t("settings.urlsDescription"))}</small></span>
         <span aria-hidden="true">›</span>
       </a>
-    </section>`;
+    </section>
+    <footer class="about-footer" data-settings-card data-search="copyright author open source william varmus 冷曜 开源 作者">
+      <p class="about-footer-product">${escapeHTML(t("app.name"))}</p>
+      <p>${escapeHTML(t("settings.aboutCopyright"))}</p>
+      <p>${escapeHTML(t("settings.aboutOpenSourceBefore"))}<a href="https://firefox-source-docs.mozilla.org/overview/gecko.html" target="_blank" rel="noopener noreferrer">Mozilla Gecko</a>${escapeHTML(t("settings.aboutOpenSourceMiddle"))}<a href="navis://credits/">${escapeHTML(t("settings.aboutOpenSourceOther"))}</a>${escapeHTML(t("settings.aboutOpenSourceAfter"))}</p>
+    </footer>`;
 }
 
 function settingsShell(page, diagnostics, t) {
-  const content =
-    page.route === "help" ? settingsHelp(diagnostics, t) : settingsRoot(t);
+  const content = settingsRoot(t) + `<section data-settings-section="help" hidden>${settingsHelp(diagnostics, t)}</section>`;
   return `
     <header class="settings-toolbar">
-      <a class="settings-brand" href="navis://settings/" aria-label="${escapeHTML(t("settings.navisSettings"))}">${escapeHTML(t("app.name"))}</a>
+      <a class="settings-brand" href="navis://settings/" aria-label="${escapeHTML(t("settings.navisSettings"))}">${renderNavisMark("navis-settings", { variant: "compact" })}${escapeHTML(t("app.name"))}</a>
       <label class="settings-search">
         <span aria-hidden="true">⌕</span>
         <input id="settings-search" type="search" autocomplete="off" placeholder="${escapeHTML(t("settings.search"))}" aria-label="${escapeHTML(t("settings.search"))}">
@@ -1724,7 +2325,7 @@ function settingsShell(page, diagnostics, t) {
           <h2>${escapeHTML(t("settings.noResults"))}</h2>
           <p>${escapeHTML(t("settings.tryAnotherSearch"))}</p>
         </section>
-        <p id="settings-status" class="settings-status" role="status" aria-live="polite">${page.route === "" ? escapeHTML(t("settings.loading")) : ""}</p>
+        <p id="settings-status" class="settings-status" role="status" aria-live="polite">${escapeHTML(t("settings.loading"))}</p>
       </main>
       <div class="settings-balance" aria-hidden="true"></div>
     </div>`;
@@ -1733,7 +2334,7 @@ function settingsShell(page, diagnostics, t) {
 function newTabPage(t) {
   return `
     <main class="newtab-content">
-      <div class="newtab-mark" aria-hidden="true">N</div>
+      <div class="newtab-mark">${renderNavisMark("navis-newtab", { animated: true })}</div>
       <h1>${escapeHTML(t("app.name"))}</h1>
       <form id="newtab-search-form" class="newtab-search">
         <label class="sr-only" for="newtab-search">${escapeHTML(t("internal.searchOrAddress"))}</label>
@@ -1852,6 +2453,10 @@ function extensionManagerPage(page, t) {
 }
 
 function pageBody(page, pages, diagnostics, t) {
+  const additional = renderAdditionalProductPage(page, t, escapeHTML);
+  if (additional !== null) {
+    return additional;
+  }
   if (page.id === "newtab") {
     return newTabPage(t);
   }
@@ -1905,6 +2510,7 @@ function pageBody(page, pages, diagnostics, t) {
         <h2 id="system-details">${escapeHTML(t("internal.system"))}</h2>
         <dl>${diagnosticRows(diagnostics.system, t)}</dl>
       </section>
+      ${renderAdditionalSupport(t, escapeHTML)}
       <section class="card note" aria-labelledby="privacy-note">
         <h2 id="privacy-note">${escapeHTML(t("internal.diagnosticsPrivacy"))}</h2>
         <p>${escapeHTML(t("internal.diagnosticsPrivacyDescription"))}</p>
@@ -1926,7 +2532,8 @@ export function renderNavisInternalPage({
   const isSettings = page.id === "settings";
   const scripts = [];
   const hasClientScript =
-    page.key === "settings" ||
+    ["processes", "credits"].includes(page.key) ||
+    isSettings ||
     ["newtab", "history", "bookmarks", "passwords", "downloads"].includes(
       page.key
     ) ||
@@ -1937,7 +2544,16 @@ export function renderNavisInternalPage({
     scripts.push(clientLocalizationScript(localizer.locale));
   }
   scripts.push(MATERIAL_INTERACTION_SCRIPT);
-  if (page.key === "settings") {
+  if (isSettings || page.key === "newtab") {
+    scripts.push(NAVIS_BRAND_SCRIPT);
+  }
+  if (!isSettings) {
+    scripts.push(APPEARANCE_SCRIPT);
+  }
+  if (["processes", "credits"].includes(page.key)) {
+    scripts.push(PRODUCT_PAGES_SCRIPT);
+  }
+  if (isSettings) {
     scripts.push(SETTINGS_SCRIPT);
   }
   if (
@@ -1950,7 +2566,7 @@ export function renderNavisInternalPage({
   if (page.key === "extensions") {
     scripts.push(EXTENSIONS_SCRIPT);
   }
-  if (page.key === "support" || page.key === "settings/help") {
+  if (page.key === "support" || isSettings) {
     scripts.push(DIAGNOSTICS_SCRIPT);
   }
   const scriptPolicy = scripts.length
@@ -1960,7 +2576,10 @@ export function renderNavisInternalPage({
     page.key === "extensions"
       ? "img-src data: moz-extension:"
       : "img-src 'none'";
-  const body = pageBody(page, pages, diagnostics, t);
+  if (page.key === "profiles") {
+    scripts.push(profilesPageScript(localizer.locale));
+  }
+  const body = page.key === "profiles" ? renderProfilesPage(localizer.locale) : pageBody(page, pages, diagnostics, t);
   const isStandaloneProductPage = [
     "newtab",
     "history",
@@ -1974,7 +2593,7 @@ export function renderNavisInternalPage({
       ? body
       : `<main class="internal-content">
       <header class="internal-heading">
-        <p class="product">${escapeHTML(t("siteInfo.internal.toolbarTitle"))}</p>
+        <p class="product">${renderNavisMark("navis-page-heading", { variant: "compact" })}${escapeHTML(t("siteInfo.internal.toolbarTitle"))}</p>
         <h1>${title}</h1>
         <p>${escapeHTML(t(page.descriptionId))}</p>
       </header>
@@ -1989,10 +2608,16 @@ export function renderNavisInternalPage({
     <meta charset="utf-8">
     <meta name="color-scheme" content="light dark">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'nonce-${escapeHTML(nonce)}'; ${imagePolicy}; ${scriptPolicy}; connect-src 'none'; object-src 'none'; frame-src 'none'; base-uri 'none'; form-action 'none'">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'nonce-${escapeHTML(nonce)}'${page.key === "profiles" ? " chrome://navis/content/profile-ui.css" : ""}; ${imagePolicy}; ${scriptPolicy}; connect-src 'none'; object-src 'none'; frame-src 'none'; base-uri 'none'; form-action 'none'">
     <title>${title}</title>
+    ${page.key === "profiles" ? '<link rel="stylesheet" href="chrome://navis/content/profile-ui.css">' : ""}
     <style nonce="${escapeHTML(nonce)}">
+      ${PRODUCT_PAGES_STYLE}
+      ${NAVIS_BRAND_STYLE}
       :root { color-scheme: light dark; font: 14px/1.5 system-ui, sans-serif; --background: #f8fafd; --surface: #fff; --surface-soft: #eef3fc; --text: #1f1f1f; --muted: #5f6368; --line: #dadce0; --accent: #0b57d0; --focus: #0b57d0; --danger: #b3261e; }
+      :root { --navis-color-selection: color-mix(in srgb, var(--accent) 20%, var(--surface)); --navis-color-on-selection: var(--text); }
+      ::selection { background-color: var(--navis-color-selection); color: var(--navis-color-on-selection); }
+      @media (forced-colors: active) { :root { --navis-color-selection: Highlight; --navis-color-on-selection: HighlightText; } }
       * { box-sizing: border-box; }
       body { min-height: 100vh; margin: 0; background: var(--background); color: var(--text); }
       button, input, select { font: inherit; }
@@ -2003,7 +2628,8 @@ export function renderNavisInternalPage({
       :focus-visible { outline: 3px solid color-mix(in srgb, var(--focus) 35%, transparent); outline-offset: 2px; }
       .internal-content { width: min(880px, calc(100% - 32px)); margin: 0 auto; padding: 56px 0 80px; }
       .internal-heading { margin: 0 0 32px; }
-      .product { margin: 0 0 8px; color: var(--accent); font-size: 13px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; }
+      .product { display: flex; align-items: center; gap: 8px; margin: 0 0 8px; color: var(--text); font-size: 13px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; }
+      .product .navis-brand-mark { width: 24px; height: 24px; }
       h1 { margin: 0; font-size: clamp(28px, 4vw, 40px); font-weight: 500; letter-spacing: -.02em; }
       .internal-heading > p:last-child { max-width: 680px; margin: 12px 0 0; color: var(--muted); font-size: 16px; }
       .card, .settings-card { margin: 16px 0; padding: 24px; border: 1px solid var(--line); border-radius: 16px; background: var(--surface); box-shadow: 0 1px 2px rgb(60 64 67 / 8%); }
@@ -2028,7 +2654,7 @@ export function renderNavisInternalPage({
       .note p { margin: 0; }
       .sr-only { position: absolute !important; width: 1px !important; height: 1px !important; padding: 0 !important; overflow: hidden !important; clip: rect(0, 0, 0, 0) !important; white-space: nowrap !important; border: 0 !important; }
       .newtab-content { display: grid; width: min(720px, calc(100% - 40px)); min-height: 75vh; margin: 0 auto; align-content: center; justify-items: center; }
-      .newtab-mark { display: grid; width: 72px; height: 72px; margin-bottom: 16px; border-radius: 22px; background: var(--accent); color: white; font-size: 36px; font-weight: 600; place-items: center; }
+      .newtab-mark { width: 90px; height: 90px; margin-bottom: 12px; }
       .newtab-content h1 { font-size: 36px; }
       .newtab-search { width: min(620px, 100%); margin: 28px 0 20px; }
       .newtab-search input { width: 100%; min-height: 48px; padding: 0 22px; border: 1px solid transparent; border-radius: 24px; outline: 0; background: var(--surface); box-shadow: 0 2px 8px rgb(60 64 67 / 20%); color: var(--text); }
@@ -2062,6 +2688,15 @@ export function renderNavisInternalPage({
       .management-row-copy strong, .management-row-copy small { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
       .management-row-copy small { color: var(--muted); }
       .management-row-actions { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 8px; }
+      .management-download-copy { gap: 6px; }
+      .management-download-copy small { overflow: visible; white-space: normal; overflow-wrap: anywhere; }
+      .management-download-row .management-action { white-space: nowrap; }
+      .management-download-progress { height: 4px; overflow: hidden; border-radius: 2px; background: color-mix(in srgb, var(--accent) 18%, var(--surface)); }
+      .management-download-progress > span { display: block; width: 100%; height: 100%; border-radius: inherit; background: var(--accent); transform-origin: left center; }
+      .management-download-progress[data-indeterminate] > span { width: 40%; animation: download-progress-slide 1.2s ease-in-out infinite; }
+      @keyframes download-progress-slide { from { transform: translateX(-100%); } to { transform: translateX(350%); } }
+      @media (prefers-reduced-motion: reduce) { .management-download-progress[data-indeterminate] > span { animation: none; transform: translateX(75%); } }
+      @media (max-width: 560px) { .management-download-row { grid-template-columns: minmax(0, 1fr); gap: 12px; } .management-download-row .management-row-actions { justify-content: flex-start; } }
       .management-secret { display: block; width: fit-content; max-width: 100%; margin-top: 6px; overflow: hidden; font-family: ui-monospace, monospace; text-overflow: ellipsis; white-space: nowrap; }
       .management-status { min-height: 24px; padding: 16px 4px 64px; color: var(--muted); }
       .management-status[data-pending]::before { display: inline-block; width: 12px; height: 12px; margin-right: 8px; border: 2px solid var(--line); border-top-color: var(--accent); border-radius: 50%; content: ""; vertical-align: -2px; animation: settings-spin 700ms linear infinite; }
@@ -2102,7 +2737,8 @@ export function renderNavisInternalPage({
       .extension-compatibility[data-incompatible] { background: color-mix(in srgb, var(--danger) 10%, var(--surface)); color: var(--danger); }
       .extension-review-card > footer { display: flex; justify-content: flex-end; gap: 10px; }
       .settings-toolbar { position: sticky; z-index: 3; top: 0; display: grid; min-height: 64px; grid-template-columns: 266px minmax(280px, 680px) 1fr; align-items: center; padding: 0 24px; border-bottom: 1px solid var(--line); background: color-mix(in srgb, var(--background) 94%, transparent); backdrop-filter: blur(12px); }
-      .settings-brand { color: var(--text); font-size: 21px; font-weight: 500; text-decoration: none; }
+      .settings-brand { display: inline-flex; align-items: center; gap: 8px; color: var(--text); font-size: 21px; font-weight: 500; text-decoration: none; }
+      .settings-brand .navis-brand-mark { width: 36px; height: 36px; }
       .settings-search { display: flex; min-height: 40px; align-items: center; gap: 10px; padding: 0 16px; border-radius: 20px; background: var(--surface-soft); box-shadow: 0 1px 2px rgb(60 64 67 / 12%); color: var(--muted); }
       .settings-search:focus-within { box-shadow: 0 1px 2px rgb(60 64 67 / 12%), 0 0 0 2px color-mix(in srgb, var(--focus) 30%, transparent); }
       .settings-search input { width: 100%; border: 0; outline: 0; background: transparent; color: var(--text); }
@@ -2124,7 +2760,7 @@ export function renderNavisInternalPage({
       .settings-row-stacked { align-items: flex-start; flex-direction: column; }
       .settings-row-copy { min-width: 0; }
       .settings-row-copy h2 { margin-bottom: 4px; }
-      .settings-row-copy p { margin: 0; color: var(--muted); }
+      .settings-row-copy p { margin: 0; overflow-wrap: anywhere; color: var(--muted); }
       .settings-row-copy .settings-feature-detail { max-width: 540px; margin-top: 8px; font-size: 13px; line-height: 1.55; }
       .settings-language-controls { display: flex; flex: none; flex-direction: column; align-items: flex-end; gap: 10px; }
       .settings-choice-group { display: grid; width: 100%; gap: 8px; margin: 0; padding: 0; border: 0; }
@@ -2151,10 +2787,52 @@ export function renderNavisInternalPage({
       .settings-switch[aria-checked="true"] { background: var(--accent); }
       .settings-switch[aria-checked="true"] .settings-switch-thumb { transform: translateX(16px); }
       .settings-switch:disabled { cursor: default; opacity: .38; }
-      .settings-action { min-height: 36px; padding: 0 16px; border: 1px solid var(--line); border-radius: 18px; background: var(--surface); color: var(--accent); font-weight: 600; cursor: pointer; }
+      .settings-action { flex-shrink: 0; min-height: 36px; padding: 0 16px; border: 1px solid var(--line); border-radius: 18px; background: var(--surface); color: var(--accent); font-weight: 600; white-space: nowrap; cursor: pointer; }
       .settings-action:hover:not(:disabled) { background: color-mix(in srgb, var(--accent) 8%, var(--surface)); }
       .settings-action:disabled { opacity: .38; cursor: default; }
       .settings-select:disabled { opacity: .55; }
+      .settings-provider-header { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 16px 24px 0; }
+      .settings-provider-header h2 { margin: 0; }
+      .settings-provider-description { margin: 0; padding: 4px 24px 20px; color: var(--muted); overflow-wrap: anywhere; }
+      .settings-provider-row { position: relative; display: grid; grid-template-columns: 40px minmax(0, 1fr) 80px; align-items: center; gap: 12px; padding: 12px 24px; border-top: 1px solid var(--line); }
+      .settings-provider-row[data-dragging] { background: color-mix(in srgb, var(--accent) 7%, transparent); }
+      .settings-provider-row[data-drop]::after { position: absolute; inset-inline: 16px; height: 2px; background: var(--accent); pointer-events: none; content: ""; }
+      .settings-provider-row[data-drop="before"]::after { top: 0; }
+      .settings-provider-row[data-drop="after"]::after { bottom: 0; }
+      .settings-provider-copy { display: grid; min-width: 0; gap: 4px; overflow-wrap: anywhere; }
+      .settings-provider-copy small { color: var(--muted); overflow-wrap: anywhere; }
+      .settings-provider-actions { display: flex; align-items: center; }
+      .settings-provider-icon { display: inline-grid; place-items: center; flex: 0 0 40px; width: 40px; height: 40px; padding: 0; border: 0; border-radius: 50%; background: transparent; color: var(--muted); cursor: pointer; }
+      .settings-provider-icon svg { width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; pointer-events: none; }
+      .settings-provider-icon:hover:not(:disabled) { background: color-mix(in srgb, var(--text) 8%, transparent); }
+      .settings-provider-icon:focus-visible { outline: 2px solid var(--focus); outline-offset: -2px; }
+      .settings-provider-icon:disabled { opacity: .38; cursor: default; }
+      .settings-provider-handle { cursor: grab; user-select: none; }
+      .settings-provider-handle:active { cursor: grabbing; }
+      .settings-provider-handle path { stroke-width: 3; }
+      .settings-dialog { max-width: min(560px, calc(100vw - 32px)); width: 100%; padding: 24px; border: 0; border-radius: 24px; background: var(--surface); color: var(--text); box-shadow: 0 8px 24px rgb(31 31 31 / 24%); }
+      .settings-dialog::backdrop { background: rgb(31 31 31 / 32%); }
+      .settings-dialog form, .settings-dialog label { display: grid; gap: 12px; }
+      .settings-dialog input { width: 100%; min-height: 40px; padding: 8px 12px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); color: var(--text); }
+      .settings-dialog p { margin: 0; color: var(--muted); }
+      .settings-dialog-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 12px; }
+      .settings-theme-choices { display: flex; flex-wrap: wrap; gap: 16px; width: 100%; border: 0; padding: 0; }
+      .settings-theme-choice { display: grid; grid-template-columns: auto 1fr; gap: 8px; cursor: pointer; }
+      .settings-theme-choice input { align-self: center; accent-color: var(--accent); }
+      .settings-theme-preview { position: relative; display: block; grid-column: 1 / -1; grid-row: 1; width: 140px; height: 92px; overflow: hidden; border: 2px solid var(--line); border-radius: 12px; background: #ffffff; }
+      .settings-theme-preview i { position: absolute; inset: 0 0 auto; height: 24px; background: #e6e8ec; }
+      .settings-theme-preview b { position: absolute; inset: 5px 55px auto 5px; height: 19px; background: #ffffff; border-radius: 6px 6px 0 0; }
+      .settings-theme-preview em { position: absolute; top: 34px; left: 16px; width: 48px; height: 8px; border-radius: 4px; background: var(--accent); }
+      .settings-theme-preview[data-preview="dark"] { background: #292a2d; }
+      .settings-theme-preview[data-preview="dark"] i { background: #17181a; }
+      .settings-theme-preview[data-preview="dark"] b { background: #292a2d; }
+      .settings-theme-preview[data-preview="system"] { background: linear-gradient(90deg, #fff 50%, #292a2d 50%); }
+      .settings-theme-preview[data-preview="system"] i { background: linear-gradient(90deg, #e6e8ec 50%, #17181a 50%); }
+      .settings-theme-choice:has(input:checked) .settings-theme-preview { border-color: var(--accent); }
+      .settings-theme-choice:has(input:focus-visible) .settings-theme-preview { outline: 2px solid var(--focus); outline-offset: 3px; }
+      #appearance-accent { width: 64px; height: 36px; padding: 4px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); cursor: pointer; }
+      .settings-accent-controls { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
+      #download-directory { overflow-wrap: anywhere; }
       .settings-status { min-height: 24px; margin: 16px 4px; color: var(--muted); }
       .settings-status[data-pending]::before { display: inline-block; width: 12px; height: 12px; margin-right: 8px; border: 2px solid var(--line); border-top-color: var(--accent); border-radius: 50%; content: ""; vertical-align: -2px; animation: settings-spin 700ms linear infinite; }
       .settings-no-results { padding: 72px 24px; text-align: center; }
@@ -2163,14 +2841,18 @@ export function renderNavisInternalPage({
       .about-product { display: flex; align-items: center; gap: 20px; padding: 24px; }
       .about-product h2, .about-product p { margin: 0; }
       .about-product p { color: var(--muted); font-family: ui-monospace, monospace; }
-      .about-mark { display: grid; width: 52px; height: 52px; border-radius: 16px; background: var(--accent); color: white; font-size: 26px; font-weight: 600; place-items: center; }
+      .about-mark { width: 65px; height: 65px; flex: 0 0 auto; }
       .about-card dl, .settings-card > dl { padding: 0 24px 20px; }
+      .about-footer { margin: 44px 4px 0; padding: 24px 0 0; border-top: 1px solid var(--line); color: var(--muted); font-size: 13px; line-height: 1.55; }
+      .about-footer p { margin: 3px 0; }
+      .about-footer-product { color: var(--text); font-size: 14px; font-weight: 600; }
       .settings-link-row { display: flex; min-height: 64px; align-items: center; justify-content: space-between; gap: 16px; padding: 12px 24px; border-top: 1px solid var(--line); color: var(--text); text-decoration: none; }
       .settings-link-row:hover { background: color-mix(in srgb, var(--text) 6%, transparent); text-decoration: none; }
       .settings-link-row span:first-child { display: grid; gap: 2px; }
       .settings-link-row small { color: var(--muted); font-size: 13px; }
       @keyframes settings-spin { to { transform: rotate(360deg); } }
-      @media (prefers-color-scheme: dark) { :root { --background: #202124; --surface: #292a2d; --surface-soft: #303134; --text: #e8eaed; --muted: #bdc1c6; --line: #3c4043; --accent: #8ab4f8; --focus: #8ab4f8; --danger: #f2b8b5; } }
+      @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --background: #202124; --surface: #292a2d; --surface-soft: #303134; --text: #e8eaed; --muted: #bdc1c6; --line: #3c4043; --accent: #8ab4f8; --focus: #8ab4f8; --danger: #f2b8b5; } }
+      :root[data-theme="dark"] { --background: #202124; --surface: #292a2d; --surface-soft: #303134; --text: #e8eaed; --muted: #bdc1c6; --line: #3c4043; --danger: #f2b8b5; }
       @media (max-width: 980px) { .settings-toolbar, .settings-layout { grid-template-columns: 220px minmax(0, 680px); } .settings-balance { display: none; } }
       @media (max-width: 760px) { .extension-grid { grid-template-columns: 1fr; } }
       @media (max-width: 720px) { .settings-toolbar { grid-template-columns: 1fr; gap: 10px; padding: 12px 16px; } .settings-brand { display: none; } .settings-layout { display: block; padding: 0 16px; } .settings-nav { position: static; flex-direction: row; padding: 16px 0 0; overflow: auto; } .settings-nav-separator { width: 1px; height: 40px; margin: 0 4px; } .settings-nav a { white-space: nowrap; } .settings-content { padding-top: 28px; } .management-header { align-items: flex-start; flex-direction: column; } .management-toolbar { align-items: stretch; flex-direction: column; } .management-search { min-width: 0; width: 100%; } .management-add-card { grid-template-columns: 1fr; } }

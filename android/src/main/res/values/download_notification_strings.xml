@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="download_notification_unavailable">This download cannot be opened. The file may be unavailable, its private session may have ended, or no app can open this file type. Check Downloads.</string>
+    <string name="download_notification_profile_unavailable">The profile for this download is no longer available or could not be opened.</string>
+</resources>

@@ -1,0 +1,179 @@
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+import java.security.MessageDigest
+
+plugins {
+    alias(libs.plugins.kotlin.android)
+    alias(libs.plugins.kotlin.compose)
+}
+
+apply plugin: 'com.android.application'
+
+def navisSourceRoot = project.projectDir.canonicalFile.parentFile
+def readProductVersion = { String fileName ->
+    def versionFile = new File(navisSourceRoot, "product/config/${fileName}")
+    if (!versionFile.isFile()) {
+        throw new GradleException("Missing Navis product version: ${versionFile}")
+    }
+    def value = versionFile.text.trim()
+    if (!(value ==~ /[0-9]+\.[0-9]+\.[0-9]+(?:-[0-9A-Za-z.-]+)?/)) {
+        throw new GradleException("Invalid Navis product version in ${versionFile}: ${value}")
+    }
+    value
+}
+def navisBaseVersion = readProductVersion('version.txt')
+def navisDisplayVersion = readProductVersion('version_display.txt')
+if (navisDisplayVersion != navisBaseVersion &&
+        !navisDisplayVersion.startsWith("${navisBaseVersion}-")) {
+    throw new GradleException(
+        "Navis display version ${navisDisplayVersion} does not extend ${navisBaseVersion}",
+    )
+}
+
+def parseVersionCode = { String source, String value ->
+    long parsed
+    try {
+        parsed = Long.parseLong(value)
+    } catch (NumberFormatException error) {
+        throw new GradleException("${source} must be an integer: ${value}", error)
+    }
+    if (parsed < 1L || parsed > 2_100_000_000L) {
+        throw new GradleException("${source} is outside Android's versionCode range: ${parsed}")
+    }
+    parsed
+}
+def parseEpochSeconds = { String value ->
+    long parsed
+    try {
+        parsed = Long.parseLong(value)
+    } catch (NumberFormatException error) {
+        throw new GradleException("SOURCE_DATE_EPOCH must be an integer: ${value}", error)
+    }
+    if (parsed < 0L) {
+        throw new GradleException("SOURCE_DATE_EPOCH must not be negative: ${parsed}")
+    }
+    parsed
+}
+def injectedVersionCode = providers.environmentVariable('NAVIS_ANDROID_VERSION_CODE').orNull
+def sourceDateEpoch = providers.environmentVariable('SOURCE_DATE_EPOCH').orNull
+def buildEpochSeconds = sourceDateEpoch == null
+    ? Math.floorDiv(System.currentTimeMillis(), 1000L)
+    : parseEpochSeconds(sourceDateEpoch)
+def derivedVersionCode = 100_000_000L + buildEpochSeconds - 1_577_836_800L
+def navisVersionCode = injectedVersionCode == null
+    ? parseVersionCode('derived Navis versionCode', Long.toString(derivedVersionCode))
+    : parseVersionCode('NAVIS_ANDROID_VERSION_CODE', injectedVersionCode)
+
+android {
+    compileSdk {
+        version = release(config.compileSdkMajorVersion) {
+            minorApiLevel = config.compileSdkMinorVersion
+        }
+    }
+
+    defaultConfig {
+        applicationId 'org.navis.browser'
+        minSdk config.minSdkVersion
+        targetSdk config.targetSdkVersion
+        versionCode navisVersionCode as int
+        versionName navisDisplayVersion
+
+        buildConfigField 'String', 'NAVIS_PRODUCT_VERSION', "\"${navisBaseVersion}\""
+        buildConfigField 'String', 'NAVIS_PRODUCT_VERSION_DISPLAY', "\"${navisDisplayVersion}\""
+
+        ndk {
+            abiFilters 'arm64-v8a'
+        }
+
+        testInstrumentationRunner 'androidx.test.runner.AndroidJUnitRunner'
+    }
+
+    buildTypes {
+        debug {
+            applicationIdSuffix '.debug'
+        }
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+    }
+
+    buildFeatures {
+        buildConfig = true
+        compose = true
+    }
+
+    namespace = 'org.navis.browser'
+
+    // uBlock Origin and conventional WebExtensions keep translations in
+    // `_locales`; AGP's default asset filter drops underscore-prefixed paths.
+    androidResources {
+        ignoreAssetsPattern = '!.svn:!.git:!.ds_store:!*.scc:.*:!CVS:!thumbs.db:!picasa.ini:!*~'
+    }
+
+    sourceSets {
+        main.assets.srcDir(layout.buildDirectory.dir('generated/navis-built-ins'))
+    }
+}
+
+def ublockPackage = new File(
+    navisSourceRoot,
+    'product/builtin/ublock-origin/uBlock0@raymondhill.net.xpi',
+)
+def generatedBuiltIns = layout.buildDirectory.dir('generated/navis-built-ins')
+def prepareNavisBuiltIns = tasks.register('prepareNavisBuiltIns', Sync) {
+    inputs.file(ublockPackage)
+    outputs.dir(generatedBuiltIns)
+
+    doFirst {
+        if (!ublockPackage.isFile()) {
+            throw new GradleException("Missing required uBlock Origin package: ${ublockPackage}")
+        }
+        def digest = MessageDigest.getInstance('SHA-256')
+            .digest(ublockPackage.bytes)
+            .encodeHex()
+            .toString()
+        if (digest != '175756d74468c9ba45863f7fc333d3be670f82d5b066314e915814dd547d1652') {
+            throw new GradleException("uBlock Origin package digest mismatch: ${digest}")
+        }
+    }
+
+    from({ zipTree(ublockPackage) }) {
+        into 'web_extensions/ublock-origin'
+    }
+    into generatedBuiltIns
+}
+
+tasks.named('preBuild').configure {
+    dependsOn prepareNavisBuiltIns
+}
+
+dependencies {
+    implementation project(':navis-runtime-android')
+
+    implementation libs.androidx.activity.compose
+    implementation libs.androidx.appcompat
+    implementation libs.androidx.core.ktx
+    implementation libs.androidx.lifecycle.runtime
+    implementation platform(libs.androidx.compose.bom)
+    implementation libs.androidx.compose.foundation
+    implementation libs.androidx.compose.material.icons
+    // Last official expressive-menu release compatible with our AGP/Compose line.
+    // alpha19+ requires AGP 9.1 and Compose 1.12; do not upgrade it independently.
+    implementation 'androidx.compose.material3:material3:1.5.0-alpha18'
+    // Android AAR built with our Kotlin 2.3.21; 1.2.0 requires Kotlin 2.4.
+    // Its CMP dependencies only forward to AndroidX. Keep our existing BOM
+    // as the single owner instead of importing another Compose dependency graph.
+    implementation('com.github.skydoves:colorpicker-compose-android:1.1.4') {
+        exclude group: 'org.jetbrains.compose.runtime'
+        exclude group: 'org.jetbrains.compose.foundation'
+        exclude group: 'org.jetbrains.compose.ui'
+    }
+    implementation libs.androidx.compose.ui
+    implementation libs.androidx.compose.ui.tooling.preview
+
+    testImplementation libs.junit4
+    debugImplementation libs.androidx.compose.ui.tooling
+}

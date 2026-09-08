@@ -6,4 +6,12 @@
 # reusable launcher/process integration supplied by Desktop Gecko Embedder.
 include("/desktop-embedder/app/desktop-embedder-app.mozbuild")
 
+if CONFIG["OS_ARCH"] == "WINNT":
+    # Product icon resources only: no Firefox branding or engine changes.
+    RCINCLUDE = "../branding/generated/navis-brand.rc"
+    DEFINES["NAVIS_ICO"] = '"%s/navis/branding/generated/navis.ico"' % TOPSRCDIR
+
 JS_PREFERENCE_PP_FILES += ["profile/navis.js"]
+
+if CONFIG["MOZ_DESKTOP_EMBEDDER_DEVTOOLS"]:
+    JS_PREFERENCE_FILES += ["profile/navis-devtools.js"]

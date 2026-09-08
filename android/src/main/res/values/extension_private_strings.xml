@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="run_in_private_tabs_builtin_summary">Built-in access follows a fixed application policy. The switch shows whether this extension can run in private tabs and cannot be changed here.</string>
+</resources>

@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="site_sheet_loading">Loading site information…</string>
+    <string name="site_sheet_extension_title">Extension page</string>
+    <string name="site_sheet_extension_status">Provided by an installed extension</string>
+    <string name="site_sheet_extension_description">This page belongs to an installed extension, not a website.</string>
+</resources>

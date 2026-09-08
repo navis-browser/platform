@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="extension_action_failed_title">无法打开扩展</string>
+    <string name="extension_action_invoke_failed">扩展未能执行此操作。请重试，或检查扩展是否已启用并允许在当前窗口中使用。</string>
+    <string name="extension_popup_load_failed">扩展弹窗加载失败。请关闭此提示，再次打开扩展。</string>
+    <string name="extension_popup_loading">正在打开扩展…</string>
+</resources>

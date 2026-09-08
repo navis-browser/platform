@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="download_storage_permission_denied">下载未保存。请在 Android 设置中允许存储访问，或在 Navis 设置中选择下载文件夹。</string>
+</resources>

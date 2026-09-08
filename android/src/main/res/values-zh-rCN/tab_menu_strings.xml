@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="tab_duplicate">复制标签页</string>
+    <string name="tab_close_others">关闭其它标签页</string>
+    <string name="tab_close_right">关闭右侧标签页</string>
+</resources>

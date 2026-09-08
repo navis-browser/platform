@@ -1,0 +1,22 @@
+<resources>
+    <string name="processes_title">进程管理</string>
+    <string name="processes_explanation">浏览器及内容进程的实时状态。共享进程中可能包含多个页面。</string>
+    <string name="processes_memory">内存：%1$d MiB</string>
+    <string name="processes_cpu">CPU：%1$s%%</string>
+    <string name="processes_threads">线程：%1$d</string>
+    <string name="processes_end">结束进程</string>
+    <string name="processes_end_warning">共享此进程的页面将停止运行，未保存的更改可能丢失。</string>
+    <string name="credits_title">开源软件</string>
+    <string name="credits_licenses">内置开源许可声明</string>
+    <string name="credits_attribution_before">"Navis 的诞生离不开 "</string>
+    <string name="credits_attribution_between">" 开源项目及其他"</string>
+    <string name="credits_attribution_after">。</string>
+    <string name="support_cpu_details">CPU 详情</string>
+    <string name="support_gpu_features">图形功能</string>
+    <string name="support_gpu_failures">图形故障</string>
+    <string name="support_gpu_guards">图形保护</string>
+    <string name="support_gpu_memory">图形内存</string>
+    <string name="support_gpu_secondary">辅助图形适配器</string>
+    <string name="support_sandbox_features">沙盒功能</string>
+    <string name="support_modified_preferences">已修改的偏好设置</string>
+</resources>

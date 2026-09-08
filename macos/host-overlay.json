@@ -1,0 +1,26 @@
+{
+  "host": "macos",
+  "mode": "descriptor",
+  "overlay_base": "../gecko-chrome",
+  "purpose": "macOS host integration contract",
+  "scope": [
+    "package_metadata",
+    "signing_and_notarization",
+    "launcher_entry",
+    "policy_overrides"
+  ],
+  "integration": {
+    "inherits_from": "../gecko-chrome",
+    "override_policy": "descriptor-first",
+    "open_items": [
+      "macOS signing/notarization path",
+      "AppKit/windowing policy hooks",
+      "installer metadata"
+    ]
+  },
+  "status": {
+    "descriptor_ready": true,
+    "concrete_host_ui": false,
+    "acceptance_dependent": true
+  }
+}

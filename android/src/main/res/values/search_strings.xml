@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="settings_remote_suggestions">Search suggestions</string>
+    <string name="settings_remote_suggestions_summary">Send search terms as you type to the selected provider. Off by default and always off in private tabs. Local bookmarks, history and open tabs stay on this device.</string>
+    <string name="settings_provider_suggestion_url">Suggestion URL (optional)</string>
+    <string name="settings_provider_suggestion_template">Use an HTTP(S) URL containing {searchTerms} that returns a JSON array [query, [suggestions]]. Leave empty for local suggestions only.</string>
+    <string name="omnibox_search_with">Search with %1$s</string>
+    <string name="omnibox_suggestion_tab">Switch to tab</string>
+    <string name="omnibox_suggestion_search">Search suggestion</string>
+</resources>

@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="context_open_link_tab">Open link in new tab</string>
+    <string name="context_open_link_private">Open link in private tab</string>
+    <string name="context_copy_link_text">Copy link text</string>
+    <string name="context_open_image_tab">Open image in new tab</string>
+    <string name="context_open_media_tab">Open media in new tab</string>
+    <string name="context_copy_image_address">Copy image address</string>
+    <string name="context_copy_media_address">Copy media address</string>
+    <string name="context_copy_selection">Copy selected text</string>
+    <string name="context_search_selection">Search with %1$s</string>
+    <string name="context_back">Back</string>
+    <string name="context_forward">Forward</string>
+    <string name="context_reload">Reload</string>
+    <string name="context_copy_page_address">Copy page address</string>
+    <string name="context_inspect_page">Inspect page</string>
+    <string name="context_action_failed">Could not complete this action. Please try again.</string>
+    <string name="context_copied">Copied</string>
+    <string name="context_play_media">Play</string>
+    <string name="context_pause_media">Pause</string>
+    <string name="context_mute_media">Mute</string>
+    <string name="context_unmute_media">Unmute</string>
+    <string name="context_show_media_controls">Show controls</string>
+    <string name="context_hide_media_controls">Hide controls</string>
+    <string name="context_undo">Undo</string>
+    <string name="context_redo">Redo</string>
+    <string name="context_cut">Cut</string>
+    <string name="context_paste">Paste</string>
+    <string name="context_select_all">Select all</string>
+</resources>

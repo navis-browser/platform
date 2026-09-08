@@ -26,9 +26,41 @@
     <link rel="stylesheet" href="chrome://global/skin/global.css" />
     <link rel="stylesheet" href="chrome://navis/content/design-system.css" />
     <link rel="stylesheet" href="chrome://navis/content/main.css" />
+    <link rel="stylesheet" href="chrome://navis/content/profile-ui.css" />
     <script type="module" src="chrome://navis/content/bootstrap.mjs"></script>
   </head>
   <body>
+    <xul:keyset id="navis-keyset">
+      <xul:key id="navis-toggle-devtools-key" keycode="VK_F12" />
+      <!-- Keep the Linux/Windows page-tool bindings aligned with
+           devtools/startup/locales/en-US/key-shortcuts.ftl. Privileged
+           Browser Toolbox and Browser Console bindings stay absent. -->
+      <xul:key
+        id="navis-toggle-devtools-shortcut-key"
+        key="I"
+        modifiers="accel,shift"
+      />
+      <xul:key
+        id="navis-inspector-devtools-key"
+        key="C"
+        modifiers="accel,shift"
+      />
+      <xul:key
+        id="navis-webconsole-devtools-key"
+        key="K"
+        modifiers="accel,shift"
+      />
+      <xul:key
+        id="navis-debugger-devtools-key"
+        key="Z"
+        modifiers="accel,shift"
+      />
+      <xul:key
+        id="navis-network-devtools-key"
+        key="E"
+        modifiers="accel,shift"
+      />
+    </xul:keyset>
     <nav
       id="session-strip"
       aria-label="Tabs"
@@ -228,6 +260,18 @@
           data-l10n-aria-label="extensions.pinnedActions"
         ></span>
         <button
+          id="library-toggle"
+          hidden="hidden"
+          class="ui-icon-button"
+          type="button"
+          title="History"
+          aria-label="History"
+          data-l10n-title="library.history"
+          data-l10n-aria-label="library.history"
+          aria-expanded="false"
+          aria-controls="library-panel"
+        ></button>
+        <button
           id="extensions-menu-toggle"
           class="ui-icon-button"
           type="button"
@@ -240,6 +284,7 @@
         ></button>
         <button
           id="downloads-toggle"
+          hidden="hidden"
           class="ui-icon-button"
           type="button"
           title="Downloads"
@@ -248,6 +293,7 @@
           data-l10n-aria-label="downloads.title"
           aria-expanded="false"
           aria-controls="downloads-panel"
+          aria-haspopup="dialog"
         >
           <svg
             id="download-toolbar-progress"
@@ -259,21 +305,14 @@
           >
             <circle cx="18" cy="18" r="16" pathLength="100"></circle>
           </svg>
-          <span id="download-count" class="toolbar-badge" hidden="hidden"
+          <span id="download-count" class="toolbar-badge" aria-hidden="true" hidden="hidden"
             >0</span
           >
         </button>
-        <button
-          id="library-toggle"
-          class="ui-icon-button"
-          type="button"
-          title="History and bookmarks"
-          aria-label="History and bookmarks"
-          data-l10n-title="chrome.historyAndBookmarks"
-          data-l10n-aria-label="chrome.historyAndBookmarks"
-          aria-expanded="false"
-          aria-controls="library-panel"
-        ></button>
+        <button id="profile-toggle" class="ui-icon-button" type="button"
+          title="Profile" aria-label="Profile"
+          data-l10n-title="menu.profile" data-l10n-aria-label="menu.profile"
+          aria-haspopup="dialog" aria-expanded="false" aria-controls="profile-menu"></button>
         <button
           id="app-menu-toggle"
           class="ui-icon-button"
@@ -572,7 +611,10 @@
       >
         <header>
           <div>
-            <h1 id="extensions-menu-title" data-l10n-id="extensions.toolbarTitle">
+            <h1
+              id="extensions-menu-title"
+              data-l10n-id="extensions.toolbarTitle"
+            >
               Extensions
             </h1>
             <p data-l10n-id="extensions.toolbarDescription">
@@ -613,6 +655,7 @@
       <section
         id="downloads-panel"
         class="ui-card"
+        role="dialog"
         hidden="hidden"
         aria-labelledby="downloads-title"
       >
@@ -654,7 +697,7 @@
           aria-label="New private window"
           data-l10n-aria-label="menu.newPrivateWindow"
         >
-          <span data-l10n-id="menu.newPrivateWindow">New private window</span>
+          <span class="menu-item-label" data-l10n-id="menu.newPrivateWindow">New private window</span>
           <kbd>Ctrl+Shift+N</kbd>
         </button>
         <button
@@ -664,7 +707,7 @@
           aria-label="History"
           data-l10n-aria-label="menu.history"
         >
-          <span data-l10n-id="menu.history">History</span>
+          <span class="menu-item-label" data-l10n-id="menu.history">History</span>
           <kbd>Ctrl+H</kbd>
         </button>
         <button
@@ -674,7 +717,7 @@
           aria-label="Bookmarks"
           data-l10n-aria-label="menu.bookmarks"
         >
-          <span data-l10n-id="menu.bookmarks">Bookmarks</span>
+          <span class="menu-item-label" data-l10n-id="menu.bookmarks">Bookmarks</span>
           <kbd>Ctrl+Shift+O</kbd>
         </button>
         <button
@@ -684,7 +727,7 @@
           aria-label="Password manager"
           data-l10n-aria-label="menu.passwordManager"
         >
-          <span data-l10n-id="menu.passwordManager">Password manager</span>
+          <span class="menu-item-label" data-l10n-id="menu.passwordManager">Password manager</span>
         </button>
         <button
           id="menu-downloads"
@@ -693,22 +736,29 @@
           aria-label="Downloads"
           data-l10n-aria-label="downloads.title"
         >
-          <span data-l10n-id="downloads.title">Downloads</span>
+          <span class="menu-item-label" data-l10n-id="downloads.title">Downloads</span>
+        </button>
+        <button id="menu-processes" class="menu-item" role="menuitem"
+          data-l10n-aria-label="menu.processes">
+          <span class="menu-item-label" data-l10n-id="menu.processes">Process manager</span>
+        </button>
+        <button id="menu-profiles" class="menu-item" role="menuitem"
+          data-l10n-aria-label="menu.profiles">
+          <span class="menu-item-label" data-l10n-id="menu.profiles">Profiles</span>
+        </button>
+        <button id="menu-support" class="menu-item" role="menuitem"
+          data-l10n-aria-label="menu.support">
+          <span class="menu-item-label" data-l10n-id="menu.support">Support</span>
         </button>
         <button
-          id="menu-toggle-bookmark-bar"
+          id="menu-developer-tools"
           class="menu-item"
-          role="menuitemcheckbox"
-          aria-label="Show bookmarks bar"
-          data-l10n-aria-label="menu.showBookmarksBar"
-          aria-checked="false"
+          role="menuitem"
+          aria-label="Developer tools"
+          data-l10n-aria-label="menu.developerTools"
         >
-          <span
-            id="menu-toggle-bookmark-bar-label"
-            data-l10n-id="menu.showBookmarksBar"
-            >Show bookmarks bar</span
-          >
-          <kbd>Ctrl+Shift+B</kbd>
+          <span class="menu-item-label" data-l10n-id="menu.developerTools">Developer tools</span>
+          <kbd>F12</kbd>
         </button>
         <hr />
         <button
@@ -718,10 +768,12 @@
           aria-label="Settings"
           data-l10n-aria-label="menu.settings"
         >
-          <span data-l10n-id="menu.settings">Settings</span>
+          <span class="menu-item-label" data-l10n-id="menu.settings">Settings</span>
         </button>
       </section>
 
+      <section id="profile-menu" class="ui-card" hidden="hidden"
+        role="dialog" data-l10n-aria-label="menu.profile"></section>
       <section
         id="bookmark-bar-popup"
         class="ui-card bookmark-popup"
@@ -741,11 +793,7 @@
         />
       </xul:popupset>
 
-      <aside
-        id="library-panel"
-        hidden="hidden"
-        aria-labelledby="library-title"
-      >
+      <aside id="library-panel" hidden="hidden" aria-labelledby="library-title">
         <header>
           <h1 id="library-title" data-l10n-id="library.history">History</h1>
           <div class="library-header-actions">
@@ -805,11 +853,7 @@
           </button>
         </section>
 
-        <section
-          id="bookmarks-view"
-          class="library-view"
-          hidden="hidden"
-        >
+        <section id="bookmarks-view" class="library-view" hidden="hidden">
           <div id="bookmark-toolbar">
             <button
               id="bookmark-up"
@@ -885,11 +929,7 @@
           </p>
         </section>
 
-        <section
-          id="passwords-view"
-          class="library-view"
-          hidden="hidden"
-        >
+        <section id="passwords-view" class="library-view" hidden="hidden">
           <p
             id="passwords-private-note"
             class="library-empty"

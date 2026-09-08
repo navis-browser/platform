@@ -1,0 +1,196 @@
+#!/usr/bin/env python3
+"""Generate committed brand assets from navis-mark.json; never build Gecko.
+
+SVG/JS/ICO assembly uses the standard library. Raster regeneration additionally
+requires rsvg-convert (the complete renderer version is recorded in manifest).
+Normal mozbuild packaging only copies these generated assets, without librsvg.
+"""
+
+from __future__ import annotations
+
+import argparse
+import hashlib
+import json
+from pathlib import Path
+import struct
+import subprocess
+import sys
+import xml.etree.ElementTree as ET
+
+
+ROOT = Path(__file__).resolve().parents[2]
+SOURCE = ROOT / "gecko-chrome/branding/navis-mark.json"
+GENERATED = "gecko-chrome/branding/generated"
+GEOMETRY = "gecko-chrome/chrome/content/brand-geometry.mjs"
+
+
+def element(parent, tag, **attributes):
+    return ET.SubElement(parent, tag, {key: str(value) for key, value in attributes.items()})
+
+
+def svg(mark, *, circle=False, monochrome=False):
+    """Return a self-contained, static SVG with no fonts or external resources."""
+    root = ET.Element("svg", {
+        "xmlns": "http://www.w3.org/2000/svg",
+        "viewBox": " ".join(map(str, mark["viewBox"])),
+        "width": str(mark["viewBox"][2]), "height": str(mark["viewBox"][3]),
+    })
+    element(root, "title").text = mark["name"]
+    defs = element(root, "defs")
+    contour = dict(mark["contour"])
+    if circle:
+        contour["rx"] = mark["contourVariants"]["circle"]
+    transform = mark["transform"]
+    rotation = "rotate({rotate} {cx} {cy})".format(**transform)
+    seam = mark["seams"]
+    seam_style = {"fill": "none", "stroke-width": seam["strokeWidth"],
+                  "stroke-linecap": seam["linecap"], "stroke-linejoin": seam["linejoin"]}
+    if monochrome:
+        # White silhouette with transparent seam cuts, not a solid square or N.
+        mask = element(defs, "mask", id="mark-mask", maskUnits="userSpaceOnUse",
+                       x=0, y=0, width=mark["viewBox"][2], height=mark["viewBox"][3])
+        element(mask, "rect", **contour, fill="#ffffff")
+        paths = element(mask, "g", transform=rotation)
+        for path in seam["paths"]:
+            element(paths, "path", d=path, stroke="#000000", **seam_style)
+        element(root, "rect", **contour, fill="#ffffff", mask="url(#mark-mask)")
+    else:
+        for name, gradient in mark["gradients"].items():
+            radial = gradient["type"] == "radial"
+            coordinates = ("cx", "cy", "r") if radial else ("x1", "y1", "x2", "y2")
+            node = element(defs, "radialGradient" if radial else "linearGradient",
+                           id=f"mark-{name}", gradientUnits=gradient["units"],
+                           **{key: gradient[key] for key in coordinates})
+            for stop in gradient["stops"]:
+                element(node, "stop", offset=stop["offset"], **{
+                    "stop-color": stop["color"], "stop-opacity": stop.get("opacity", 1)})
+        for name, effect in mark["effects"]["relief"].items():
+            bounds = dict(zip(("x", "y", "width", "height"), effect["bounds"]))
+            node = element(defs, "filter", id=f"mark-relief-{name}", **bounds, **{
+                "color-interpolation-filters": mark["effects"]["colorInterpolationFilters"]})
+            for shadow in effect["shadows"]:
+                element(node, "feDropShadow", dx=shadow["dx"], dy=shadow["dy"],
+                        stdDeviation=shadow["stdDeviation"], **{
+                            "flood-color": shadow["color"], "flood-opacity": shadow["opacity"]})
+        element(element(defs, "clipPath", id="mark-clip"), "rect", **contour)
+        group = element(root, "g", **{"clip-path": "url(#mark-clip)"})
+        element(group, "rect", **contour, fill="url(#mark-contour)", filter="url(#mark-relief-contour)")
+        for name in ("frostDiffuse", "frostFog"):
+            element(group, "rect", **contour, fill=f"url(#mark-{name})")
+        rim = mark["effects"]["rim"]
+        element(group, "rect", **contour, fill="none", stroke="url(#mark-rim)",
+                opacity=rim["opacity"], **{"stroke-width": rim["strokeWidth"]})
+        paths = element(group, "g", transform=rotation)
+        channel = mark["channel"]
+        element(paths, "path", d=channel["path"], fill="none", stroke="url(#mark-channel)",
+                filter="url(#mark-relief-channel)", **{
+                    "stroke-opacity": channel["opacity"], "stroke-width": channel["strokeWidth"],
+                    "stroke-linecap": channel["linecap"], "stroke-linejoin": channel["linejoin"]})
+        for path in seam["paths"]:
+            element(paths, "path", d=path, stroke=seam["color"],
+                    filter="url(#mark-relief-seam)", **seam_style)
+    ET.indent(root, space="  ")
+    return ET.tostring(root, encoding="utf-8", xml_declaration=True) + b"\n"
+
+
+def geometry_module(mark):
+    serialized = json.dumps(mark, ensure_ascii=False, indent=2)
+    return ("// Generated by gecko-chrome/branding/generate_brand_assets.py. Do not edit.\n"
+            "// Canonical source: gecko-chrome/branding/navis-mark.json.\n"
+            "function deepFreeze(value) {\n"
+            "  if (value && typeof value === \"object\") {\n"
+            "    for (const child of Object.values(value)) deepFreeze(child);\n"
+            "    Object.freeze(value);\n"
+            "  }\n"
+            "  return value;\n"
+            "}\n\n"
+            f"export const NAVIS_MARK = deepFreeze({serialized});\n"
+            "export const geometry = deepFreeze(Object.fromEntries(\n"
+            "  [\"viewBox\", \"contour\", \"contourVariants\", \"transform\", \"channel\", \"seams\"]\n"
+            "    .map(key => [key, NAVIS_MARK[key]])\n"
+            "));\n"
+            "export const colors = deepFreeze({ gradients: NAVIS_MARK.gradients, effects: NAVIS_MARK.effects });\n"
+            "export const motion = NAVIS_MARK.motion;\n"
+            "export default NAVIS_MARK;\n").encode("utf-8")
+
+
+def rasterize(source, size, renderer):
+    return subprocess.run([renderer, "--width", str(size), "--height", str(size)],
+                          input=source, check=True, capture_output=True).stdout
+
+
+def ico(images):
+    """Windows Vista+ PNG-compressed icon directory; 256 is encoded as zero."""
+    offset = 6 + 16 * len(images)
+    directory = bytearray(struct.pack("<HHH", 0, 1, len(images)))
+    payload = bytearray()
+    for size, png in images:
+        directory.extend(struct.pack("<BBBBHHII", size % 256, size % 256,
+                                     0, 0, 1, 32, len(png), offset))
+        payload.extend(png)
+        offset += len(png)
+    return bytes(directory + payload)
+
+
+def generate(mark, renderer="rsvg-convert"):
+    rounded = svg(mark)
+    outputs = {f"{GENERATED}/navis-mark.svg": rounded,
+               f"{GENERATED}/navis-mark-circle.svg": svg(mark, circle=True),
+               f"{GENERATED}/navis-mark-mono.svg": svg(mark, monochrome=True),
+               GEOMETRY: geometry_module(mark)}
+    pngs = {size: rasterize(rounded, size, renderer) for size in mark["outputs"]["pngSizes"]}
+    outputs.update({f"{GENERATED}/navis-{size}.png": data for size, data in pngs.items()})
+    for size in mark["outputs"]["linuxSizes"]:
+        outputs[f"{GENERATED}/default{size}.png"] = pngs[size]
+    for size in (70, 150):
+        outputs[f"{GENERATED}/VisualElements_{size}.png"] = pngs[size]
+    icon = ico([(size, pngs[size]) for size in mark["outputs"]["icoSizes"]])
+    outputs[f"{GENERATED}/navis.ico"] = icon
+    # The hash changes RCINCLUDE whenever the ICO changes, making the resource
+    # dependency explicit even though create_res.py has no icon depfile.
+    outputs[f"{GENERATED}/navis-brand.rc"] = (
+        "// Generated by generate_brand_assets.py. Do not edit.\n"
+        f"// Icon SHA-256: {hashlib.sha256(icon).hexdigest()}\n"
+        '#include "nsNativeAppSupportWin.h"\n'
+        "IDI_APPICON ICON NAVIS_ICO\n"
+        "IDI_APPLICATION ICON NAVIS_ICO\n"
+        "IDI_PBMODE ICON NAVIS_ICO\n"
+    ).encode("utf-8")
+    renderer_version = subprocess.run([renderer, "--version"], check=True,
+                                      capture_output=True, text=True).stdout.strip()
+    manifest = {"schemaVersion": 1, "source": str(SOURCE.relative_to(ROOT)),
+                "sourceSha256": hashlib.sha256(SOURCE.read_bytes()).hexdigest(),
+                "renderer": renderer_version,
+                "files": {path: {"sha256": hashlib.sha256(data).hexdigest(), "size": len(data)}
+                          for path, data in sorted(outputs.items())}}
+    outputs[f"{GENERATED}/manifest.json"] = (json.dumps(manifest, indent=2) + "\n").encode()
+    return outputs
+
+
+def main():
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--check", action="store_true", help="Regenerate in memory and reject stale assets")
+    parser.add_argument("--renderer", default="rsvg-convert")
+    args = parser.parse_args()
+    mark = json.loads(SOURCE.read_text(encoding="utf-8"))
+    if mark["schemaVersion"] != 1:
+        parser.error("unsupported canonical brand schema")
+    outputs = generate(mark, args.renderer)
+    stale = []
+    for name, data in outputs.items():
+        path = ROOT / name
+        if args.check:
+            if not path.is_file() or path.read_bytes() != data:
+                stale.append(name)
+        elif not path.is_file() or path.read_bytes() != data:
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_bytes(data)
+    if stale:
+        print("Stale brand assets:\n" + "\n".join(stale), file=sys.stderr)
+        return 1
+    print(f"{'Verified' if args.check else 'Generated'} {len(outputs)} canonical brand assets")
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

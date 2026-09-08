@@ -16,7 +16,9 @@ import {
   t,
 } from "chrome://navis/content/localization.mjs";
 import { OmniboxEditState } from "chrome://navis/content/omnibox-edit-state.mjs";
+import { OmniboxSuggestions } from "chrome://navis/content/omnibox-suggestions.mjs";
 import { setOmniboxValidity } from "chrome://navis/content/omnibox-validity.mjs";
+import { mountProfileMenu } from "chrome://navis/content/profile-ui.mjs";
 import {
   DESKTOP_EMBEDDER_API_VERSION,
   EngineRuntime,
@@ -25,14 +27,14 @@ import {
 
 if (DESKTOP_EMBEDDER_API_VERSION !== 2) {
   throw new Error(
-    `Navis requires Desktop Embedder source API 2, found ${DESKTOP_EMBEDDER_API_VERSION}`
+    `Navis requires Desktop Embedder source API 2, found ${DESKTOP_EMBEDDER_API_VERSION}`,
   );
 }
 
 const DEFAULT_URI = "navis://newtab/";
 const TAB_HOVER_DELAY_MS = 400;
 const TAB_MEMORY_CACHE_MS = 5000;
-const hasVisibleLoading = state => state.loadingActivity === "visible";
+const hasVisibleLoading = (state) => state.loadingActivity === "visible";
 
 const CONTEXT_MENU_PRESENTATION = Object.freeze({
   back: Object.freeze({ label: t("menu.back"), shortcut: "Alt+Left" }),
@@ -58,6 +60,10 @@ const CONTEXT_MENU_PRESENTATION = Object.freeze({
   "select-all": Object.freeze({
     label: t("menu.selectAll"),
     shortcut: "Ctrl+A",
+  }),
+  "inspect-element": Object.freeze({
+    label: t("menu.inspectElement"),
+    shortcut: "Ctrl+Shift+C",
   }),
   "tab-new": Object.freeze({ label: t("chrome.newTab"), shortcut: "Ctrl+T" }),
   "tab-reload": Object.freeze({
@@ -93,12 +99,13 @@ const CONTEXT_MENU_PRESENTATION = Object.freeze({
     shortcut: "Ctrl+A",
   }),
   "bookmark-open": Object.freeze({ label: t("common.open") }),
+  "bookmark-open-new-tab": Object.freeze({ label: t("menu.openLinkNewTab") }),
+  "bookmark-copy-link": Object.freeze({ label: t("menu.copyLinkAddress") }),
   "bookmark-edit": Object.freeze({ label: t("common.edit") }),
   "bookmark-delete": Object.freeze({ label: t("common.delete") }),
-  "bookmark-bar-hide": Object.freeze({
-    label: t("menu.hideBookmarksBar"),
-    shortcut: "Ctrl+Shift+B",
-  }),
+  "bookmark-add-page": Object.freeze({ label: t("menu.addBookmarkPage") }),
+  "bookmark-add-folder": Object.freeze({ label: t("menu.addBookmarkFolder") }),
+  "bookmark-manager": Object.freeze({ label: t("menu.openBookmarkManager") }),
 });
 
 async function initialize() {
@@ -140,7 +147,7 @@ async function initialize() {
   const fullscreenHint = document.getElementById("fullscreen-hint");
   const fullscreenOrigin = document.getElementById("fullscreen-origin");
   const fullscreenInstruction = document.getElementById(
-    "fullscreen-instruction"
+    "fullscreen-instruction",
   );
   const sessionCount = document.getElementById("session-count");
   const crashPanel = document.getElementById("crash-panel");
@@ -163,7 +170,7 @@ async function initialize() {
   const promptUsername = document.getElementById("prompt-username");
   const promptPasswordLabel = document.getElementById("prompt-password-label");
   const promptPasswordLabelText = document.getElementById(
-    "prompt-password-label-text"
+    "prompt-password-label-text",
   );
   const promptPassword = document.getElementById("prompt-password");
   const promptChoiceLabel = document.getElementById("prompt-choice-label");
@@ -177,23 +184,23 @@ async function initialize() {
   const downloadsToggle = document.getElementById("downloads-toggle");
   const downloadCount = document.getElementById("download-count");
   const downloadToolbarProgress = document.getElementById(
-    "download-toolbar-progress"
+    "download-toolbar-progress",
   );
   const downloadList = document.getElementById("download-list");
   const downloadsEmpty = document.getElementById("downloads-empty");
   const extensionActionButtons = document.getElementById(
-    "extension-action-buttons"
+    "extension-action-buttons",
   );
   const extensionPageActionButtons = document.getElementById(
-    "extension-page-actions"
+    "extension-page-actions",
   );
   const extensionsMenuToggle = document.getElementById(
-    "extensions-menu-toggle"
+    "extensions-menu-toggle",
   );
   const extensionsMenu = document.getElementById("extensions-menu");
   const extensionActionList = document.getElementById("extension-action-list");
   const extensionActionsEmpty = document.getElementById(
-    "extension-actions-empty"
+    "extension-actions-empty",
   );
   const manageExtensions = document.getElementById("manage-extensions");
   const bookmarkCurrent = document.getElementById("bookmark-current");
@@ -205,7 +212,7 @@ async function initialize() {
   const positionAnchoredSurface = (
     surface,
     anchor,
-    { align = "end", anchorRect = null } = {}
+    { align = "end", anchorRect = null } = {},
   ) => {
     const source = anchorRect ?? anchor?.getBoundingClientRect();
     if (!source) {
@@ -219,7 +226,7 @@ async function initialize() {
     const viewportHeight = document.documentElement.clientHeight;
     const availableBelow = Math.max(
       0,
-      viewportHeight - source.bottom - gap - margin
+      viewportHeight - source.bottom - gap - margin,
     );
     const availableAbove = Math.max(0, source.top - gap - margin);
     const placeAbove =
@@ -233,7 +240,7 @@ async function initialize() {
       align === "start" ? source.left : source.right - surfaceBounds.width;
     const maximumLeft = Math.max(
       margin,
-      viewportWidth - surfaceBounds.width - margin
+      viewportWidth - surfaceBounds.width - margin,
     );
     const left = Math.min(Math.max(margin, preferredLeft), maximumLeft);
     surface.style.top = `${Math.round(surfaceTop)}px`;
@@ -242,19 +249,19 @@ async function initialize() {
     surface.style.maxHeight = `${Math.max(80, Math.floor(availableHeight))}px`;
   };
   const contextMenuController = createMenuController(
-    document.getElementById("context-menu")
+    document.getElementById("context-menu"),
   );
   const newPrivateWindow = document.getElementById("new-private-window");
   const menuHistory = document.getElementById("menu-history");
   const menuBookmarks = document.getElementById("menu-bookmarks");
   const menuPasswords = document.getElementById("menu-passwords");
   const menuDownloads = document.getElementById("menu-downloads");
-  const menuToggleBookmarkBar = document.getElementById(
-    "menu-toggle-bookmark-bar"
-  );
-  const menuToggleBookmarkBarLabel = document.getElementById(
-    "menu-toggle-bookmark-bar-label"
-  );
+  const menuProcesses = document.getElementById("menu-processes");
+  const menuProfiles = document.getElementById("menu-profiles");
+  const menuSupport = document.getElementById("menu-support");
+  const profileToggle = document.getElementById("profile-toggle");
+  const profileMenu = document.getElementById("profile-menu");
+  const menuDeveloperTools = document.getElementById("menu-developer-tools");
   const menuSettings = document.getElementById("menu-settings");
   const clearSiteData = document.getElementById("clear-site-data");
   const siteDataSummary = document.getElementById("site-data-summary");
@@ -283,7 +290,7 @@ async function initialize() {
   const bookmarkEditType = document.getElementById("bookmark-edit-type");
   const bookmarkEditTitle = document.getElementById("bookmark-edit-title");
   const bookmarkEditUrlLabel = document.getElementById(
-    "bookmark-edit-url-label"
+    "bookmark-edit-url-label",
   );
   const bookmarkEditUrl = document.getElementById("bookmark-edit-url");
   const cancelBookmarkEdit = document.getElementById("cancel-bookmark-edit");
@@ -292,10 +299,53 @@ async function initialize() {
   const passwordsList = document.getElementById("passwords-list");
   const passwordsEmpty = document.getElementById("passwords-empty");
   const passwordsPrivateNote = document.getElementById(
-    "passwords-private-note"
+    "passwords-private-note",
   );
   const clearPasswords = document.getElementById("clear-passwords");
-  const createView = () => new EngineView({ document, host: viewHost });
+  const developerToolsShortcutBindings = Object.freeze([
+    Object.freeze({
+      element: document.getElementById("navis-toggle-devtools-key"),
+      toolId: null,
+    }),
+    Object.freeze({
+      element: document.getElementById("navis-toggle-devtools-shortcut-key"),
+      toolId: null,
+    }),
+    Object.freeze({
+      element: document.getElementById("navis-inspector-devtools-key"),
+      toolId: "inspector",
+    }),
+    Object.freeze({
+      element: document.getElementById("navis-webconsole-devtools-key"),
+      toolId: "webconsole",
+    }),
+    Object.freeze({
+      element: document.getElementById("navis-debugger-devtools-key"),
+      toolId: "jsdebugger",
+    }),
+    Object.freeze({
+      element: document.getElementById("navis-network-devtools-key"),
+      toolId: "netmonitor",
+    }),
+  ]);
+  const viewPanels = new WeakMap();
+  const createView = () => {
+    const panel = document.createXULElement("hbox");
+    panel.className = "desktop-engine-session-panel browserSidebarContainer";
+    panel.hidden = true;
+
+    const container = document.createXULElement("vbox");
+    container.className = "desktop-engine-browser-container browserContainer";
+    const stack = document.createXULElement("stack");
+    stack.className = "desktop-engine-browser-stack browserStack";
+    container.append(stack);
+    panel.append(container);
+    viewHost.append(panel);
+
+    const view = new EngineView({ document, host: stack });
+    viewPanels.set(view, panel);
+    return view;
+  };
   const runtime = new EngineRuntime();
   runtime.setCredentialReauthenticationPresentation({
     reason: t("passwords.reauthenticationReason"),
@@ -341,6 +391,10 @@ async function initialize() {
     suggestions: Object.freeze([]),
   });
   let extensionOmniboxSelection = 0;
+  let ordinarySuggestionRows = [];
+  let ordinarySuggestionQuery = "";
+  let addressComposing = false;
+  let ordinarySuggestions = null;
   let tabWheelDelta = 0;
   let tabWheelResetTimer = null;
   let lastTabWheelSwitch = 0;
@@ -374,15 +428,47 @@ async function initialize() {
   setIcon(document.getElementById("crash-icon"), "warning");
   setIcon(bookmarkCurrent, "star");
   setIcon(passwordToggle, "password");
-  setIcon(libraryToggle, "library");
+  setIcon(libraryToggle, "history");
   setIcon(appMenuToggle, "menu");
+  setIcon(profileToggle, "profile");
+  for (const [button, icon] of [
+    [newPrivateWindow, "private"],
+    [menuHistory, "history"],
+    [menuBookmarks, "star"],
+    [menuPasswords, "password"],
+    [menuDownloads, "downloads"],
+    [menuProcesses, "processes"],
+    [menuProfiles, "profile"],
+    [menuSupport, "info"],
+    [menuDeveloperTools, "developerTools"],
+    [menuSettings, "siteControls"],
+  ]) {
+    setIcon(button, icon);
+  }
+  for (const [button, labelId] of [
+    [bookmarkCurrent, "chrome.bookmarkPage"],
+    [extensionsMenuToggle, "extensions.toolbarTitle"],
+  ]) {
+    button.className = "menu-item";
+    button.setAttribute("role", "menuitem");
+    const label = document.createElement("span");
+    label.className = "menu-item-label";
+    label.textContent = t(labelId);
+    button.append(label);
+    appMenu.insertBefore(button, menuHistory);
+  }
+  extensionActionList.before(extensionPageActionButtons);
   setIcon(closeLibrary, "close");
   setIcon(openLibraryPage, "openPage");
   installMaterialRipple(document);
   privateIndicator.hidden = !privateMode;
 
-  const presentContextMenuItems = items =>
-    items.flatMap(item => {
+  const presentContextMenuItems = (items) =>
+    items.flatMap((item) => {
+      if (item.id === "search-selection") {
+        return [{...item, label: t("menu.searchSelection", {
+          provider: item.providerName, text: item.excerpt}), enabled: item.enabled !== false}];
+      }
       if (item.group?.startsWith("extension:")) {
         return [
           {
@@ -420,7 +506,7 @@ async function initialize() {
       : null;
     closeCompetingTransientSurfaces(
       relatedSurface ?? "context-menu",
-      "competing-surface"
+      "competing-surface",
     );
     const owner = { id: ownerId, relatedSurface };
     contextMenuController.open({
@@ -429,13 +515,13 @@ async function initialize() {
       triggerEvent,
       label,
       items: presentContextMenuItems(items),
-      onSelect: command => {
+      onSelect: (command) => {
         if (contextMenuOwner === owner) {
           contextMenuOwner = null;
         }
         onSelect(command);
       },
-      onDismiss: reason => {
+      onDismiss: (reason) => {
         if (contextMenuOwner === owner) {
           contextMenuOwner = null;
         }
@@ -446,7 +532,7 @@ async function initialize() {
     contextMenuOwner = owner;
   };
 
-  const dismissGeckoContextMenu = ownerId => {
+  const dismissGeckoContextMenu = (ownerId) => {
     if (contextMenuOwner?.id !== ownerId) {
       return false;
     }
@@ -477,7 +563,7 @@ async function initialize() {
   };
 
   runtime.setNavigationDelegate({
-    onNewSession: request => ({
+    onNewSession: (request) => ({
       allow: true,
       activate: request.disposition !== "background",
       view: createView(),
@@ -485,7 +571,7 @@ async function initialize() {
     onSessionCreated: ({ session, activate }) => {
       adoptSession(session, { activate });
     },
-    onPopupBlocked: request => {
+    onPopupBlocked: (request) => {
       showTransientStatus(t("chrome.popupBlocked", { reason: request.reason }));
     },
   });
@@ -494,10 +580,10 @@ async function initialize() {
 
   const synchronizeSessionOrder = () => {
     const recordsByTab = new Map(
-      orderedSessionRecords().map(record => [record.tab, record])
+      orderedSessionRecords().map((record) => [record.tab, record]),
     );
     const ordered = [...sessionTabs.children]
-      .map(tab => recordsByTab.get(tab))
+      .map((tab) => recordsByTab.get(tab))
       .filter(Boolean);
     if (ordered.length !== records.size) {
       return false;
@@ -511,8 +597,8 @@ async function initialize() {
 
   const saveCurrentSessionState = () => {
     const sessions = orderedSessionRecords()
-      .map(record => record.session)
-      .filter(session => !session.state.closed);
+      .map((record) => record.session)
+      .filter((session) => !session.state.closed);
     if (privateMode || !sessions.length) {
       return Promise.resolve(false);
     }
@@ -529,7 +615,7 @@ async function initialize() {
     clearTimeout(sessionPersistenceTimer);
     const persist = () => {
       sessionPersistenceTimer = null;
-      saveCurrentSessionState().catch(error => {
+      saveCurrentSessionState().catch((error) => {
         console.error("Navis could not persist Session state", error);
       });
     };
@@ -540,7 +626,7 @@ async function initialize() {
     }
   };
 
-  const updateSessionPresentation = session => {
+  const updateSessionPresentation = (session) => {
     const record = records.get(session.id);
     if (!record || session.state.closed) {
       return;
@@ -576,21 +662,21 @@ async function initialize() {
     persistSessionState({ immediate: navigationChanged });
   };
 
-  runtime.setSessionDelegateFactory(session => ({
+  runtime.setSessionDelegateFactory((session) => ({
     content: {
       onStateChanged: () => updateSessionPresentation(session),
       onInteraction: () => {
         if (records.get(session.id) === activeRecord) {
           closeCompetingTransientSurfaces(
             "context-menu",
-            "content-interaction"
+            "content-interaction",
           );
           dismissGeckoContextMenuAfterContentInteraction();
         }
       },
     },
     contextMenu: {
-      onShow: request => {
+      onShow: (request) => {
         const record = records.get(session.id);
         if (!record || record !== activeRecord) {
           return false;
@@ -601,7 +687,7 @@ async function initialize() {
           y: request.position.y,
           label: t("menu.pageContext"),
           items: request.items,
-          onSelect: command => {
+          onSelect: (command) => {
             session.executeContextMenuCommand(request.id, command);
             if (activeRecord === record) {
               session.view?.focus();
@@ -612,20 +698,20 @@ async function initialize() {
         });
         return true;
       },
-      onDismissed: request => {
+      onDismissed: (request) => {
         dismissGeckoContextMenu(request.id);
       },
     },
     permission: {
-      onRequest: request =>
-        new Promise(resolve => {
+      onRequest: (request) =>
+        new Promise((resolve) => {
           permissionResolvers.set(request.id, {
             sessionId: session.id,
             resolve,
           });
           updateSessionPresentation(session);
         }),
-      onCanceled: request => {
+      onCanceled: (request) => {
         const pending = permissionResolvers.get(request.id);
         if (pending?.sessionId === session.id) {
           permissionResolvers.delete(request.id);
@@ -635,8 +721,8 @@ async function initialize() {
       },
     },
     prompt: {
-      onPrompt: request =>
-        new Promise(resolve => {
+      onPrompt: (request) =>
+        new Promise((resolve) => {
           promptResolvers.set(request.id, {
             sessionId: session.id,
             request,
@@ -644,7 +730,7 @@ async function initialize() {
           });
           updateSessionPresentation(session);
         }),
-      onCanceled: request => {
+      onCanceled: (request) => {
         const pending = promptResolvers.get(request.id);
         if (pending?.sessionId === session.id) {
           promptResolvers.delete(request.id);
@@ -654,8 +740,8 @@ async function initialize() {
       },
     },
     webAuthn: {
-      onRequest: request =>
-        new Promise(resolve => {
+      onRequest: (request) =>
+        new Promise((resolve) => {
           webAuthnResolvers.set(request.id, {
             sessionId: session.id,
             request,
@@ -663,7 +749,7 @@ async function initialize() {
           });
           updateSessionPresentation(session);
         }),
-      onCanceled: request => {
+      onCanceled: (request) => {
         const pending = webAuthnResolvers.get(request.id);
         if (pending?.sessionId === session.id) {
           webAuthnResolvers.delete(request.id);
@@ -674,7 +760,7 @@ async function initialize() {
     },
     media: runtime.capabilities.mediaCapture
       ? {
-          onStateChanged: media => {
+          onStateChanged: (media) => {
             const record = records.get(session.id);
             if (record) {
               record.media = media;
@@ -684,7 +770,7 @@ async function initialize() {
         }
       : null,
     crash: {
-      onCrash: detail => {
+      onCrash: (detail) => {
         updateSessionPresentation(session);
         console.error("Navis content process crashed", detail);
       },
@@ -693,7 +779,7 @@ async function initialize() {
 
   await runtime.ready;
 
-  const showTransientStatus = message => {
+  const showTransientStatus = (message) => {
     loadingState.textContent = message;
     loadingState.setAttribute("aria-label", message);
     loadingState.dataset.visible = "true";
@@ -704,27 +790,27 @@ async function initialize() {
     }, 2500);
   };
 
-  const extensionActionAnchorId = extensionId => {
+  const extensionActionAnchorId = (extensionId) => {
     if (!extensionActionAnchorIds.has(extensionId)) {
       extensionActionAnchorIds.set(
         extensionId,
-        `extension-action-${nextExtensionActionAnchorId++}`
+        `extension-action-${nextExtensionActionAnchorId++}`,
       );
     }
     return extensionActionAnchorIds.get(extensionId);
   };
 
-  const extensionPageActionAnchorId = extensionId => {
+  const extensionPageActionAnchorId = (extensionId) => {
     if (!extensionPageActionAnchorIds.has(extensionId)) {
       extensionPageActionAnchorIds.set(
         extensionId,
-        `extension-page-action-${nextExtensionPageActionAnchorId++}`
+        `extension-page-action-${nextExtensionPageActionAnchorId++}`,
       );
     }
     return extensionPageActionAnchorIds.get(extensionId);
   };
 
-  const extensionIcon = action => {
+  const extensionIcon = (action) => {
     if (!action.icon) {
       return createIcon(document, "extension");
     }
@@ -736,7 +822,7 @@ async function initialize() {
     return image;
   };
 
-  const badgeColor = color =>
+  const badgeColor = (color) =>
     `rgba(${color[0]}, ${color[1]}, ${color[2]}, ${color[3] / 255})`;
 
   const extensionActionByButton = new WeakMap();
@@ -744,7 +830,7 @@ async function initialize() {
 
   const updateExtensionButtonIcon = (button, action, before = null) => {
     const current = button.querySelector(
-      ":scope > .extension-action-icon, :scope > .navis-icon"
+      ":scope > .extension-action-icon, :scope > .navis-icon",
     );
     const currentMatches = action.icon
       ? current?.localName === "img" &&
@@ -768,7 +854,7 @@ async function initialize() {
       await runtime.triggerExtensionAction(
         record.session,
         action.extensionId,
-        anchorId
+        anchorId,
       );
     } catch (error) {
       showTransientStatus(t("extensions.actionFailed"));
@@ -785,7 +871,7 @@ async function initialize() {
       await runtime.triggerExtensionPageAction(
         record.session,
         action.extensionId,
-        anchorId
+        anchorId,
       );
     } catch (error) {
       showTransientStatus(t("extensions.actionFailed"));
@@ -850,13 +936,13 @@ async function initialize() {
     container,
     actions,
     createButton,
-    updateButton
+    updateButton,
   ) => {
     const existing = new Map(
-      [...container.children].map(button => [
+      [...container.children].map((button) => [
         button.dataset.extensionId,
         button,
-      ])
+      ]),
     );
     let insertionPoint = container.firstElementChild;
     for (const action of actions) {
@@ -874,7 +960,7 @@ async function initialize() {
     }
   };
 
-  const createExtensionMenuItem = action => {
+  const createExtensionMenuItem = (action) => {
     const item = document.createElement("div");
     item.className = "extension-menu-item";
     item.setAttribute("role", "listitem");
@@ -896,7 +982,7 @@ async function initialize() {
     });
     const pinLabel = t(
       action.toolbarPinned ? "extensions.unpinAction" : "extensions.pinAction",
-      { name: action.name }
+      { name: action.name },
     );
     const pin = createIconButton(document, {
       className: "extension-menu-pin",
@@ -909,7 +995,7 @@ async function initialize() {
       try {
         await runtime.setExtensionActionPinned(
           action.extensionId,
-          !action.toolbarPinned
+          !action.toolbarPinned,
         );
       } catch (error) {
         showTransientStatus(t("extensions.actionFailed"));
@@ -931,16 +1017,16 @@ async function initialize() {
       extensionPageActionButtons,
       pageActions,
       createExtensionPageActionButton,
-      updateExtensionPageActionButton
+      updateExtensionPageActionButton,
     );
     reconcileExtensionActionButtons(
       extensionActionButtons,
-      actions.filter(action => action.toolbarPinned),
+      actions.filter((action) => action.toolbarPinned),
       createExtensionActionButton,
-      updateExtensionActionButton
+      updateExtensionActionButton,
     );
     extensionActionList.replaceChildren(
-      ...actions.map(createExtensionMenuItem)
+      ...actions.map(createExtensionMenuItem),
     );
     extensionActionsEmpty.hidden = actions.length !== 0;
   };
@@ -955,9 +1041,31 @@ async function initialize() {
     });
   };
 
+  const ordinaryOmniboxChoices = () => {
+    if (!ordinarySuggestionQuery || addressComposing) return [];
+    const provider = runtime.searchProviders.find(item => item.id === runtime.defaultSearchProvider);
+    let primary;
+    try {
+      const resolved = runtime.resolveAddressInput(ordinarySuggestionQuery, {privateMode});
+      primary = {kind: resolved.kind === "url" ? "visit" : "search",
+        text: ordinarySuggestionQuery, url: resolved.url, title: ordinarySuggestionQuery};
+    } catch {
+      return [];
+    }
+    return [primary, ...ordinarySuggestionRows].map(item => ({
+      ...item,
+      description: item.title,
+      detail: item.kind === "search" ? t("chrome.suggestionSearch", {provider: provider?.name || ""})
+        : item.kind === "visit" ? t("chrome.suggestionVisit")
+          : `${t({tab: "chrome.suggestionTab", bookmark: "chrome.suggestionBookmark",
+            history: "chrome.suggestionHistory"}[item.kind])} · ${item.url}`,
+      deletable: false,
+    }));
+  };
+
   const extensionOmniboxChoices = () => {
     if (!extensionOmniboxState.active) {
-      return [];
+      return ordinaryOmniboxChoices();
     }
     return [
       {
@@ -968,29 +1076,30 @@ async function initialize() {
           extensionOmniboxState.extensionName,
         detail: extensionOmniboxState.input,
       },
-      ...extensionOmniboxState.suggestions.map(suggestion => ({
+      ...extensionOmniboxState.suggestions.map((suggestion) => ({
         ...suggestion,
         detail: suggestion.content,
       })),
     ];
   };
 
-  const renderExtensionOmnibox = state => {
+  const renderExtensionOmnibox = (state) => {
     extensionOmniboxState = state;
     const choices = extensionOmniboxChoices();
     extensionOmniboxSelection = Math.max(
       0,
-      Math.min(extensionOmniboxSelection, choices.length - 1)
+      Math.min(extensionOmniboxSelection, choices.length - 1),
     );
     const rows = choices.map((choice, index) => {
       const row = document.createElement("button");
       row.id = `extension-omnibox-suggestion-${index}`;
       row.className = "omnibox-suggestion";
       row.type = "button";
+      row.tabIndex = -1;
       row.setAttribute("role", "option");
       row.setAttribute(
         "aria-selected",
-        String(index === extensionOmniboxSelection)
+        String(index === extensionOmniboxSelection),
       );
       const copy = document.createElement("span");
       copy.className = "omnibox-suggestion-copy";
@@ -1000,7 +1109,7 @@ async function initialize() {
       detail.textContent = choice.detail;
       copy.append(description, detail);
       row.append(copy);
-      row.addEventListener("mousedown", event => event.preventDefault());
+      row.addEventListener("mousedown", (event) => event.preventDefault());
       row.addEventListener("click", () => {
         extensionOmniboxSelection = index;
         loadAddress();
@@ -1015,19 +1124,21 @@ async function initialize() {
     if (choices.length) {
       address.setAttribute(
         "aria-activedescendant",
-        `extension-omnibox-suggestion-${extensionOmniboxSelection}`
+        `extension-omnibox-suggestion-${extensionOmniboxSelection}`,
       );
+      rows[extensionOmniboxSelection]?.scrollIntoView({block: "nearest"});
     } else {
       address.removeAttribute("aria-activedescendant");
     }
   };
 
   const cancelExtensionOmnibox = () => {
+    ordinarySuggestions?.clear();
     if (extensionOmniboxState.active && activeRecord) {
       runtime.cancelExtensionOmnibox(activeRecord.session);
     }
     renderExtensionOmnibox(
-      Object.freeze({ active: false, suggestions: Object.freeze([]) })
+      Object.freeze({ active: false, suggestions: Object.freeze([]) }),
     );
   };
 
@@ -1037,23 +1148,44 @@ async function initialize() {
       return;
     }
     extensionOmniboxSelection = 0;
-    renderExtensionOmnibox(
-      runtime.updateExtensionOmnibox(activeRecord.session, address.value)
-    );
+    const state = addressComposing
+      ? Object.freeze({active: false, suggestions: Object.freeze([])})
+      : runtime.updateExtensionOmnibox(activeRecord.session, address.value);
+    if (state.active) ordinarySuggestions?.clear();
+    renderExtensionOmnibox(state);
+    if (!state.active) ordinarySuggestions?.update(address.value, {composing: addressComposing});
   };
 
+  ordinarySuggestions = new OmniboxSuggestions({
+    local: (query, options) => activeRecord
+      ? runtime.getLocalSuggestions(activeRecord.session, query, options) : [],
+    remote: (query, options) => activeRecord
+      ? runtime.getNetworkSuggestions(activeRecord.session, query, options) : [],
+    changed: ({query, rows}) => {
+      const previous = ordinaryOmniboxChoices()[extensionOmniboxSelection];
+      ordinarySuggestionQuery = query;
+      ordinarySuggestionRows = rows;
+      if (query && (document.activeElement !== address || addressComposing || extensionOmniboxState.active)) return;
+      const key = item => item ? `${item.kind}:${item.id || item.url || item.text}` : "";
+      const index = ordinaryOmniboxChoices().findIndex(item => key(item) === key(previous));
+      extensionOmniboxSelection = Math.max(0, index);
+      renderExtensionOmnibox(extensionOmniboxState);
+    },
+  });
+
   runtime.setExtensionOmniboxDelegate({
-    onStateChanged: state => {
+    onStateChanged: (state) => {
       if (
         state.sessionId === activeRecord?.session.id &&
         addressEditState.editing
       ) {
+        if (state.active) ordinarySuggestions.clear();
         renderExtensionOmnibox(state);
       }
     },
   });
 
-  const setExtensionsMenuOpen = shouldOpen => {
+  const setExtensionsMenuOpen = (shouldOpen) => {
     extensionsMenu.hidden = !shouldOpen;
     extensionsMenuToggle.setAttribute("aria-expanded", String(shouldOpen));
     if (!shouldOpen) {
@@ -1062,7 +1194,7 @@ async function initialize() {
     }
     closeCompetingTransientSurfaces("extensions", "competing-surface");
     renderExtensionActions();
-    positionAnchoredSurface(extensionsMenu, extensionsMenuToggle);
+    positionAnchoredSurface(extensionsMenu, appMenuToggle);
     extensionActionList.querySelector("button:not(:disabled)")?.focus();
   };
 
@@ -1077,7 +1209,7 @@ async function initialize() {
     passwordsList.replaceChildren();
   };
 
-  const setAppMenuOpen = shouldOpen => {
+  const setAppMenuOpen = (shouldOpen) => {
     appMenu.hidden = !shouldOpen;
     appMenuToggle.setAttribute("aria-expanded", String(shouldOpen));
     if (shouldOpen) {
@@ -1086,6 +1218,46 @@ async function initialize() {
       appMenu.querySelector('[role="menuitem"]')?.focus();
     } else {
       clearMaterialRipples(appMenu);
+    }
+  };
+
+  let profileMenuGeneration = 0;
+  const setProfileMenuOpen = async (open) => {
+    const generation = ++profileMenuGeneration;
+    profileMenu.hidden = !open;
+    profileToggle.setAttribute("aria-expanded", String(open));
+    if (!open) {
+      profileMenu.removeAttribute("aria-busy");
+      clearMaterialRipples(profileMenu);
+      return;
+    }
+    closeCompetingTransientSurfaces("profile", "competing-surface");
+    profileMenu.setAttribute("aria-busy", "true");
+    profileMenu.textContent = t("common.loading");
+    positionAnchoredSurface(profileMenu, profileToggle);
+    try {
+      await mountProfileMenu({
+        container: profileMenu, locale: localizer.locale,
+        current: () => runtime.getCurrentProfile(),
+        update: value => runtime.updateCurrentProfile(value),
+        create: value => runtime.createProfile(value),
+        launch: id => runtime.launchProfile(id),
+        navigate: uri => loadProductPage(uri),
+        dismiss: () => setProfileMenuOpen(false),
+        isCurrent: () => generation === profileMenuGeneration && !profileMenu.hidden,
+        returnFocus: profileToggle,
+      });
+      if (generation === profileMenuGeneration && !profileMenu.hidden) {
+        profileMenu.removeAttribute("aria-busy");
+        positionAnchoredSurface(profileMenu, profileToggle);
+        profileMenu.querySelector("button:not(:disabled)")?.focus();
+      }
+    } catch (error) {
+      if (generation === profileMenuGeneration && !profileMenu.hidden) {
+        profileMenu.removeAttribute("aria-busy");
+        profileMenu.textContent = t("settings.failed");
+      }
+      console.error("Navis profile menu failed", error);
     }
   };
 
@@ -1136,8 +1308,8 @@ async function initialize() {
           async () => {
             await runtime.deleteHistory([entry.url]);
             await renderHistory();
-          }
-        )
+          },
+        ),
       );
       row.append(primary, actions);
       fragment.append(row);
@@ -1232,7 +1404,7 @@ async function initialize() {
         async () => {
           await runtime.moveBookmark(entry.id, folder.id, index - 1);
           await Promise.all([renderBookmarks(), renderBookmarkBar()]);
-        }
+        },
       );
       moveUp.disabled = index === 0;
       const moveDown = makeLibraryAction(
@@ -1241,7 +1413,7 @@ async function initialize() {
         async () => {
           await runtime.moveBookmark(entry.id, folder.id, index + 1);
           await Promise.all([renderBookmarks(), renderBookmarkBar()]);
-        }
+        },
       );
       moveDown.disabled = index === entries.length - 1;
       actions.append(
@@ -1252,7 +1424,7 @@ async function initialize() {
           t("bookmarks.editNamed", { name: title.textContent }),
           () => {
             showBookmarkEditor(entry);
-          }
+          },
         ),
         makeLibraryAction(
           "trash",
@@ -1260,8 +1432,8 @@ async function initialize() {
           async () => {
             await runtime.removeBookmark(entry.id);
             await Promise.all([renderBookmarks(), renderBookmarkBar()]);
-          }
-        )
+          },
+        ),
       );
       row.append(primary, actions);
       fragment.append(row);
@@ -1279,7 +1451,7 @@ async function initialize() {
     }
   };
 
-  const openBookmarkEntry = entry => {
+  const openBookmarkEntry = (entry) => {
     if (entry.type === "folder") {
       return;
     }
@@ -1287,7 +1459,7 @@ async function initialize() {
     closeBookmarkPopup();
   };
 
-  const editBookmarkEntry = entry => {
+  const editBookmarkEntry = (entry) => {
     bookmarkFolderStack = [];
     setLibraryOpen(true, "bookmarks");
     showBookmarkEditor(entry);
@@ -1302,17 +1474,25 @@ async function initialize() {
       label: t("menu.bookmarkContext"),
       items: [
         { id: "bookmark-open", group: "bookmark-open", enabled: true },
+        { id: "bookmark-open-new-tab", group: "bookmark-open", enabled: entry.type !== "folder" && !!entry.url },
+        { id: "bookmark-copy-link", group: "bookmark-open", enabled: entry.type !== "folder" && !!entry.url },
         { id: "bookmark-edit", group: "bookmark-manage", enabled: true },
         { id: "bookmark-delete", group: "bookmark-manage", enabled: true },
-        { id: "bookmark-bar-hide", group: "bookmark-bar", enabled: true },
+        { id: "bookmark-add-page", group: "bookmark-create", enabled: true },
+        { id: "bookmark-add-folder", group: "bookmark-create", enabled: true },
+        { id: "bookmark-manager", group: "bookmark-manage", enabled: true },
       ],
-      onSelect: command => {
+      onSelect: (command) => {
         if (command === "bookmark-open") {
           if (entry.type === "folder") {
             openBookmarkFolder(entry).catch(console.error);
           } else {
             openBookmarkEntry(entry);
           }
+        } else if (command === "bookmark-open-new-tab") {
+          createSession(entry.url);
+        } else if (command === "bookmark-copy-link") {
+          navigator.clipboard?.writeText(entry.url).catch(console.error);
         } else if (command === "bookmark-edit") {
           editBookmarkEntry(entry);
         } else if (command === "bookmark-delete") {
@@ -1320,8 +1500,12 @@ async function initialize() {
             .removeBookmark(entry.id)
             .then(() => Promise.all([renderBookmarks(), renderBookmarkBar()]))
             .catch(console.error);
-        } else if (command === "bookmark-bar-hide") {
-          setBookmarkBarVisible(false);
+        } else if (command === "bookmark-manager") {
+          loadProductPage("navis://bookmarks/");
+        } else if (command === "bookmark-add-page" || command === "bookmark-add-folder") {
+          bookmarkFolderStack = [];
+          setLibraryOpen(true, "bookmarks");
+          showBookmarkEditor({ type: command === "bookmark-add-folder" ? "folder" : "bookmark" });
         }
       },
       restoreFocus: () => event.currentTarget?.focus(),
@@ -1353,7 +1537,7 @@ async function initialize() {
         openBookmarkEntry(entry);
       }
     });
-    button.addEventListener("contextmenu", event => {
+    button.addEventListener("contextmenu", (event) => {
       event.preventDefault();
       event.stopPropagation();
       showBookmarkItemContextMenu(entry, event);
@@ -1364,7 +1548,7 @@ async function initialize() {
   const showBookmarkPopupEntries = (
     entries,
     owner = null,
-    anchorRect = null
+    anchorRect = null,
   ) => {
     closeCompetingTransientSurfaces("bookmark-popup", "competing-surface");
     const fragment = document.createDocumentFragment();
@@ -1434,19 +1618,18 @@ async function initialize() {
     window.requestAnimationFrame(layoutBookmarkBarOverflow);
   };
 
-  const setBookmarkBarVisible = visible => {
-    const stored = runtime.setBookmarkBarVisible(Boolean(visible));
-    bookmarkBar.hidden = !stored;
-    menuToggleBookmarkBar.setAttribute("aria-checked", String(stored));
-    const label = t(stored ? "menu.hideBookmarksBar" : "menu.showBookmarksBar");
-    menuToggleBookmarkBarLabel.textContent = label;
-    menuToggleBookmarkBar.setAttribute("aria-label", label);
-    if (stored) {
+  const renderBookmarkBarVisibility = () => {
+    const mode = runtime.appearanceSettings.bookmarkBar;
+    const visible = mode === "always" ||
+      (mode === "newtab" && activeRecord?.session.state.identityKey === "newtab");
+    const changed = bookmarkBar.hidden === visible;
+    bookmarkBar.hidden = !visible;
+    if (visible && changed) {
       renderBookmarkBar().catch(console.error);
-    } else {
+    } else if (!visible) {
       closeBookmarkPopup();
     }
-    return stored;
+    return visible;
   };
 
   const renderCredentials = async () => {
@@ -1456,7 +1639,8 @@ async function initialize() {
       return;
     }
     const availableToSession = new Set(
-      activeRecord?.session.state.credentials.items.map(item => item.id) ?? []
+      activeRecord?.session.state.credentials.items.map((item) => item.id) ??
+        [],
     );
     const fragment = document.createDocumentFragment();
     for (const entry of entries) {
@@ -1479,7 +1663,7 @@ async function initialize() {
           "aria-label",
           t("passwords.revealedFor", {
             identity: entry.username || entry.origin,
-          })
+          }),
         );
         primary.append(password);
       }
@@ -1494,12 +1678,12 @@ async function initialize() {
           try {
             const filled = await activeRecord?.session.fillCredential(entry.id);
             showTransientStatus(
-              t(filled ? "passwords.filled" : "passwords.fieldUnavailable")
+              t(filled ? "passwords.filled" : "passwords.fieldUnavailable"),
             );
           } catch (error) {
             showTransientStatus(t("passwords.fillFailed"));
           }
-        }
+        },
       );
       fill.disabled = privateMode || !availableToSession.has(entry.id);
 
@@ -1521,7 +1705,7 @@ async function initialize() {
               showTransientStatus(t("passwords.revealFailed"));
             }
           }
-        }
+        },
       );
 
       const remove = makeLibraryAction(
@@ -1534,7 +1718,7 @@ async function initialize() {
           }
           await renderCredentials();
           showTransientStatus(t("passwords.deleted"));
-        }
+        },
       );
       actions.append(fill, reveal, remove);
       row.append(primary, actions);
@@ -1547,7 +1731,7 @@ async function initialize() {
     clearPasswords.disabled = entries.length === 0;
   };
 
-  const setLibraryView = async view => {
+  const setLibraryView = async (view) => {
     const historySelected = view === "history";
     const bookmarksSelected = view === "bookmarks";
     const passwordsSelected = view === "passwords";
@@ -1563,11 +1747,11 @@ async function initialize() {
     openLibraryPage.setAttribute("aria-label", openLabel);
     libraryToggle.setAttribute(
       "aria-expanded",
-      String(historySelected && !libraryPanel.hidden)
+      String(historySelected && !libraryPanel.hidden),
     );
     passwordToggle.setAttribute(
       "aria-expanded",
-      String(passwordsSelected && !libraryPanel.hidden)
+      String(passwordsSelected && !libraryPanel.hidden),
     );
     historyView.hidden = !historySelected;
     bookmarksView.hidden = !bookmarksSelected;
@@ -1586,11 +1770,11 @@ async function initialize() {
     libraryPanel.hidden = !shouldOpen;
     libraryToggle.setAttribute(
       "aria-expanded",
-      String(shouldOpen && targetView === "history")
+      String(shouldOpen && targetView === "history"),
     );
     passwordToggle.setAttribute(
       "aria-expanded",
-      String(shouldOpen && targetView === "passwords")
+      String(shouldOpen && targetView === "passwords"),
     );
     viewHost.parentElement.dataset.libraryOpen = String(shouldOpen);
     if (!shouldOpen) {
@@ -1598,7 +1782,7 @@ async function initialize() {
       return;
     }
     closeCompetingTransientSurfaces(null, "persistent-surface-opened");
-    setLibraryView(targetView).catch(error => {
+    setLibraryView(targetView).catch((error) => {
       console.error("Navis could not render the library", error);
       showTransientStatus(t("library.renderFailed"));
     });
@@ -1617,23 +1801,23 @@ async function initialize() {
     });
   };
 
-  const tabMemoryText = usage =>
+  const tabMemoryText = (usage) =>
     usage?.available
       ? t("tabs.memoryUsage", { memory: formatBytes(usage.bytes) })
       : t("tabs.memoryUnavailable");
 
-  const positionTabHoverCard = record => {
+  const positionTabHoverCard = (record) => {
     const bounds = record.tab.getBoundingClientRect();
     const cardWidth = Math.min(300, Math.max(0, window.innerWidth - 16));
     const left = Math.min(
       Math.max(8, window.innerWidth - cardWidth - 8),
-      Math.max(8, bounds.left + (bounds.width - cardWidth) / 2)
+      Math.max(8, bounds.left + (bounds.width - cardWidth) / 2),
     );
     tabHoverCard.style.left = `${Math.round(left)}px`;
     tabHoverCard.style.top = `${Math.round(bounds.bottom + 6)}px`;
   };
 
-  const renderTabHoverCard = record => {
+  const renderTabHoverCard = (record) => {
     const { state } = record.session;
     tabHoverTitle.textContent = state.title || t("chrome.newTab");
     tabHoverDomain.textContent =
@@ -1652,7 +1836,7 @@ async function initialize() {
     tabHoverCard.hidden = true;
   };
 
-  const showTabHoverCard = async record => {
+  const showTabHoverCard = async (record) => {
     if (tabHoverRecord !== record || !records.has(record.session.id)) {
       return;
     }
@@ -1684,7 +1868,7 @@ async function initialize() {
     tabHoverMemory.textContent = tabMemoryText(usage);
   };
 
-  const scheduleTabHoverCard = record => {
+  const scheduleTabHoverCard = (record) => {
     hideTabHoverCard();
     tabHoverRecord = record;
     tabHoverTimer = setTimeout(() => {
@@ -1696,10 +1880,10 @@ async function initialize() {
     }, TAB_HOVER_DELAY_MS);
   };
 
-  const renderSessionTab = record => {
+  const renderSessionTab = (record) => {
     const { state } = record.session;
     const sharing = Object.entries(record.media).some(
-      ([key, active]) => key !== "sessionId" && active
+      ([key, active]) => key !== "sessionId" && active,
     );
     record.title.textContent = state.title || t("chrome.newTab");
     record.tab.classList.toggle("is-loading", hasVisibleLoading(state));
@@ -1764,7 +1948,7 @@ async function initialize() {
     sessionCount.setAttribute("aria-label", label);
   };
 
-  const renderPermission = state => {
+  const renderPermission = (state) => {
     const permissionRequest =
       state.prompt?.category === "permission" ||
       state.prompt?.category === "media" ||
@@ -1800,7 +1984,7 @@ async function initialize() {
               style: "long",
               type: "conjunction",
             }).format(permissionRequest.permissions),
-          })
+          }),
         );
       }
       if (permissionRequest.origins.length) {
@@ -1810,7 +1994,7 @@ async function initialize() {
               style: "long",
               type: "conjunction",
             }).format(permissionRequest.origins),
-          })
+          }),
         );
       }
       permissionDetail.hidden = !details.length;
@@ -1830,7 +2014,7 @@ async function initialize() {
     allowAlways.hidden = false;
     allowSession.textContent = t("permission.allowSession");
     allowSession.hidden = false;
-    const permissionNames = permissionRequest.permissions.map(permission =>
+    const permissionNames = permissionRequest.permissions.map((permission) =>
       t(
         {
           camera: "permission.camera",
@@ -1839,8 +2023,8 @@ async function initialize() {
           location: "permission.location",
           notifications: "permission.notifications",
           "persistent storage": "permission.persistentStorage",
-        }[permission] ?? "permission.device"
-      )
+        }[permission] ?? "permission.device",
+      ),
     );
     const requested = new Intl.ListFormat(localizer.locale, {
       style: "long",
@@ -1856,14 +2040,14 @@ async function initialize() {
       deviceNames.push(
         t("permission.cameraDetail", {
           name: permissionRequest.devices.camera[0],
-        })
+        }),
       );
     }
     if (permissionRequest.devices?.microphone?.length) {
       deviceNames.push(
         t("permission.microphoneDetail", {
           name: permissionRequest.devices.microphone[0],
-        })
+        }),
       );
     }
     permissionDetail.hidden = !deviceNames.length;
@@ -1876,7 +2060,7 @@ async function initialize() {
         return t(
           request.kind === "password-update"
             ? "passwordPrompt.updateAction"
-            : "passwordPrompt.saveAction"
+            : "passwordPrompt.saveAction",
         );
       }
       if (button.role === "cancel") {
@@ -1911,7 +2095,7 @@ async function initialize() {
     return t("prompt.option", { number: button.id + 1 });
   };
 
-  const webAuthnMessage = request => {
+  const webAuthnMessage = (request) => {
     const key =
       {
         presence: "webauthn.presence",
@@ -1940,12 +2124,12 @@ async function initialize() {
             request.kind === "pin-invalid"
               ? "webauthn.pinInvalidRetries"
               : "webauthn.userVerificationInvalidRetries",
-            { count: request.retries }
+            { count: request.retries },
           )
         : t(
             request.kind === "pin-invalid"
               ? "webauthn.pinInvalid"
-              : "webauthn.userVerificationInvalid"
+              : "webauthn.userVerificationInvalid",
           );
     }
     if (request.kind.startsWith("related-origin-")) {
@@ -1966,7 +2150,7 @@ async function initialize() {
           request.kind === "conditional-get"
             ? "webauthn.useAnother"
             : "common.continue",
-      }[action] ?? "common.cancel"
+      }[action] ?? "common.cancel",
     );
 
   const resetPromptInputs = () => {
@@ -1991,7 +2175,7 @@ async function initialize() {
     });
   };
 
-  const focusOpenedPrompt = request => {
+  const focusOpenedPrompt = (request) => {
     queueMicrotask(() => {
       if (promptPanel.hidden || promptPanel.dataset.promptId !== request.id) {
         return;
@@ -2004,13 +2188,14 @@ async function initialize() {
         promptActions.querySelector("button.primary"),
         promptActions.querySelector("button"),
       ].find(
-        element => element && !element.disabled && !element.closest("[hidden]")
+        (element) =>
+          element && !element.disabled && !element.closest("[hidden]"),
       );
       target?.focus();
     });
   };
 
-  const renderWebAuthnPrompt = request => {
+  const renderWebAuthnPrompt = (request) => {
     promptTitle.textContent = t("webauthn.title");
     promptMessage.textContent = webAuthnMessage(request);
     if (promptPanel.dataset.promptId === request.id) {
@@ -2058,23 +2243,23 @@ async function initialize() {
     }
   };
 
-  const renderGenericPrompt = request => {
+  const renderGenericPrompt = (request) => {
     if (request.category === "credential") {
       const updating = request.kind === "password-update";
       promptTitle.textContent = t(
-        updating ? "passwordPrompt.updateTitle" : "passwordPrompt.saveTitle"
+        updating ? "passwordPrompt.updateTitle" : "passwordPrompt.saveTitle",
       );
       promptMessage.textContent = request.username
         ? t(
             updating
               ? "passwordPrompt.updateNamed"
               : "passwordPrompt.saveNamed",
-            { username: request.username }
+            { username: request.username },
           )
         : t(
             updating
               ? "passwordPrompt.updateAccount"
-              : "passwordPrompt.saveAccount"
+              : "passwordPrompt.saveAccount",
           );
     } else if (request.kind === "before-unload") {
       promptTitle.textContent = t("prompt.beforeUnloadTitle");
@@ -2133,9 +2318,9 @@ async function initialize() {
     }
   };
 
-  const renderPrompt = state => {
+  const renderPrompt = (state) => {
     const request = ["prompt", "credential", "webauthn"].includes(
-      state.prompt?.category
+      state.prompt?.category,
     )
       ? state.prompt
       : null;
@@ -2169,7 +2354,7 @@ async function initialize() {
     }
   };
 
-  const renderMediaIndicator = media => {
+  const renderMediaIndicator = (media) => {
     const activeMedia = Object.entries(media)
       .filter(([kind, active]) => kind !== "sessionId" && active)
       .map(([kind]) =>
@@ -2178,8 +2363,8 @@ async function initialize() {
             camera: "permission.camera",
             microphone: "permission.microphone",
             screen: "permission.screen",
-          }[kind] ?? "permission.device"
-        )
+          }[kind] ?? "permission.device",
+        ),
       );
     const label = activeMedia.length
       ? t("media.sharing", {
@@ -2198,14 +2383,14 @@ async function initialize() {
     }
   };
 
-  const renderCredentialIndicator = state => {
+  const renderCredentialIndicator = (state) => {
     const count = state?.credentials.items.length ?? 0;
     const available = runtime.capabilities.passwordManager && !privateMode;
     passwordToggle.hidden = !available || count === 0;
     passwordToggle.disabled = !available || count === 0;
     passwordToggle.setAttribute(
       "aria-expanded",
-      String(!libraryPanel.hidden && libraryView === "passwords")
+      String(!libraryPanel.hidden && libraryView === "passwords"),
     );
     const label = t("passwords.siteCount", { count });
     passwordToggle.title = label;
@@ -2213,7 +2398,7 @@ async function initialize() {
     menuPasswords.disabled = !available;
   };
 
-  const pageSubtitle = state => {
+  const pageSubtitle = (state) => {
     if (state.identity === "built-in-extension") {
       return t("siteInfo.extension.subtitle");
     }
@@ -2228,7 +2413,7 @@ async function initialize() {
     }
   };
 
-  const identityPresentation = state => {
+  const identityPresentation = (state) => {
     if (state.identity === "internal-page") {
       return {
         icon: "navis",
@@ -2317,13 +2502,13 @@ async function initialize() {
     definition.textContent = displayedValue;
     row.setAttribute(
       "aria-label",
-      t("certificate.field", { label, value: displayedValue })
+      t("certificate.field", { label, value: displayedValue }),
     );
     row.append(term, definition);
     certificateFields.append(row);
   };
 
-  const formatCertificateTime = value => {
+  const formatCertificateTime = (value) => {
     if (!value) {
       return t("common.unavailable");
     }
@@ -2336,14 +2521,14 @@ async function initialize() {
         });
   };
 
-  const renderCertificateDetails = details => {
+  const renderCertificateDetails = (details) => {
     certificateFields.replaceChildren();
     certificateChain.replaceChildren();
     const certificate = details?.certificate;
     if (!details?.available || !certificate) {
       appendCertificateField(
         t("certificate.status"),
-        t("certificate.unavailable")
+        t("certificate.unavailable"),
       );
       return;
     }
@@ -2351,35 +2536,35 @@ async function initialize() {
     appendCertificateField(t("certificate.subject"), certificate.subjectName);
     appendCertificateField(
       t("certificate.organization"),
-      certificate.organization || certificate.commonName
+      certificate.organization || certificate.commonName,
     );
     appendCertificateField(t("certificate.issuer"), certificate.issuerName);
     appendCertificateField(
       t("certificate.validFrom"),
-      formatCertificateTime(certificate.validFrom)
+      formatCertificateTime(certificate.validFrom),
     );
     appendCertificateField(
       t("certificate.validUntil"),
-      formatCertificateTime(certificate.validTo)
+      formatCertificateTime(certificate.validTo),
     );
     appendCertificateField(
       t("certificate.serialNumber"),
-      certificate.serialNumber
+      certificate.serialNumber,
     );
     appendCertificateField(
       t("certificate.sha256Fingerprint"),
-      certificate.sha256Fingerprint
+      certificate.sha256Fingerprint,
     );
     appendCertificateField(
       t("certificate.publicKeyDigest"),
-      certificate.sha256SubjectPublicKeyInfoDigest
+      certificate.sha256SubjectPublicKeyInfoDigest,
     );
     if (connection) {
       appendCertificateField(t("certificate.protocol"), connection.protocol);
       appendCertificateField(t("certificate.cipher"), connection.cipher);
       appendCertificateField(
         t("certificate.keyExchange"),
-        connection.keyExchange
+        connection.keyExchange,
       );
       appendCertificateField(t("certificate.signature"), connection.signature);
     }
@@ -2409,7 +2594,7 @@ async function initialize() {
         t("certificate.chainEntry", {
           name: certificateName.textContent,
           issuer: issuer.textContent,
-        })
+        }),
       );
       entry.append(certificateName, issuer);
       certificateChain.append(entry);
@@ -2461,7 +2646,7 @@ async function initialize() {
     siteInfoDescription.textContent = presentation.description;
 
     const showSiteData = !["internal-page", "internal-error"].includes(
-      state.identity
+      state.identity,
     );
     siteDataSection.hidden = !showSiteData;
     if (showSiteData) {
@@ -2486,7 +2671,7 @@ async function initialize() {
     }
   };
 
-  const setSiteInfoOpen = shouldOpen => {
+  const setSiteInfoOpen = (shouldOpen) => {
     if (!shouldOpen || !activeRecord) {
       clearTimeout(clearSiteDataTimer);
       delete clearSiteData.dataset.confirm;
@@ -2508,6 +2693,7 @@ async function initialize() {
   };
 
   const renderActiveSession = () => {
+    renderBookmarkBarVisibility();
     if (!activeRecord) {
       setSiteInfoOpen(false);
       document.documentElement.removeAttribute("data-dom-fullscreen");
@@ -2521,11 +2707,11 @@ async function initialize() {
     }
     const { state } = activeRecord.session;
     const wasFullscreen = document.documentElement.hasAttribute(
-      "data-dom-fullscreen"
+      "data-dom-fullscreen",
     );
     document.documentElement.toggleAttribute(
       "data-dom-fullscreen",
-      state.fullscreen
+      state.fullscreen,
     );
     if (state.fullscreen && !wasFullscreen) {
       let fullscreenPageOrigin;
@@ -2555,7 +2741,7 @@ async function initialize() {
     reload.setAttribute("aria-label", reloadLabel);
     setIcon(
       reload,
-      hasVisibleLoading(state) && !state.crashed ? "stop" : "reload"
+      hasVisibleLoading(state) && !state.crashed ? "stop" : "reload",
     );
 
     security.dataset.state =
@@ -2575,7 +2761,7 @@ async function initialize() {
         ? securityDetails.certificate.organization.trim()
         : "";
     security.dataset.certificateOrganization = String(
-      Boolean(certificateOrganization)
+      Boolean(certificateOrganization),
     );
     securityLabel.textContent =
       certificateOrganization || presentation.toolbarLabel;
@@ -2627,6 +2813,7 @@ async function initialize() {
         const selected = candidate === record;
         candidate.tab.setAttribute("aria-selected", String(selected));
         candidate.tab.tabIndex = selected ? 0 : -1;
+        candidate.panel.hidden = !selected;
       }
       record.tab.scrollIntoView({ block: "nearest", inline: "nearest" });
       renderActiveSession();
@@ -2637,7 +2824,7 @@ async function initialize() {
     }
   };
 
-  const closeSession = record => {
+  const closeSession = (record) => {
     if (!record) {
       return;
     }
@@ -2651,8 +2838,12 @@ async function initialize() {
     const orderedRecords = orderedSessionRecords();
     const closedIndex = orderedRecords.indexOf(record);
     const wasActive = record === activeRecord;
+    runtime.closeDeveloperTools(record.session).catch((error) => {
+      console.error("Navis could not close the Session developer tools", error);
+    });
     record.session.close();
     record.tab.remove();
+    record.panel.remove();
     records.delete(record.session.id);
     if (wasActive) {
       activeRecord = null;
@@ -2695,7 +2886,7 @@ async function initialize() {
           enabled: index < orderedRecords.length - 1,
         },
       ],
-      onSelect: command => {
+      onSelect: (command) => {
         if (command === "tab-new") {
           openNewTab();
         } else if (command === "tab-reload") {
@@ -2721,7 +2912,7 @@ async function initialize() {
     });
   };
 
-  const showOmniboxContextMenu = event => {
+  const showOmniboxContextMenu = (event) => {
     const hasSelection =
       Number.isInteger(address.selectionStart) &&
       Number.isInteger(address.selectionEnd) &&
@@ -2763,7 +2954,7 @@ async function initialize() {
           enabled: Boolean(address.value),
         },
       ],
-      onSelect: command => {
+      onSelect: (command) => {
         address.focus();
         if (
           clipboardAddress &&
@@ -2806,7 +2997,7 @@ async function initialize() {
     draggedTabRecord = null;
   };
 
-  sessionTabs.addEventListener("dragover", event => {
+  sessionTabs.addEventListener("dragover", (event) => {
     if (!draggedTabRecord) {
       return;
     }
@@ -2815,9 +3006,9 @@ async function initialize() {
       event.dataTransfer.dropEffect = "move";
     }
     const candidates = orderedSessionRecords().filter(
-      record => record !== draggedTabRecord
+      (record) => record !== draggedTabRecord,
     );
-    const beforeRecord = candidates.find(record => {
+    const beforeRecord = candidates.find((record) => {
       const bounds = record.tab.getBoundingClientRect();
       return event.clientX < bounds.left + bounds.width / 2;
     });
@@ -2830,17 +3021,17 @@ async function initialize() {
     tabDropTarget = nextTarget;
     tabDropBefore = nextBefore;
     tabDropTarget?.tab.classList.add(
-      tabDropBefore ? "drop-before" : "drop-after"
+      tabDropBefore ? "drop-before" : "drop-after",
     );
   });
 
-  sessionTabs.addEventListener("dragleave", event => {
+  sessionTabs.addEventListener("dragleave", (event) => {
     if (!sessionTabs.contains(event.relatedTarget)) {
       clearTabDropIndicator();
     }
   });
 
-  sessionTabs.addEventListener("drop", event => {
+  sessionTabs.addEventListener("drop", (event) => {
     if (!draggedTabRecord) {
       return;
     }
@@ -2849,7 +3040,7 @@ async function initialize() {
     if (tabDropTarget && tabDropTarget !== movedRecord) {
       sessionTabs.insertBefore(
         movedRecord.tab,
-        tabDropBefore ? tabDropTarget.tab : tabDropTarget.tab.nextSibling
+        tabDropBefore ? tabDropTarget.tab : tabDropTarget.tab.nextSibling,
       );
     }
     const orderChanged = synchronizeSessionOrder();
@@ -2861,14 +3052,14 @@ async function initialize() {
 
   sessionStrip.addEventListener(
     "wheel",
-    event => {
+    (event) => {
       if (
         draggedTabRecord ||
         records.size < 2 ||
         event.ctrlKey ||
         event.metaKey ||
         event.altKey ||
-        event.composedPath().some(node => node?.id === "window-controls")
+        event.composedPath().some((node) => node?.id === "window-controls")
       ) {
         return;
       }
@@ -2906,26 +3097,26 @@ async function initialize() {
         selectSession(orderedRecords[nextIndex], { focusContent: true });
       }
     },
-    { passive: false }
+    { passive: false },
   );
 
-  window.addEventListener("NavisBindingTabActivated", event => {
+  window.addEventListener("NavisBindingTabActivated", (event) => {
     const record = records.get(event.detail.session.id);
     if (record) {
       selectSession(record, { focusContent: true });
     }
   });
-  window.addEventListener("NavisBindingTabCloseRequested", event => {
+  window.addEventListener("NavisBindingTabCloseRequested", (event) => {
     closeSession(records.get(event.detail.session.id));
   });
 
-  const buildSessionTab = record => {
+  const buildSessionTab = (record) => {
     const tab = document.createElement("div");
     tab.className = "session-tab";
     tab.draggable = true;
     tab.setAttribute("role", "tab");
     tab.setAttribute("aria-selected", "false");
-    tab.setAttribute("aria-controls", "session-host");
+    tab.setAttribute("aria-controls", record.panel.id);
     tab.tabIndex = -1;
 
     const indicator = document.createElement("span");
@@ -2958,7 +3149,7 @@ async function initialize() {
       }
     });
     tab.addEventListener("pointerleave", hideTabHoverCard);
-    tab.addEventListener("dragstart", event => {
+    tab.addEventListener("dragstart", (event) => {
       if (records.size < 2 || closeButton.contains(event.target)) {
         event.preventDefault();
         return;
@@ -2972,23 +3163,23 @@ async function initialize() {
         event.dataTransfer.effectAllowed = "move";
         event.dataTransfer.setData(
           "text/x-navis-tab",
-          String(record.session.id)
+          String(record.session.id),
         );
       }
       selectSession(record);
     });
     tab.addEventListener("dragend", finishTabDrag);
-    tab.addEventListener("click", event => {
+    tab.addEventListener("click", (event) => {
       if (!closeButton.contains(event.target)) {
         selectSession(record, { focusContent: true });
       }
     });
-    tab.addEventListener("contextmenu", event => {
+    tab.addEventListener("contextmenu", (event) => {
       event.preventDefault();
       hideTabHoverCard();
       showTabContextMenu(record, event);
     });
-    tab.addEventListener("keydown", event => {
+    tab.addEventListener("keydown", (event) => {
       if (event.key === "Enter" || event.key === " ") {
         event.preventDefault();
         selectSession(record, { focusContent: true });
@@ -3016,7 +3207,7 @@ async function initialize() {
         target.tab.focus();
       }
     });
-    closeButton.addEventListener("click", event => {
+    closeButton.addEventListener("click", (event) => {
       event.stopPropagation();
       closeSession(record);
     });
@@ -3040,6 +3231,7 @@ async function initialize() {
 
     const record = {
       session,
+      panel: viewPanels.get(session.view),
       tab: null,
       title: null,
       indicator: null,
@@ -3053,6 +3245,10 @@ async function initialize() {
       },
       navigationId: session.state.navigationId,
     };
+    if (!record.panel) {
+      throw new Error("The Session has no Platform content panel");
+    }
+    record.panel.id = `navis-session-panel-${session.id}`;
     records.set(session.id, record);
     buildSessionTab(record);
     if (activate) {
@@ -3090,18 +3286,33 @@ async function initialize() {
           runtime.acceptExtensionOmnibox(
             activeRecord.session,
             choice?.content ?? null,
-            "currentTab"
+            "currentTab",
           )
         ) {
           addressEditState.accept();
           renderExtensionOmnibox(
-            Object.freeze({ active: false, suggestions: Object.freeze([]) })
+            Object.freeze({ active: false, suggestions: Object.freeze([]) }),
           );
           return true;
         }
       }
-      const resolved = runtime.resolveAddressInput(requestedAddress);
+      const choice = ordinarySuggestionQuery === requestedAddress.trim()
+        ? ordinaryOmniboxChoices()[extensionOmniboxSelection] : null;
+      if (choice?.kind === "tab") {
+        const record = [...records.values()].find(item => String(item.session.id) === choice.id);
+        if (record) {
+          cancelExtensionOmnibox();
+          addressEditState.accept();
+          selectSession(record);
+          return true;
+        }
+      }
+      const resolved = choice?.kind === "search"
+        ? runtime.searchText(choice.text, {privateMode})
+        : choice?.url ? {url: choice.url}
+          : runtime.resolveAddressInput(requestedAddress, {privateMode});
       activeRecord.session.loadUri(resolved.url);
+      cancelExtensionOmnibox();
       addressEditState.accept();
       setOmniboxValidity(address);
       return true;
@@ -3125,7 +3336,7 @@ async function initialize() {
     }
   };
 
-  const answerPrompt = decision => {
+  const answerPrompt = (decision) => {
     const pendingPrompt = activeRecord?.session.state.prompt;
     const pending = permissionResolvers.get(pendingPrompt?.id);
     if (pending?.sessionId === activeRecord?.session.id) {
@@ -3186,7 +3397,7 @@ async function initialize() {
     }
   };
 
-  const formatBytes = bytes => {
+  const formatBytes = (bytes) => {
     if (bytes < 1024) {
       return t("downloads.bytes", { value: localizer.number(bytes) });
     }
@@ -3206,7 +3417,7 @@ async function initialize() {
     });
   };
 
-  const downloadStatusText = download => {
+  const downloadStatusText = (download) => {
     switch (download.status) {
       case "pending":
         return t("downloads.starting");
@@ -3241,56 +3452,101 @@ async function initialize() {
   };
 
   const performDownloadAction = async (button, failureMessage, action) => {
+    if (button.disabled || button.dataset.downloadActionPending === "true") return;
+    button.dataset.downloadActionPending = "true";
     button.disabled = true;
     try {
       if (!(await action())) {
         showTransientStatus(failureMessage);
-        button.disabled = false;
       }
     } catch (error) {
       console.error(failureMessage, error);
       showTransientStatus(failureMessage);
-      button.disabled = false;
+    } finally {
+      delete button.dataset.downloadActionPending;
+      button.disabled = button.dataset.downloadUnavailable === "true";
     }
+  };
+
+  const downloadRows = new Map();
+  const visibleDownloadRows = new Set();
+  let downloadsRenderFrame = 0;
+  let downloadsSeenFrame = 0;
+  const downloadsPanelIsForeground = () =>
+    !downloadsPanel.hidden && document.visibilityState === "visible" && document.hasFocus();
+  const scheduleDownloadsSeen = () => {
+    if (downloadsSeenFrame || !downloadsPanelIsForeground()) return;
+    downloadsSeenFrame = window.requestAnimationFrame(() => {
+      downloadsSeenFrame = 0;
+      if (!downloadsPanelIsForeground()) return;
+      const seen = [];
+      for (const row of visibleDownloadRows) {
+        if (row.item.isConnected && downloadRows.get(row.id) === row && row.attentionToken) {
+          seen.push({ id: row.downloadId, token: row.attentionToken });
+        }
+      }
+      if (seen.length) runtime.acknowledgeDownloadsSeen(seen, { window });
+    });
+  };
+  const downloadsVisibilityObserver = new IntersectionObserver(entries => {
+    for (const entry of entries) {
+      const row = downloadRows.get(entry.target.dataset.downloadId);
+      if (!row || row.item !== entry.target) continue;
+      if (entry.isIntersecting && entry.intersectionRatio > 0) visibleDownloadRows.add(row);
+      else visibleDownloadRows.delete(row);
+    }
+    scheduleDownloadsSeen();
+  }, { root: downloadsPanel, threshold: 0 });
+  const scheduleDownloadsRender = () => {
+    if (downloadsRenderFrame) return;
+    downloadsRenderFrame = window.requestAnimationFrame(() => {
+      downloadsRenderFrame = 0;
+      renderDownloads();
+    });
   };
 
   const renderDownloads = () => {
     const downloads = runtime.downloads.filter(
-      download => download.private === privateMode
+      (download) => download.private === privateMode,
     );
+    const attention = runtime.getDownloadAttention({ privateMode });
     const activeDownloads = downloads.filter(
-      download => download.status === "downloading"
+      (download) => ["pending", "downloading"].includes(download.status),
     );
-    downloadCount.textContent = String(downloads.length);
-    downloadCount.hidden = downloads.length === 0;
+    const attentionCount = attention.activeCount + attention.unseenCompleted.length;
+    downloadsToggle.hidden = attentionCount === 0 && downloadsPanel.hidden;
+    downloadCount.textContent = String(attentionCount);
+    downloadCount.hidden = attentionCount === 0;
     const knownActive = activeDownloads.filter(
-      download => download.totalBytes > 0
+      (download) => Number.isFinite(download.totalBytes) && download.totalBytes > 0,
     );
     const activeCurrentBytes = knownActive.reduce(
       (total, download) => total + download.currentBytes,
-      0
+      0,
     );
     const activeTotalBytes = knownActive.reduce(
       (total, download) => total + download.totalBytes,
-      0
+      0,
     );
-    const aggregateProgress = activeTotalBytes
+    const aggregateProgress = activeTotalBytes && knownActive.length === activeDownloads.length
       ? Math.max(
           0,
           Math.min(
             100,
-            Math.round((activeCurrentBytes / activeTotalBytes) * 100)
-          )
+            Math.round((activeCurrentBytes / activeTotalBytes) * 100),
+          ),
         )
       : null;
-    downloadToolbarProgress.hidden = activeDownloads.length === 0;
+    // SVGElement does not reflect HTMLElement.hidden; change the attribute.
+    downloadToolbarProgress.toggleAttribute("hidden", activeDownloads.length === 0);
     downloadToolbarProgress.dataset.indeterminate = String(
-      activeDownloads.length > knownActive.length
+      activeDownloads.length > knownActive.length,
     );
-    downloadToolbarProgress.style.setProperty(
-      "--download-progress",
-      String(aggregateProgress ?? 25)
-    );
+    if (aggregateProgress === null) {
+      downloadToolbarProgress.style.removeProperty("--download-progress");
+    } else {
+      downloadToolbarProgress.style.setProperty("--download-progress", String(aggregateProgress));
+    }
     let downloadsLabel;
     if (activeDownloads.length && aggregateProgress === null) {
       downloadsLabel = t("downloads.activeCount", {
@@ -3310,112 +3566,102 @@ async function initialize() {
     }
     downloadsToggle.title = downloadsLabel;
     downloadsToggle.setAttribute("aria-label", downloadsLabel);
+    if (downloadsPanel.hidden) return;
     downloadsEmpty.hidden = Boolean(downloads.length);
-    downloadList.replaceChildren();
-
+    const existingIds = new Set(downloads.map(download => String(download.id)));
+    for (const [id, row] of downloadRows) {
+      if (!existingIds.has(id)) {
+        downloadsVisibilityObserver.unobserve(row.item);
+        visibleDownloadRows.delete(row);
+        row.item.remove();
+        downloadRows.delete(id);
+      }
+    }
+    let previousItem = null;
     for (const download of [...downloads].reverse()) {
-      const item = document.createElement("div");
-      item.className = "download-item";
-      item.setAttribute("role", "listitem");
-
-      const details = document.createElement("div");
-      details.className = "download-details";
-
-      const fileNameLabel = document.createElement("span");
-      fileNameLabel.className = "download-name";
+      const id = String(download.id);
+      let row = downloadRows.get(id);
+      if (!row) {
+        const item = document.createElement("div");
+        item.className = "download-item";
+        item.dataset.downloadId = id;
+        item.setAttribute("role", "listitem");
+        const details = document.createElement("div");
+        details.className = "download-details";
+        const fileNameLabel = document.createElement("span");
+        fileNameLabel.className = "download-name";
+        const statusLabel = document.createElement("span");
+        statusLabel.className = "download-status";
+        statusLabel.setAttribute("role", "status");
+        statusLabel.setAttribute("aria-live", "polite");
+        const progress = document.createElement("progress");
+        progress.className = "download-progress";
+        progress.max = 100;
+        details.append(fileNameLabel, statusLabel, progress);
+        const actions = document.createElement("div");
+        actions.className = "download-actions";
+        item.append(details, actions);
+        row = { id, downloadId: download.id, item, fileNameLabel, statusLabel, progress, actions, buttons: {}, attentionToken: null };
+        downloadRows.set(id, row);
+      }
+      const { item, fileNameLabel, statusLabel, progress, actions } = row;
+      row.download = download;
+      const nextItem = previousItem ? previousItem.nextElementSibling : downloadList.firstElementChild;
+      if (nextItem !== item) downloadList.insertBefore(item, nextItem);
+      previousItem = item;
+      row.attentionToken = download.status === "complete" ? download.attentionToken : null;
+      downloadsVisibilityObserver.observe(item);
       fileNameLabel.textContent = download.fileName;
       fileNameLabel.title = download.sourceUrl;
       fileNameLabel.setAttribute("aria-label", download.fileName);
 
-      const statusLabel = document.createElement("span");
-      statusLabel.className = "download-status";
-      statusLabel.setAttribute("role", "status");
-      statusLabel.setAttribute("aria-live", "polite");
       const statusText = downloadStatusText(download);
-      statusLabel.textContent = statusText;
+      if (statusLabel.textContent !== statusText) statusLabel.textContent = statusText;
       statusLabel.setAttribute("aria-label", statusText);
       item.setAttribute(
         "aria-label",
-        t("downloads.item", { name: download.fileName, status: statusText })
+        t("downloads.item", { name: download.fileName, status: statusText }),
       );
-      details.append(fileNameLabel, statusLabel);
-
-      if (download.status === "downloading") {
-        const progress = document.createElement("progress");
-        progress.className = "download-progress";
-        progress.max = 100;
-        if (download.progress !== null) {
-          progress.value = download.progress;
+      const active = ["pending", "downloading"].includes(download.status);
+      progress.hidden = !active;
+      if (download.totalBytes > 0 && Number.isFinite(download.progress)) {
+        progress.value = Math.max(0, Math.min(100, download.progress));
+      } else {
+        progress.removeAttribute("value");
+      }
+      progress.setAttribute("aria-label", t("downloads.progress", { name: download.fileName }));
+      for (const [name, offered, execute] of [
+        ["open", download.status === "complete", () => runtime.openDownload(row.download.id, { window })],
+        ["cancel", download.canCancel, () => runtime.cancelDownload(row.download.id)],
+        ["retry", !download.canCancel && download.canRetry, () => runtime.retryDownload(row.download.id)],
+        ["remove", !active, () => runtime.removeDownload(row.download.id)],
+      ]) {
+        let button = row.buttons[name];
+        if (!button && offered) {
+          button = document.createElement("button");
+          button.type = "button";
+          button.className = "ui-button";
+          button.textContent = t("common." + name);
+          button.addEventListener("click", event => {
+            if (button.hidden) return;
+            if (name === "open" && event?.detail > 1) return;
+            return performDownloadAction(button,
+              t("downloads." + name + "Failed", { name: row.download.fileName }), execute);
+          });
+          row.buttons[name] = button;
+          actions.append(button);
         }
-        progress.setAttribute(
-          "aria-label",
-          t("downloads.progress", { name: download.fileName })
-        );
-        details.append(progress);
+        if (!button) continue;
+        button.hidden = !offered;
+        button.dataset.downloadUnavailable = String(name === "open" && !download.canOpen);
+        button.disabled = button.dataset.downloadUnavailable === "true" || button.dataset.downloadActionPending === "true";
+        button.setAttribute("aria-label", t("downloads." + name, { name: download.fileName }));
       }
-
-      const actions = document.createElement("div");
-      actions.className = "download-actions";
-      if (download.canCancel) {
-        const cancel = document.createElement("button");
-        cancel.type = "button";
-        cancel.className = "ui-button";
-        cancel.textContent = t("common.cancel");
-        cancel.setAttribute(
-          "aria-label",
-          t("downloads.cancel", { name: download.fileName })
-        );
-        cancel.addEventListener("click", () => {
-          performDownloadAction(
-            cancel,
-            t("downloads.cancelFailed", { name: download.fileName }),
-            () => runtime.cancelDownload(download.id)
-          );
-        });
-        actions.append(cancel);
-      } else if (download.canRetry) {
-        const retry = document.createElement("button");
-        retry.type = "button";
-        retry.className = "ui-button";
-        retry.textContent = t("common.retry");
-        retry.setAttribute(
-          "aria-label",
-          t("downloads.retry", { name: download.fileName })
-        );
-        retry.addEventListener("click", () => {
-          performDownloadAction(
-            retry,
-            t("downloads.retryFailed", { name: download.fileName }),
-            () => runtime.retryDownload(download.id)
-          );
-        });
-        actions.append(retry);
-      }
-      if (download.status !== "downloading") {
-        const remove = document.createElement("button");
-        remove.type = "button";
-        remove.className = "ui-button";
-        remove.textContent = t("common.remove");
-        remove.setAttribute(
-          "aria-label",
-          t("downloads.remove", { name: download.fileName })
-        );
-        remove.addEventListener("click", () => {
-          performDownloadAction(
-            remove,
-            t("downloads.removeFailed", { name: download.fileName }),
-            () => runtime.removeDownload(download.id)
-          );
-        });
-        actions.append(remove);
-      }
-
-      item.append(details, actions);
-      downloadList.append(item);
     }
+    scheduleDownloadsSeen();
   };
 
-  const setDownloadsOpen = shouldOpen => {
+  const setDownloadsOpen = (shouldOpen) => {
     downloadsPanel.hidden = !shouldOpen;
     downloadsToggle.setAttribute("aria-expanded", String(shouldOpen));
     if (shouldOpen) {
@@ -3423,17 +3669,24 @@ async function initialize() {
       renderDownloads();
       positionAnchoredSurface(downloadsPanel, downloadsToggle);
     } else {
+      downloadsVisibilityObserver.disconnect();
+      visibleDownloadRows.clear();
+      if (downloadsSeenFrame) {
+        window.cancelAnimationFrame(downloadsSeenFrame);
+        downloadsSeenFrame = 0;
+      }
       clearMaterialRipples(downloadsPanel);
+      scheduleDownloadsRender();
     }
   };
 
   closeCompetingTransientSurfaces = (
     exception = null,
-    reason = "competing-surface"
+    reason = "competing-surface",
   ) => {
     const relatedContextSurface =
       exception === "context-menu" ? contextMenuOwner?.relatedSurface : null;
-    const keepsSurface = surface =>
+    const keepsSurface = (surface) =>
       exception === surface || relatedContextSurface === surface;
     if (!keepsSurface("extension-popup") && activeRecord) {
       try {
@@ -3457,6 +3710,9 @@ async function initialize() {
     if (!keepsSurface("app-menu")) {
       setAppMenuOpen(false);
     }
+    if (!keepsSurface("profile")) {
+      setProfileMenuOpen(false);
+    }
     if (!keepsSurface("bookmark-popup")) {
       closeBookmarkPopup();
     }
@@ -3471,27 +3727,27 @@ async function initialize() {
     }
   };
 
-  const showProductTextContextMenu = event => {
+  const showProductTextContextMenu = (event) => {
     const path = event.composedPath();
-    const target = path.find(node => node?.nodeType === Node.ELEMENT_NODE);
+    const target = path.find((node) => node?.nodeType === Node.ELEMENT_NODE);
     if (
-      target?.closest?.(".bookmark-bar-item, #bookmark-bar-popup .menu-item")
+      target?.closest?.("#bookmark-bar, #bookmark-bar-popup .menu-item")
     ) {
       // Bookmark surfaces own richer Open/Edit/Delete/visibility commands.
       // The document-level text menu runs in capture phase, so it must yield
       // before the dedicated bookmark listener receives the trusted event.
       return false;
     }
-    const surface = path.find(node =>
+    const surface = path.find((node) =>
       node?.matches?.(
-        "#library-panel, #downloads-panel, #extensions-menu, #site-info-panel, #app-menu, #bookmark-bar, #bookmark-bar-popup"
-      )
+        "#library-panel, #downloads-panel, #extensions-menu, #site-info-panel, #app-menu, #bookmark-bar, #bookmark-bar-popup",
+      ),
     );
     if (!surface) {
       return false;
     }
     const textControl = target?.closest?.(
-      'input:not([type="button"]), textarea'
+      'input:not([type="button"]), textarea',
     );
     const selection = document.getSelection();
     let selectedText = "";
@@ -3503,12 +3759,14 @@ async function initialize() {
     ) {
       selectedText = textControl.value.slice(
         textControl.selectionStart,
-        textControl.selectionEnd
+        textControl.selectionEnd,
       );
     } else if (!textControl && selection && !selection.isCollapsed) {
       selectedText = selection.toString();
     }
     const hasSelection = Boolean(selectedText);
+    const canSearch = hasSelection && textControl?.type !== "password" && selectedText.length <= 8192;
+    const searchProvider = runtime.searchProviders.find(item => item.id === runtime.defaultSearchProvider);
     event.preventDefault();
     event.stopPropagation();
     openGeckoContextMenu({
@@ -3519,15 +3777,20 @@ async function initialize() {
       label: t("menu.textContext"),
       items: [
         { id: "product-copy", group: "product-edit", enabled: hasSelection },
+        ...(canSearch ? [{id: "search-selection", group: "selection", enabled: true,
+          providerName: searchProvider.name,
+          excerpt: Array.from(selectedText.trim().replace(/\s+/gu, " ")).slice(0, 40).join("")}] : []),
         {
           id: "product-select-all",
           group: "product-edit",
           enabled: Boolean(textControl?.value || surface.textContent),
         },
       ],
-      onSelect: command => {
+      onSelect: (command) => {
         if (command === "product-copy") {
           runtime.copyText(selectedText);
+        } else if (command === "search-selection" && canSearch && activeRecord) {
+          runtime.searchSelectedText(activeRecord.session, selectedText, searchProvider.id);
         } else if (command === "product-select-all") {
           if (textControl) {
             textControl.focus();
@@ -3543,8 +3806,10 @@ async function initialize() {
   };
 
   runtime.setDownloadDelegate({
-    onDownloadsChanged: () => renderDownloads(),
+    onDownloadsChanged: scheduleDownloadsRender,
   });
+  window.addEventListener("focus", scheduleDownloadsRender);
+  document.addEventListener("visibilitychange", scheduleDownloadsRender);
 
   const openNewTab = () => {
     createSession();
@@ -3552,9 +3817,9 @@ async function initialize() {
     address.select();
   };
 
-  transientSurfaceForPath = path => {
+  transientSurfaceForPath = (path) => {
     const matches = (selector, key) =>
-      path.some(node => node?.matches?.(selector)) ? key : null;
+      path.some((node) => node?.matches?.(selector)) ? key : null;
     return (
       matches("#context-menu", "context-menu") ||
       matches("#navis-extension-popup", "extension-popup") ||
@@ -3563,12 +3828,13 @@ async function initialize() {
       matches("#downloads-panel, #downloads-toggle", "downloads") ||
       matches(
         "#extensions-menu, #extensions-menu-toggle, #extension-action-buttons",
-        "extensions"
+        "extensions",
       ) ||
       matches("#app-menu, #app-menu-toggle", "app-menu") ||
+      matches("#profile-menu, #profile-toggle, .profile-dialog", "profile") ||
       matches(
         "#bookmark-bar-popup, #bookmark-bar-overflow, .bookmark-bar-item[aria-expanded='true']",
-        "bookmark-popup"
+        "bookmark-popup",
       ) ||
       matches(".permission-card", "permission") ||
       matches(".prompt-card", "prompt")
@@ -3577,27 +3843,27 @@ async function initialize() {
 
   document.addEventListener(
     "pointerdown",
-    event => {
+    (event) => {
       if (event.isTrusted) {
         closeCompetingTransientSurfaces(
           transientSurfaceForPath(event.composedPath()),
-          "chrome-interaction"
+          "chrome-interaction",
         );
       }
     },
-    true
+    true,
   );
   document.addEventListener(
     "focusin",
-    event => {
+    (event) => {
       if (event.isTrusted) {
         closeCompetingTransientSurfaces(
           transientSurfaceForPath(event.composedPath()),
-          "focus-transfer"
+          "focus-transfer",
         );
       }
     },
-    true
+    true,
   );
 
   window.addEventListener("blur", hideTabHoverCard);
@@ -3626,9 +3892,33 @@ async function initialize() {
       closeBookmarkPopup();
     }
   });
+  bookmarkBar.addEventListener("contextmenu", event => {
+    if (!event.isTrusted || event.target.closest(".bookmark-bar-item")) return;
+    event.preventDefault();
+    event.stopPropagation();
+    openGeckoContextMenu({
+      ownerId: "bookmark-bar-background", x: event.clientX, y: event.clientY,
+      triggerEvent: event, label: t("menu.bookmarkContext"),
+      items: [
+        { id: "bookmark-add-page", group: "bookmark-create", enabled: true },
+        { id: "bookmark-add-folder", group: "bookmark-create", enabled: true },
+        { id: "bookmark-manager", group: "bookmark-manage", enabled: true },
+      ],
+      onSelect: command => {
+        if (command === "bookmark-manager") {
+          loadProductPage("navis://bookmarks/");
+        } else {
+          bookmarkFolderStack = [];
+          setLibraryOpen(true, "bookmarks");
+          showBookmarkEditor({ type: command === "bookmark-add-folder" ? "folder" : "bookmark" });
+        }
+      },
+      restoreFocus: () => appMenuToggle.focus(),
+    });
+  });
   document.addEventListener(
     "contextmenu",
-    event => {
+    (event) => {
       if (!event.isTrusted) {
         return;
       }
@@ -3640,9 +3930,10 @@ async function initialize() {
         showProductTextContextMenu(event);
       }
     },
-    true
+    true,
   );
-  address.addEventListener("keydown", event => {
+  address.addEventListener("keydown", (event) => {
+    if (event.isComposing || addressComposing || event.keyCode === 229) return;
     const choices = extensionOmniboxChoices();
     if (choices.length && ["ArrowDown", "ArrowUp"].includes(event.key)) {
       event.preventDefault();
@@ -3660,7 +3951,7 @@ async function initialize() {
       event.preventDefault();
       runtime.deleteExtensionOmniboxSuggestion(
         activeRecord.session,
-        choices[extensionOmniboxSelection].content
+        choices[extensionOmniboxSelection].content,
       );
     } else if (event.key === "Enter") {
       event.preventDefault();
@@ -3680,13 +3971,13 @@ async function initialize() {
       activeRecord?.session.view?.focus();
     }
   });
-  address.addEventListener("pointerdown", event => {
+  address.addEventListener("pointerdown", (event) => {
     selectAddressOnActivationClick =
       event.isPrimary &&
       event.button === 0 &&
       document.activeElement !== address;
   });
-  address.addEventListener("click", event => {
+  address.addEventListener("click", (event) => {
     if (selectAddressOnActivationClick && event.button === 0) {
       address.select();
     }
@@ -3695,7 +3986,7 @@ async function initialize() {
   address.addEventListener("focus", () => {
     addressEditState.beginEditing();
   });
-  address.addEventListener("copy", event => {
+  address.addEventListener("copy", (event) => {
     const selectsWholeAddress =
       address.selectionStart === 0 &&
       address.selectionEnd === address.value.length;
@@ -3710,6 +4001,14 @@ async function initialize() {
   address.addEventListener("input", () => {
     addressEditState.updateInput();
     setOmniboxValidity(address);
+    updateExtensionOmnibox();
+  });
+  address.addEventListener("compositionstart", () => {
+    addressComposing = true;
+    cancelExtensionOmnibox();
+  });
+  address.addEventListener("compositionend", () => {
+    addressComposing = false;
     updateExtensionOmnibox();
   });
   address.addEventListener("blur", () => {
@@ -3744,6 +4043,7 @@ async function initialize() {
     siteInfoSummary.hidden = false;
     certificateDetails.focus();
   });
+
   bookmarkCurrent.addEventListener("click", beginCurrentBookmark);
   libraryToggle.addEventListener("click", () => {
     const historyIsOpen = !libraryPanel.hidden && libraryView === "history";
@@ -3782,7 +4082,7 @@ async function initialize() {
     showBookmarkEditor({ type: "folder" });
   });
   cancelBookmarkEdit.addEventListener("click", hideBookmarkEditor);
-  bookmarkEditor.addEventListener("submit", async event => {
+  bookmarkEditor.addEventListener("submit", async (event) => {
     event.preventDefault();
     const id = bookmarkEditId.value;
     const type = bookmarkEditType.value || "bookmark";
@@ -3811,6 +4111,7 @@ async function initialize() {
   appMenuToggle.addEventListener("click", () => {
     setAppMenuOpen(appMenu.hidden);
   });
+  profileToggle.addEventListener("click", () => setProfileMenuOpen(profileMenu.hidden));
   newPrivateWindow.addEventListener("click", () => {
     setAppMenuOpen(false);
     runtime.openPlatformWindow({
@@ -3819,33 +4120,36 @@ async function initialize() {
       privateMode: true,
     });
   });
-  const loadProductPage = uri => {
+  const loadProductPage = (uri) => {
     setAppMenuOpen(false);
     setLibraryOpen(false);
     activeRecord?.session.loadUri(uri);
     activeRecord?.session.view?.focus();
   };
   menuHistory.addEventListener("click", () =>
-    loadProductPage("navis://history/")
+    loadProductPage("navis://history/"),
   );
   menuBookmarks.addEventListener("click", () =>
-    loadProductPage("navis://bookmarks/")
+    loadProductPage("navis://bookmarks/"),
   );
   menuPasswords.addEventListener("click", () =>
-    loadProductPage("navis://passwords/")
+    loadProductPage("navis://passwords/"),
   );
   menuDownloads.addEventListener("click", () =>
-    loadProductPage("navis://downloads/")
+    loadProductPage("navis://downloads/"),
   );
   menuSettings.addEventListener("click", () =>
-    loadProductPage("navis://settings/")
+    loadProductPage("navis://settings/"),
   );
-  menuToggleBookmarkBar.addEventListener("click", () => {
-    setBookmarkBarVisible(bookmarkBar.hidden);
+  menuProcesses.addEventListener("click", () => loadProductPage("navis://processes/"));
+  menuProfiles.addEventListener("click", () => loadProductPage("navis://profiles/"));
+  menuSupport.addEventListener("click", () => loadProductPage("navis://support/"));
+  menuDeveloperTools.addEventListener("click", () => {
     setAppMenuOpen(false);
+    toggleActiveDeveloperTools();
   });
   passwordToggle.addEventListener("click", () =>
-    setLibraryOpen(true, "passwords")
+    setLibraryOpen(true, "passwords"),
   );
   clearPasswords.addEventListener("click", async () => {
     if (clearPasswords.dataset.confirm !== "true") {
@@ -3936,9 +4240,30 @@ async function initialize() {
     setExtensionsMenuOpen(false);
     loadProductPage("navis://extensions/");
   });
+  const toggleActiveDeveloperTools = (toolId = null) => {
+    if (!activeRecord) {
+      return;
+    }
+    closeCompetingTransientSurfaces(null, "developer-tools-opened");
+    const options = toolId ? { toolId } : undefined;
+    runtime
+      .toggleDeveloperTools(activeRecord.session, options)
+      .catch((error) => {
+        console.error("Navis could not toggle developer tools", error);
+        showTransientStatus(error.message);
+      });
+  };
+  // XUL keys remain active while focus is inside a remote content process.
+  // The ordinary chrome-window keydown listener cannot observe that case.
+  for (const { element, toolId } of developerToolsShortcutBindings) {
+    element.addEventListener("command", (event) => {
+      event.preventDefault();
+      toggleActiveDeveloperTools(toolId);
+    });
+  }
   // This is the single keyboard-routing table for chrome and Session actions.
   // eslint-disable-next-line complexity
-  window.addEventListener("keydown", event => {
+  window.addEventListener("keydown", (event) => {
     if (
       event.key === "F11" &&
       !event.altKey &&
@@ -3957,6 +4282,7 @@ async function initialize() {
         setExtensionsMenuOpen(false);
         setLibraryOpen(false);
         setAppMenuOpen(false);
+        setProfileMenuOpen(false);
       }
       window.fullScreen = enteringFullscreen;
       return;
@@ -3978,6 +4304,17 @@ async function initialize() {
       return;
     }
     if (event.key === "Escape") {
+      // Native dialog cancellation owns Escape while editing a profile; do not
+      // also dismiss a sidebar or stop the background page's load.
+      if (document.querySelector(".profile-dialog[open]")) {
+        return;
+      }
+      if (!profileMenu.hidden) {
+        event.preventDefault();
+        setProfileMenuOpen(false);
+        profileToggle.focus();
+        return;
+      }
       if (document.activeElement === address) {
         return;
       }
@@ -4003,7 +4340,7 @@ async function initialize() {
       }
       if (!libraryPanel.hidden) {
         setLibraryOpen(false);
-        libraryToggle.focus();
+        (libraryToggle.hidden ? appMenuToggle : libraryToggle).focus();
         return;
       }
       if (!downloadsPanel.hidden) {
@@ -4036,7 +4373,9 @@ async function initialize() {
       });
     } else if (key === "b" && event.shiftKey) {
       event.preventDefault();
-      setBookmarkBarVisible(bookmarkBar.hidden);
+      const current = runtime.appearanceSettings.bookmarkBar;
+      const next = current === "always" ? "newtab" : current === "newtab" ? "never" : "always";
+      runtime.setAppearanceSetting("bookmarkBar", next);
     } else if (key === "h" && !event.shiftKey) {
       event.preventDefault();
       loadProductPage("navis://history/");
@@ -4081,18 +4420,18 @@ async function initialize() {
     windowMaximize.dataset.platformIcon = maximizeIcon;
     setIcon(windowMaximize, maximizeIcon);
     const maximizeLabel = t(
-      maximized ? "chrome.restoreWindow" : "chrome.maximizeWindow"
+      maximized ? "chrome.restoreWindow" : "chrome.maximizeWindow",
     );
     windowMaximize.title = t(maximized ? "chrome.restore" : "chrome.maximize");
     windowMaximize.setAttribute("aria-label", maximizeLabel);
     const browserFullscreen =
       window.fullScreen && !activeRecord?.session.state.fullscreen;
     const wasBrowserFullscreen = document.documentElement.hasAttribute(
-      "data-browser-fullscreen"
+      "data-browser-fullscreen",
     );
     document.documentElement.toggleAttribute(
       "data-browser-fullscreen",
-      browserFullscreen
+      browserFullscreen,
     );
     if (browserFullscreen && !wasBrowserFullscreen) {
       showFullscreenHint(t("app.name"), t("chrome.fullscreenF11"));
@@ -4108,7 +4447,17 @@ async function initialize() {
   renderBrowserFullscreen();
 
   renderDownloads();
-  setBookmarkBarVisible(runtime.bookmarkBarVisible);
+  renderBookmarkBarVisibility();
+  const appearanceDelegate = {
+    onAppearanceChanged(state) {
+      document.documentElement.dataset.appearance = state.theme;
+      document.documentElement.style.setProperty("--navis-user-accent", state.accent);
+      renderBookmarkBarVisibility();
+      libraryToggle.hidden = !state.historyButton;
+    },
+  };
+  runtime.addAppearanceDelegate(appearanceDelegate);
+  appearanceDelegate.onAppearanceChanged(runtime.appearanceSettings);
   const bookmarkBarResizeObserver = new ResizeObserver(() => {
     window.requestAnimationFrame(layoutBookmarkBarOverflow);
   });
@@ -4126,7 +4475,7 @@ async function initialize() {
   } else {
     startupEntries = [{ url: DEFAULT_URI, selected: true }];
   }
-  const startupRecords = startupEntries.map(entry => ({
+  const startupRecords = startupEntries.map((entry) => ({
     entry,
     record: createSession(entry.url, { activate: false }),
   }));
@@ -4134,7 +4483,7 @@ async function initialize() {
   selectSession(
     startupRecords.find(({ entry }) => entry.selected)?.record ??
       startupRecords[0].record,
-    { focusContent: true }
+    { focusContent: true },
   );
   persistSessionState({ immediate: true });
   window.addEventListener(
@@ -4145,22 +4494,28 @@ async function initialize() {
       clearTimeout(clearPasswordsTimer);
       clearTimeout(fullscreenHintTimer);
       clearTimeout(tabWheelResetTimer);
+      if (downloadsRenderFrame) window.cancelAnimationFrame(downloadsRenderFrame);
+      if (downloadsSeenFrame) window.cancelAnimationFrame(downloadsSeenFrame);
+      downloadsVisibilityObserver.disconnect();
+      window.removeEventListener("focus", scheduleDownloadsRender);
+      document.removeEventListener("visibilitychange", scheduleDownloadsRender);
       if (extensionActionRenderFrame) {
         window.cancelAnimationFrame(extensionActionRenderFrame);
         extensionActionRenderFrame = 0;
       }
       bookmarkBarResizeObserver.disconnect();
+      runtime.removeAppearanceDelegate(appearanceDelegate);
       if (!privateMode && records.size && activeRecord) {
         saveCurrentSessionState().catch(console.error);
       }
       runtime.close();
     },
-    { once: true }
+    { once: true },
   );
 }
 
 const start = () => {
-  initialize().catch(error => {
+  initialize().catch((error) => {
     console.error("Navis initialization failed", error);
     document.title = t("chrome.startupFailedTitle");
     const statusNode = document.getElementById("loading-state");

@@ -1,0 +1,22 @@
+<resources>
+    <string name="processes_title">Process manager</string>
+    <string name="processes_explanation">Live browser and content processes. Shared processes may contain more than one page.</string>
+    <string name="processes_memory">Memory: %1$d MiB</string>
+    <string name="processes_cpu">CPU: %1$s%%</string>
+    <string name="processes_threads">Threads: %1$d</string>
+    <string name="processes_end">End process</string>
+    <string name="processes_end_warning">Pages sharing this process will stop. Unsaved changes may be lost.</string>
+    <string name="credits_title">Open-source software</string>
+    <string name="credits_licenses">Packaged license notices</string>
+    <string name="credits_attribution_before">"Navis is made possible by the "</string>
+    <string name="credits_attribution_between">" open-source project and other "</string>
+    <string name="credits_attribution_after">.</string>
+    <string name="support_cpu_details">CPU details</string>
+    <string name="support_gpu_features">Graphics features</string>
+    <string name="support_gpu_failures">Graphics failures</string>
+    <string name="support_gpu_guards">Graphics safeguards</string>
+    <string name="support_gpu_memory">Graphics memory</string>
+    <string name="support_gpu_secondary">Secondary graphics adapter</string>
+    <string name="support_sandbox_features">Sandbox features</string>
+    <string name="support_modified_preferences">Modified preferences</string>
+</resources>

@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="site_sheet_loading">正在读取站点信息…</string>
+    <string name="site_sheet_extension_title">扩展页面</string>
+    <string name="site_sheet_extension_status">由已安装的扩展提供</string>
+    <string name="site_sheet_extension_description">此页面属于已安装的扩展，而非网站。</string>
+</resources>

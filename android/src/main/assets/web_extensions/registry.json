@@ -1,0 +1,14 @@
+{
+  "schema": 1,
+  "extensions": [
+    {
+      "id": "uBlock0@raymondhill.net",
+      "name": "uBlock Origin",
+      "version": "1.74.0",
+      "baseUri": "resource://android/assets/web_extensions/ublock-origin/",
+      "sha256": "175756d74468c9ba45863f7fc333d3be670f82d5b066314e915814dd547d1652",
+      "required": true,
+      "defaultToolbarPinned": true
+    }
+  ]
+}

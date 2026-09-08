@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="downloads_title">Downloads</string>
+    <string name="download_search">Search downloads</string>
+    <string name="download_empty">No downloads</string>
+    <string name="download_private_history">Private download history is removed when you close all private tabs. Files you save stay on your device.</string>
+    <string name="download_clear_finished">Clear finished</string>
+    <string name="download_clear_message">Remove finished downloads from this list? Saved files and active downloads will be kept.</string>
+    <string name="download_actions">Download actions</string>
+    <string name="download_open_source">Open source link</string>
+    <string name="download_cancel_remove">Cancel and remove from list</string>
+    <string name="download_remove_record">Remove from list</string>
+    <string name="download_state_downloading">Downloading</string>
+    <string name="download_state_paused">Paused</string>
+    <string name="download_state_complete">Completed</string>
+    <string name="download_state_missing">File no longer available</string>
+    <string name="download_state_cancelled">Cancelled</string>
+    <string name="download_state_failed">Interrupted</string>
+    <string name="download_progress_bytes">%1$s of %2$s</string>
+    <string name="download_status_bytes">%1$s · %2$s</string>
+    <string name="download_pause">Pause</string>
+    <string name="download_resume">Resume</string>
+    <string name="download_open">Open</string>
+    <string name="download_retry">Retry</string>
+    <string name="download_action_failed">Could not complete this download action. The file or original browsing session may no longer be available.</string>
+</resources>

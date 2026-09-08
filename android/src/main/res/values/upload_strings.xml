@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="upload_selection_preparing">Preparing upload</string>
+    <string name="upload_selection_preparing_detail">Copying only the files you selected to temporary browser storage. You can cancel.</string>
+    <string name="upload_selection_cancelled">File selection cancelled. No files were sent to the page.</string>
+    <string name="upload_selection_file_count">Upload selection exceeds the limit of 32 retained files. Close tabs holding earlier selections, or select fewer files.</string>
+    <string name="upload_selection_file_size">A selected file exceeds the 128 MiB upload preparation limit. No files were sent to the page.</string>
+    <string name="upload_selection_total_size">Upload selections exceed 512 MiB of temporary storage. Close tabs holding earlier selections, or select smaller files.</string>
+    <string name="upload_selection_tree_limit">This folder is too deeply nested or contains too many entries (maximum 32 levels and 2,048 entries). No files were sent to the page.</string>
+    <string name="upload_selection_no_space">Not enough temporary storage to prepare this upload. Free some device storage and try again.</string>
+    <string name="upload_selection_invalid_name">A selected name cannot be preserved safely, or the folder contains duplicate names. No files were sent to the page.</string>
+    <string name="upload_selection_unreadable">The selected files could not be read. Check the file provider and try again. No files were sent to the page.</string>
+</resources>

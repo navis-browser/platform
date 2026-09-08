@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="window_attention_channel">窗口提醒</string>
+    <string name="window_attention_generic">一个 Navis 窗口需要你的关注。点按以返回该窗口。</string>
+    <string name="window_attention_extension">%1$s 需要你的关注。点按以返回其 Navis 窗口。</string>
+    <string name="window_attention_extension_fallback">一个扩展</string>
+</resources>

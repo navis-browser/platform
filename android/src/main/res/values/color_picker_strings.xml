@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="color_picker_preview">Selected color</string>
+    <string name="color_picker_presets">Preset colors</string>
+    <string name="color_picker_preset">Color %1$s</string>
+    <string name="color_picker_custom">Custom color</string>
+    <string name="color_picker_hide_custom">Hide custom color</string>
+    <string name="color_picker_hue_saturation">Hue and saturation color wheel</string>
+    <string name="color_picker_hsv_state">Hue %1$d degrees, saturation %2$d percent</string>
+    <string name="color_picker_hue_less">Decrease hue</string>
+    <string name="color_picker_hue_more">Increase hue</string>
+    <string name="color_picker_saturation_less">Decrease saturation</string>
+    <string name="color_picker_saturation_more">Increase saturation</string>
+    <string name="color_picker_brightness">Brightness</string>
+    <string name="color_picker_brightness_value">Brightness · %1$d%%</string>
+    <string name="color_picker_show_hex">Advanced: color code</string>
+    <string name="color_picker_hide_hex">Hide color code</string>
+    <string name="color_picker_hex">Hex color</string>
+    <string name="color_picker_hex_help">Optional: #rrggbb. Correct an invalid code or choose a color before saving.</string>
+</resources>

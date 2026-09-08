@@ -1,0 +1,26 @@
+{
+  "host": "windows",
+  "mode": "descriptor",
+  "overlay_base": "../gecko-chrome",
+  "purpose": "windows host integration contract",
+  "scope": [
+    "package_metadata",
+    "installer_entrypoint",
+    "launcher_entry",
+    "deployment_policy"
+  ],
+  "integration": {
+    "inherits_from": "../gecko-chrome",
+    "override_policy": "descriptor-first",
+    "open_items": [
+      "windows installer/update assets",
+      "window-manager integration",
+      "enterprise/system launcher integration"
+    ]
+  },
+  "status": {
+    "descriptor_ready": true,
+    "concrete_host_ui": false,
+    "acceptance_dependent": true
+  }
+}

@@ -2,12 +2,18 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
+import { appendNavisMark } from "./brand.mjs";
+
 const SVG_NAMESPACE = "http://www.w3.org/2000/svg";
 
 // Navis-owned 20-DIP line icons. Keeping the geometry here gives every
 // Platform surface the same stroke, optical size, and state behavior without
 // depending on Gecko theme artwork or a Chromium asset.
 const ICONS = Object.freeze({
+  profile: [
+    ["circle", { cx: "10", cy: "6.5", r: "3" }],
+    ["path", { d: "M3.5 17v-1a6.5 6.5 0 0 1 13 0v1" }],
+  ],
   back: [
     ["path", { d: "M12.5 4.5 7 10l5.5 5.5" }],
     ["path", { d: "M7.5 10H17" }],
@@ -17,8 +23,8 @@ const ICONS = Object.freeze({
     ["path", { d: "M12.5 10H3" }],
   ],
   reload: [
-    ["path", { d: "M16 7.5V3.8l-2 2A6.5 6.5 0 1 0 16.3 12" }],
-    ["path", { d: "M16 3.8h-3.8" }],
+    ["path", { d: "M16.5 4v4.2h-4.2" }],
+    ["path", { d: "M16.5 8.2A7 7 0 1 0 17 12" }],
   ],
   stop: [
     [
@@ -83,10 +89,6 @@ const ICONS = Object.freeze({
     ["circle", { cx: "10", cy: "10", r: "7" }],
     ["path", { d: "M10 9v5" }],
     ["circle", { cx: "10", cy: "6.2", r: ".7", class: "icon-fill" }],
-  ],
-  navis: [
-    ["circle", { cx: "10", cy: "10", r: "7" }],
-    ["path", { d: "m12.8 7.2-1.5 4.1-4.1 1.5 1.5-4.1 4.1-1.5Z" }],
   ],
   extension: [
     [
@@ -161,6 +163,13 @@ const ICONS = Object.freeze({
     ["path", { d: "M3 5a7 7 0 1 1 0 8" }],
     ["path", { d: "M10 6v4l3 2" }],
   ],
+  processes: [
+    ["rect", { x: "3", y: "3", width: "14", height: "11", rx: "1.5" }],
+    ["path", { d: "M6.5 17h7M10 14v3M5.5 9h2l1.5-3 2 5 1.5-2H15" }],
+  ],
+  developerTools: [
+    ["path", { d: "m6.5 6-4 4 4 4M13.5 6l4 4-4 4M11.5 3.5l-3 13" }],
+  ],
   folder: [
     ["path", { d: "M2.5 5.5h6l1.5 2h7.5v8h-15z" }],
     ["path", { d: "M2.5 7.5v-3h5l1.5 2" }],
@@ -194,7 +203,7 @@ function appendGeometry(ownerDocument, icon, geometry) {
 
 export function createIcon(ownerDocument, iconName) {
   const geometry = ICONS[iconName];
-  if (!geometry) {
+  if (!geometry && iconName !== "navis") {
     throw new TypeError(`Unknown Navis icon: ${iconName}`);
   }
   const icon = ownerDocument.createElementNS(SVG_NAMESPACE, "svg");
@@ -203,7 +212,8 @@ export function createIcon(ownerDocument, iconName) {
   icon.setAttribute("aria-hidden", "true");
   icon.setAttribute("focusable", "false");
   icon.setAttribute("data-icon", iconName);
-  appendGeometry(ownerDocument, icon, geometry);
+  if (iconName === "navis") appendNavisMark(ownerDocument, icon);
+  else appendGeometry(ownerDocument, icon, geometry);
   return icon;
 }
 
@@ -216,13 +226,20 @@ export function setIcon(container, iconName) {
     container.prepend(icon);
     return icon;
   }
+  // Session status updates can be frequent; an unchanged brand mark keeps
+  // its scoped gradients and filter nodes instead of rebuilding them.
+  if (iconName === "navis" && icon.getAttribute("data-icon") === "navis") {
+    return icon;
+  }
   const geometry = ICONS[iconName];
-  if (!geometry) {
+  if (!geometry && iconName !== "navis") {
     throw new TypeError(`Unknown Navis icon: ${iconName}`);
   }
   icon.replaceChildren();
+  icon.setAttribute("viewBox", "0 0 20 20");
   icon.setAttribute("data-icon", iconName);
-  appendGeometry(container.ownerDocument, icon, geometry);
+  if (iconName === "navis") appendNavisMark(container.ownerDocument, icon);
+  else appendGeometry(container.ownerDocument, icon, geometry);
   return icon;
 }
 

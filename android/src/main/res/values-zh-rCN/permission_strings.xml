@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="permission_allow_session">本次会话允许</string>
+    <string name="permission_allow_always">始终允许</string>
+    <string name="permission_session_explanation">临时授权在关闭 Navis 后失效。始终允许会为此网站记住选择。</string>
+    <string name="permission_save_failed">无法保存权限，未授予新的访问权限。请重试。</string>
+</resources>

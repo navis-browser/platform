@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="notifications_enable_android_settings">Notifications are disabled for Navis in Android settings. Enable them there before allowing a website to send notifications.</string>
+</resources>

@@ -12,8 +12,8 @@ imply_option("MOZ_DEDICATED_PROFILES", True)
 imply_option("MOZ_BLOCK_PROFILE_DOWNGRADE", True)
 imply_option("--enable-desktop-embedder", True)
 imply_option(
-    "--with-desktop-embedder-remote-settings-collections",
-    "blocklists/addons,blocklists/addons-bloomfilters,blocklists/gfx,main/moz-essential-domain-fallbacks,main/password-recipes,main/password-rules,main/url-parser-default-unknown-schemes-interventions,security-state/cert-revocations,security-state/intermediates,security-state/onecrl",
+    "--with-navis-remote-settings-policy",
+    "navis/config/navis-remote-settings-policy.json",
 )
 set_config("MOZ_DESKTOP_EMBEDDER_INTERNAL_SCHEME", "navis")
 set_define("MOZ_DESKTOP_EMBEDDER_INTERNAL_SCHEME", '"navis"')

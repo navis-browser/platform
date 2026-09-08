@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="tab_duplicate">Duplicate tab</string>
+    <string name="tab_close_others">Close other tabs</string>
+    <string name="tab_close_right">Close tabs to the right</string>
+</resources>

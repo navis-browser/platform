@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="login_saving">Saving…</string>
+    <string name="login_save_retry">Retry</string>
+    <string name="login_save_failed">The password could not be saved. Try again, or choose Not now.</string>
+</resources>

@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="login_saving">正在保存…</string>
+    <string name="login_save_retry">重试</string>
+    <string name="login_save_failed">无法保存密码。请重试，或选择“暂不”。</string>
+</resources>

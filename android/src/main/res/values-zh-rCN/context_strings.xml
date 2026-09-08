@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="context_open_link_tab">在新标签页中打开链接</string>
+    <string name="context_open_link_private">在隐私标签页中打开链接</string>
+    <string name="context_copy_link_text">复制链接文字</string>
+    <string name="context_open_image_tab">在新标签页中打开图片</string>
+    <string name="context_open_media_tab">在新标签页中打开媒体</string>
+    <string name="context_copy_image_address">复制图片地址</string>
+    <string name="context_copy_media_address">复制媒体地址</string>
+    <string name="context_copy_selection">复制选中文字</string>
+    <string name="context_search_selection">使用 %1$s 搜索</string>
+    <string name="context_back">后退</string>
+    <string name="context_forward">前进</string>
+    <string name="context_reload">重新加载</string>
+    <string name="context_copy_page_address">复制页面地址</string>
+    <string name="context_inspect_page">检查页面</string>
+    <string name="context_action_failed">无法完成此操作，请重试。</string>
+    <string name="context_copied">已复制</string>
+    <string name="context_play_media">播放</string>
+    <string name="context_pause_media">暂停</string>
+    <string name="context_mute_media">静音</string>
+    <string name="context_unmute_media">取消静音</string>
+    <string name="context_show_media_controls">显示控件</string>
+    <string name="context_hide_media_controls">隐藏控件</string>
+    <string name="context_undo">撤销</string>
+    <string name="context_redo">重做</string>
+    <string name="context_cut">剪切</string>
+    <string name="context_paste">粘贴</string>
+    <string name="context_select_all">全选</string>
+</resources>

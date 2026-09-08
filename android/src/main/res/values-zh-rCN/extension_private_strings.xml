@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="run_in_private_tabs_builtin_summary">内置扩展遵循应用的固定策略。开关显示此扩展是否可在隐私标签页中运行，不能在此更改。</string>
+</resources>

@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="upload_selection_preparing">正在准备上传</string>
+    <string name="upload_selection_preparing_detail">仅将你选择的文件复制到浏览器临时存储，可随时取消。</string>
+    <string name="upload_selection_cancelled">已取消文件选择，未向页面提供文件。</string>
+    <string name="upload_selection_file_count">上传选择超过保留 32 个文件的限制。请关闭持有先前选择的标签页，或减少选择的文件。</string>
+    <string name="upload_selection_file_size">所选文件超过上传准备的单文件 128 MiB 限制，未向页面提供文件。</string>
+    <string name="upload_selection_total_size">上传选择超过 512 MiB 临时存储限制。请关闭持有先前选择的标签页，或选择较小文件。</string>
+    <string name="upload_selection_tree_limit">文件夹层级或条目过多（最多 32 层、2,048 个条目），未向页面提供文件。</string>
+    <string name="upload_selection_no_space">临时存储空间不足，无法准备上传。请释放设备存储空间后重试。</string>
+    <string name="upload_selection_invalid_name">所选名称无法安全保留，或文件夹中存在重名条目，未向页面提供文件。</string>
+    <string name="upload_selection_unreadable">无法读取所选文件，请检查文件提供程序后重试。未向页面提供文件。</string>
+</resources>

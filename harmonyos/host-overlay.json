@@ -1,0 +1,25 @@
+{
+  "host": "harmonyos",
+  "mode": "planning",
+  "overlay_base": null,
+  "purpose": "HarmonyOS host integration contract",
+  "scope": [
+    "planning",
+    "deployment_path",
+    "future_arkui_integration"
+  ],
+  "integration": {
+    "inherits_from": null,
+    "override_policy": "descriptor-first",
+    "open_items": [
+      "ArkUI glue path",
+      "packaging model and signing strategy",
+      "host launch/policy baseline"
+    ]
+  },
+  "status": {
+    "descriptor_ready": true,
+    "concrete_host_ui": false,
+    "acceptance_dependent": true
+  }
+}

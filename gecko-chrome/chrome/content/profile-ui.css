@@ -1,0 +1,89 @@
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+.profile-dialog {
+  width: min(420px, calc(100vw - 32px));
+  max-height: calc(100vh - 32px);
+  overflow: auto;
+  padding: var(--navis-space-8, 24px);
+  border: 0;
+  box-sizing: border-box;
+  border-radius: 24px;
+  color: var(--navis-color-text, var(--text, #1f1f1f));
+  background: var(--navis-color-surface, var(--surface, #fff));
+  font: inherit;
+  box-shadow: var(--navis-elevation-3, 0 8px 24px rgb(0 0 0 / 18%));
+}
+.profile-dialog::backdrop { background: var(--navis-color-scrim, rgb(31 31 31 / 16%)); }
+.profile-dialog h2 { margin: 0; font-size: 22px; font-weight: 500; line-height: 1.3; }
+.profile-dialog-description { margin: 8px 0 24px; color: var(--navis-color-text-secondary, var(--muted, #5f6368)); font-size: 14px; line-height: 1.5; }
+.profile-field { display: grid; gap: 8px; margin-block: 20px; font-size: 13px; font-weight: 500; }
+.profile-input {
+  width: 100%;
+  min-height: 44px;
+  box-sizing: border-box;
+  padding: 10px 12px;
+  border: 1px solid var(--navis-color-outline, var(--border, #747775));
+  border-radius: 8px;
+  color: inherit;
+  background: transparent;
+  font: inherit;
+  font-size: 14px;
+  font-weight: 400;
+}
+.profile-input:focus-visible,
+.profile-button:focus-visible,
+.profile-color-swatch:focus-visible,
+.profile-custom-color input:focus-visible { outline: 2px solid var(--navis-color-accent, var(--accent, #0b57d0)); outline-offset: 2px; }
+.profile-input:focus-visible { border-color: var(--navis-color-accent, var(--accent, #0b57d0)); outline-offset: 0; }
+.profile-colors { min-width: 0; margin: 20px 0; padding: 0; border: 0; }
+.profile-colors legend { margin-bottom: 12px; padding: 0; font-size: 13px; font-weight: 500; }
+.profile-color-presets { display: flex; flex-wrap: wrap; gap: 12px; padding: 4px; }
+.profile-color-swatch {
+  position: relative;
+  width: 32px;
+  height: 32px;
+  min-width: 32px;
+  min-height: 32px;
+  padding: 0;
+  flex: 0 0 auto;
+  border: 0;
+  border-radius: 50%;
+  background: var(--profile-swatch);
+  box-shadow: none;
+  cursor: pointer;
+}
+.profile-color-swatch:is(:hover, :active):not(:disabled) { background: var(--profile-swatch); filter: brightness(0.94); }
+.profile-color-swatch[aria-pressed="true"] { box-shadow: 0 0 0 2px var(--navis-color-surface, var(--surface, #fff)), 0 0 0 4px var(--navis-color-text, var(--text, #1f1f1f)); }
+.profile-color-swatch[aria-pressed="true"]::after { content: "✓"; color: white; font-size: 19px; font-weight: 600; }
+.profile-custom-color { display: flex; align-items: center; gap: 10px; margin-top: 16px; font-size: 13px; cursor: pointer; }
+.profile-custom-color input { box-sizing: border-box; width: 40px; height: 32px; padding: 3px; border: 1px solid var(--navis-color-outline, var(--border, #747775)); border-radius: 8px; background: transparent; cursor: pointer; }
+.profile-custom-color input::-moz-color-swatch { border: 0; border-radius: 4px; }
+.profile-color-value { margin-inline-start: auto; color: var(--navis-color-text-secondary, var(--muted, #5f6368)); font: 12px ui-monospace, monospace; }
+.profile-dialog-status { margin: 16px 0; color: var(--navis-color-text-secondary, var(--muted, #5f6368)); font-size: 13px; line-height: 1.4; }
+.profile-dialog-status:empty { display: none; }
+.profile-actions { display: flex; flex-wrap: wrap; align-items: center; justify-content: flex-end; gap: var(--navis-space-4, 8px); }
+.profile-button { min-height: 40px; padding: 8px 20px; border: 0; border-radius: 20px; color: var(--navis-color-accent, var(--accent, #0b57d0)); background: transparent; font: inherit; font-size: 14px; font-weight: 500; cursor: pointer; }
+.profile-button:hover:not(:disabled) { background: var(--navis-color-state-hover, rgb(60 64 67 / 8%)); }
+.profile-button.profile-primary { color: var(--navis-color-on-accent, white); background: var(--navis-color-accent, var(--accent, #0b57d0)); }
+.profile-button.profile-primary:is(:hover, :active):not(:disabled) { background: var(--navis-color-accent, var(--accent, #0b57d0)); filter: brightness(0.94); }
+.profile-dialog :is(input, button):disabled { opacity: 0.5; cursor: default; }
+.profile-menu-heading, .profile-menu-subtitle { display: block; overflow-wrap: anywhere; }
+.profile-menu-heading { font-size: 15px; line-height: 1.4; }
+.profile-menu-subtitle { color: var(--navis-color-text-secondary, var(--muted, #5f6368)); margin-top: 4px; font-size: 12px; line-height: 1.4; }
+.profile-menu-identity { display: grid; grid-template-columns: 40px minmax(0, 1fr) 32px; align-items: center; gap: 12px; padding: 12px 20px 16px; }
+.profile-menu-text { min-width: 0; }
+.profile-menu-avatar { display: inline-grid; width: 40px; height: 40px; place-items: center; border-radius: 50%; font-weight: 600; font-size: 18px; }
+.profile-menu-edit { width: 32px; height: 32px; }
+.profile-menu-actions { padding-block: 8px 0; border-top: 1px solid var(--navis-color-divider, var(--border, #dadce0)); }
+.profile-menu-item { width: 100%; text-align: start; }
+.profile-card { display: grid; gap: var(--navis-space-5, 12px); }
+.profile-card h2 { margin: 0; overflow-wrap: anywhere; }
+.profile-card small { color: var(--navis-color-text-secondary, var(--muted)); }
+.profile-card .profile-actions { justify-content: flex-start; }
+@media (forced-colors: active) {
+  .profile-dialog, .profile-color-swatch { border: 1px solid CanvasText; }
+  .profile-color-swatch { forced-color-adjust: none; }
+  .profile-color-swatch[aria-pressed="true"] { outline: 2px solid CanvasText; outline-offset: 3px; }
+}

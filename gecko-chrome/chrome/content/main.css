@@ -11,6 +11,21 @@ body {
   overflow: hidden;
 }
 
+/*
+ * Gecko's dynamically loaded DevTools browser sheet expects the embedding
+ * window to provide the browser-stack layer contract normally declared by
+ * Firefox's browser-shared.css. Navis intentionally does not load Firefox
+ * chrome, so keep the equivalent host-owned ordering here: the toolbox
+ * splitter sits above content, dialogs above that, the RDM toolbar above the
+ * browser stack, and screenshot chrome remains topmost.
+ */
+html {
+  --browser-stack-z-index-devtools-splitter: 1;
+  --browser-stack-z-index-dialog-stack: 2;
+  --browser-stack-z-index-rdm-toolbar: 3;
+  --browser-stack-z-index-screenshots-panel: 4;
+}
+
 body {
   display: flex;
   min-width: 520px;
@@ -814,11 +829,6 @@ html[data-l10n-ready="false"] body {
   font: var(--navis-font-omnibox);
 }
 
-.omnibox-input::selection {
-  background: var(--navis-color-accent-container);
-  color: var(--navis-color-text);
-}
-
 #omnibox-suggestions {
   position: absolute;
   z-index: 12;
@@ -954,6 +964,11 @@ html[data-l10n-ready="false"] body {
   animation: navis-spin 900ms linear infinite;
 }
 
+.download-toolbar-progress[data-indeterminate="true"] circle {
+  stroke-dasharray: 25 75;
+  stroke-dashoffset: 0;
+}
+
 #view-stack {
   position: relative;
   min-height: 0;
@@ -1028,6 +1043,9 @@ html[data-browser-fullscreen] #session-host {
 #session-host {
   position: absolute;
   display: flex;
+  /* Parent-frame text selection must not cancel a remote page's native drag.
+   * Scope this to the content host, preserving selectable text in sibling UI. */
+  user-select: none;
   overflow: hidden;
   border: 0;
   border-radius: 0;
@@ -1036,11 +1054,59 @@ html[data-browser-fullscreen] #session-host {
   inset: 0;
 }
 
-.desktop-engine-view {
+.desktop-engine-session-panel {
+  display: flex;
   width: 100%;
   min-width: 0;
   min-height: 0;
-  flex: 1;
+  flex: 1 1 auto;
+}
+
+.desktop-engine-session-panel[hidden] {
+  display: none;
+}
+
+.desktop-engine-browser-container {
+  display: flex;
+  min-width: 0;
+  min-height: 0;
+  flex: 10000 10000;
+  flex-direction: column;
+  position: relative;
+}
+
+.desktop-engine-browser-stack {
+  display: grid;
+  min-width: 25px;
+  min-height: 25px;
+  flex: 10000 10000;
+}
+
+/*
+ * RDM's upstream sheet controls the viewport through the --rdm-* grid
+ * variables.  EngineView browsers carry flex="1" so they fill a normal
+ * Session host; that flex must not override the RDM viewport or the resize
+ * handles no longer track the visible browser edge.  Keep this adaptation in
+ * the product host so responsive-browser.css remains an upstream byte-for-
+ * byte resource.
+ */
+.browserContainer.responsive-mode
+  > .browserStack
+  > :is(browser.desktop-engine-view, .rdm-screen-box) {
+  width: var(--rdm-width) !important;
+  min-width: 0 !important;
+  max-width: none !important;
+  height: var(--rdm-height) !important;
+  min-height: 0 !important;
+  max-height: none !important;
+  flex: none !important;
+}
+
+.desktop-engine-view {
+  grid-area: 1 / 1;
+  width: 100%;
+  min-width: 0;
+  min-height: 0;
 }
 
 .desktop-engine-view[hidden] {
@@ -1583,7 +1649,8 @@ html[data-browser-fullscreen] #session-host {
   color: var(--navis-color-text-secondary);
 }
 
-#app-menu {
+#app-menu,
+#profile-menu {
   position: fixed;
   z-index: 7;
   top: var(--navis-space-4);
@@ -1593,6 +1660,10 @@ html[data-browser-fullscreen] #session-host {
   padding: var(--navis-space-3) 0;
   overflow: auto;
   gap: 0;
+}
+
+#toolbar-actions > #password-toggle {
+  display: none;
 }
 
 #app-menu hr {
@@ -1628,7 +1699,7 @@ html[data-browser-fullscreen] #session-host {
   width: 100%;
   min-height: var(--navis-menu-row-min-height);
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-start;
   gap: var(--navis-space-5);
   padding: var(--navis-menu-row-padding);
   border: 0;
@@ -1640,6 +1711,11 @@ html[data-browser-fullscreen] #session-host {
 .menu-item:hover,
 .menu-item:focus-visible {
   background: var(--navis-color-state-hover);
+}
+
+.menu-item > .menu-item-label {
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 .menu-item:focus-visible {
@@ -1677,6 +1753,7 @@ html[data-browser-fullscreen] #session-host {
 }
 
 .menu-item kbd {
+  margin-inline-start: auto;
   color: var(--navis-color-text-secondary);
   font: var(--navis-font-label);
 }

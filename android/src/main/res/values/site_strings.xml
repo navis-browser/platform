@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="site_retry">Retry</string>
+    <string name="site_clear">Clear</string>
+    <string name="site_value_unavailable">Unavailable</string>
+    <string name="site_copied">Copied</string>
+    <string name="support_summary">Copy these details when reporting a Navis problem. The report contains application, engine and extension information, without browsing history or saved passwords.</string>
+    <string name="support_engine_unavailable">Engine information is currently unavailable.</string>
+    <string name="support_package">Application package</string>
+    <string name="support_version_code">Application version code</string>
+    <string name="support_engine_build">Gecko build</string>
+    <string name="support_available_languages">Available engine languages</string>
+    <string name="support_remote_content">Remote content processes</string>
+    <string name="support_site_isolation">Site isolation available</string>
+    <string name="support_process_type">Current engine process type</string>
+    <string name="support_enabled">Enabled</string>
+    <string name="support_disabled">Disabled</string>
+    <string name="support_builtin">Built-in</string>
+    <string name="support_user_extension">Installed</string>
+    <string name="support_temporary">Temporary</string>
+    <string name="support_no_extensions">No extensions installed.</string>
+    <string name="support_internal_pages_summary">Pages built into Navis. Select a page to open it.</string>
+</resources>

@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="newtab_shortcuts">Shortcuts</string>
+    <string name="newtab_manage">Manage</string>
+    <string name="newtab_manage_bookmarks">Manage bookmarks</string>
+    <string name="newtab_empty_shortcuts">Your bookmarks and folders appear here. Add a bookmark to get started.</string>
+    <string name="newtab_empty_folder">This folder is empty. Add a bookmark or move one here using Manage bookmarks.</string>
+</resources>

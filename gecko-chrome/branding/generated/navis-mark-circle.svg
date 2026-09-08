@@ -1,0 +1,57 @@
+<?xml version='1.0' encoding='utf-8'?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 220 220" width="220" height="220">
+  <title>Navis</title>
+  <defs>
+    <linearGradient id="mark-contour" gradientUnits="userSpaceOnUse" x1="35" y1="32" x2="176" y2="190">
+      <stop offset="0" stop-color="#448aff" stop-opacity="1" />
+      <stop offset="0.54" stop-color="#536fe7" stop-opacity="1" />
+      <stop offset="1" stop-color="#7355db" stop-opacity="1" />
+    </linearGradient>
+    <linearGradient id="mark-channel" gradientUnits="userSpaceOnUse" x1="35" y1="32" x2="176" y2="190">
+      <stop offset="0" stop-color="#4082f0" stop-opacity="1" />
+      <stop offset="0.54" stop-color="#4e68d9" stop-opacity="1" />
+      <stop offset="1" stop-color="#6c50ce" stop-opacity="1" />
+    </linearGradient>
+    <radialGradient id="mark-frostDiffuse" gradientUnits="objectBoundingBox" cx="0.48" cy="0.42" r="0.68">
+      <stop offset="0" stop-color="#f7f9ff" stop-opacity="0.2" />
+      <stop offset="0.42" stop-color="#edf1ff" stop-opacity="0.09" />
+      <stop offset="1" stop-color="#dfe6ff" stop-opacity="0" />
+    </radialGradient>
+    <radialGradient id="mark-frostFog" gradientUnits="objectBoundingBox" cx="0.62" cy="0.78" r="0.86">
+      <stop offset="0" stop-color="#ffffff" stop-opacity="0" />
+      <stop offset="0.56" stop-color="#e8eeff" stop-opacity="0.08" />
+      <stop offset="1" stop-color="#9ca7d6" stop-opacity="0.24" />
+    </radialGradient>
+    <linearGradient id="mark-rim" gradientUnits="objectBoundingBox" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#eff4ff" stop-opacity="0.24" />
+      <stop offset="0.58" stop-color="#d3ddef" stop-opacity="0.16" />
+      <stop offset="1" stop-color="#6f7aaf" stop-opacity="0.18" />
+    </linearGradient>
+    <filter id="mark-relief-contour" x="-0.2" y="-0.2" width="1.4" height="1.4" color-interpolation-filters="sRGB">
+      <feDropShadow dx="-0.8" dy="-1.2" stdDeviation="1.1" flood-color="#d7e4ff" flood-opacity="0.22" />
+      <feDropShadow dx="1.2" dy="1.4" stdDeviation="1.5" flood-color="#07122f" flood-opacity="0.2" />
+    </filter>
+    <filter id="mark-relief-channel" x="-0.3" y="-0.3" width="1.6" height="1.6" color-interpolation-filters="sRGB">
+      <feDropShadow dx="-0.5" dy="-0.9" stdDeviation="0.8" flood-color="#dce8ff" flood-opacity="0.3" />
+      <feDropShadow dx="0.8" dy="1.4" stdDeviation="1.1" flood-color="#071136" flood-opacity="0.38" />
+    </filter>
+    <filter id="mark-relief-seam" x="-0.3" y="-0.3" width="1.6" height="1.6" color-interpolation-filters="sRGB">
+      <feDropShadow dx="-0.6" dy="-0.6" stdDeviation="0.7" flood-color="#ffffff" flood-opacity="0.32" />
+      <feDropShadow dx="0.5" dy="0.8" stdDeviation="0.7" flood-color="#0b1438" flood-opacity="0.3" />
+    </filter>
+    <clipPath id="mark-clip">
+      <rect x="22" y="22" width="176" height="176" rx="88" />
+    </clipPath>
+  </defs>
+  <g clip-path="url(#mark-clip)">
+    <rect x="22" y="22" width="176" height="176" rx="88" fill="url(#mark-contour)" filter="url(#mark-relief-contour)" />
+    <rect x="22" y="22" width="176" height="176" rx="88" fill="url(#mark-frostDiffuse)" />
+    <rect x="22" y="22" width="176" height="176" rx="88" fill="url(#mark-frostFog)" />
+    <rect x="22" y="22" width="176" height="176" rx="88" fill="none" stroke="url(#mark-rim)" opacity="0.42" stroke-width="0.95" />
+    <g transform="rotate(42 110 110)">
+      <path d="M127.4 239.9 L108 217 C91 197 62 154 64 133 C66 112 83 105 103 108 C123 111 159 91 165 61 C168 46 164 32 160 25 L145.1 -1" fill="none" stroke="url(#mark-channel)" filter="url(#mark-relief-channel)" stroke-opacity="0.8" stroke-width="22.5" stroke-linecap="round" stroke-linejoin="round" />
+      <path d="M127.4 239.9 L108 217 C91 197 62 154 64 133 C66 112 83 105 103 108" stroke="#ffffff" filter="url(#mark-relief-seam)" fill="none" stroke-width="6.8" stroke-linecap="round" stroke-linejoin="round" />
+      <path d="M145.1 -1 L160 25 C164 32 168 46 165 61 C161.1 80.5 144.525 95.775 127.908 103.255" stroke="#ffffff" filter="url(#mark-relief-seam)" fill="none" stroke-width="6.8" stroke-linecap="round" stroke-linejoin="round" />
+    </g>
+  </g>
+</svg>

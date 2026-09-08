@@ -1,0 +1,14 @@
+<?xml version='1.0' encoding='utf-8'?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 220 220" width="220" height="220">
+  <title>Navis</title>
+  <defs>
+    <mask id="mark-mask" maskUnits="userSpaceOnUse" x="0" y="0" width="220" height="220">
+      <rect x="22" y="22" width="176" height="176" rx="40" fill="#ffffff" />
+      <g transform="rotate(42 110 110)">
+        <path d="M127.4 239.9 L108 217 C91 197 62 154 64 133 C66 112 83 105 103 108" stroke="#000000" fill="none" stroke-width="6.8" stroke-linecap="round" stroke-linejoin="round" />
+        <path d="M145.1 -1 L160 25 C164 32 168 46 165 61 C161.1 80.5 144.525 95.775 127.908 103.255" stroke="#000000" fill="none" stroke-width="6.8" stroke-linecap="round" stroke-linejoin="round" />
+      </g>
+    </mask>
+  </defs>
+  <rect x="22" y="22" width="176" height="176" rx="40" fill="#ffffff" mask="url(#mark-mask)" />
+</svg>

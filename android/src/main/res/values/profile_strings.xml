@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="profile_search">Search</string>
+    <string name="profile_no_matches">No matching items</string>
+    <string name="profile_operation_failed">Could not complete this action. Please try again.</string>
+    <string name="profile_remove_history">Remove from history</string>
+    <string name="profile_add_bookmark">Add bookmark</string>
+    <string name="profile_add_folder">New folder</string>
+    <string name="profile_parent_folder">Parent folder</string>
+    <string name="profile_root_folder">All bookmarks</string>
+    <string name="profile_folder">Folder</string>
+    <string name="profile_bookmark">Bookmark</string>
+    <string name="profile_bookmark_actions">Bookmark actions</string>
+    <string name="profile_edit_move">Edit or move</string>
+    <string name="profile_move_up">Move up</string>
+    <string name="profile_move_down">Move down</string>
+    <string name="profile_remove_bookmark_title">Remove bookmark?</string>
+    <string name="profile_remove_folder_message">Remove “%1$s” and all bookmarks and folders inside it?</string>
+    <string name="profile_title">Name</string>
+    <string name="profile_address">Address</string>
+    <string name="profile_location">Folder: %1$s</string>
+    <string name="profile_clear_passwords">Remove all passwords</string>
+    <string name="profile_clear_passwords_message">All saved passwords will be removed from Navis on this device. This cannot be undone.</string>
+    <string name="profile_show_password">Show password</string>
+    <string name="profile_hide_password">Hide password</string>
+    <string name="profile_copy">Copy</string>
+    <string name="user_profile_title">User profile</string>
+    <string name="user_profile_username">Username</string>
+    <string name="user_profile_accent">Theme color</string>
+    <string name="user_profile_create">New profile</string>
+    <string name="user_profile_edit">Edit profile</string>
+    <string name="user_profile_manage">Manage profiles</string>
+    <string name="user_profile_set_default">Set as default</string>
+    <string name="user_profile_remove">Remove</string>
+    <string name="user_profile_launch">Launch</string>
+    <string name="user_profile_restart">Restart normally</string>
+    <string name="user_profile_restart_safe">Restart with extensions disabled</string>
+    <string name="user_profile_default">Default</string>
+    <string name="user_profile_current">Current</string>
+    <string name="user_profile_keep_files">Keep files</string>
+    <string name="user_profile_delete_files">Delete files</string>
+    <string name="user_profile_remove_title">Remove profile?</string>
+    <string name="user_profile_remove_message">Remove \u201c%1$s\u201d? Its separated browsing data can be kept or deleted.</string>
+</resources>

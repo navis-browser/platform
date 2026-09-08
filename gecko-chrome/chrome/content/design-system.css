@@ -33,6 +33,8 @@
   --navis-color-accent: #0b57d0;
   --navis-color-accent-container: #d3e3fd;
   --navis-color-on-accent: #ffffff;
+  --navis-color-selection: color-mix(in srgb, var(--navis-color-accent) 20%, var(--navis-color-surface));
+  --navis-color-on-selection: var(--navis-color-text);
   --navis-color-danger: #b3261e;
   --navis-color-warning: #8a4f00;
   --navis-color-success: #146c2e;
@@ -100,6 +102,11 @@
   display: none !important;
 }
 
+::selection {
+  background-color: var(--navis-color-selection);
+  color: var(--navis-color-on-selection);
+}
+
 *,
 *::before,
 *::after {
@@ -134,6 +141,56 @@
     --navis-color-scrim: rgb(0 0 0 / 32%);
     --navis-color-shadow: rgb(0 0 0 / 52%);
   }
+}
+
+:root[data-appearance="light"] {
+  color-scheme: light;
+  --navis-color-frame: #f6f5f4;
+  --navis-color-toolbar: #f6f5f4;
+  --navis-color-tab-active: #f3f2f1;
+  --navis-color-field: #ffffff;
+  --navis-color-surface: #ffffff;
+  --navis-color-surface-raised: #f8f9fa;
+  --navis-color-content-underlay: #e8eaed;
+  --navis-color-text: #1f1f1f;
+  --navis-color-text-secondary: #444746;
+  --navis-color-text-disabled: #80868b;
+  --navis-color-icon: #444746;
+  --navis-color-outline: #747775;
+  --navis-color-divider: #e1e3e1;
+  --navis-color-state-hover: rgb(31 31 31 / 6%);
+  --navis-color-state-pressed: rgb(31 31 31 / 12%);
+  --navis-color-danger: #b3261e;
+  --navis-color-warning: #8a5100;
+  --navis-color-success: #146c2e;
+}
+
+:root[data-appearance="dark"] {
+  color-scheme: dark;
+  --navis-color-frame: #202326;
+  --navis-color-toolbar: #292c30;
+  --navis-color-tab-active: #292c30;
+  --navis-color-field: #1f1f1f;
+  --navis-color-surface: #292c30;
+  --navis-color-surface-raised: #303338;
+  --navis-color-content-underlay: #1c1f21;
+  --navis-color-text: #e3e3e3;
+  --navis-color-text-secondary: #a9b0b7;
+  --navis-color-text-disabled: #73777d;
+  --navis-color-icon: #c4c7c5;
+  --navis-color-outline: #5f6368;
+  --navis-color-divider: #44474b;
+  --navis-color-state-hover: rgb(227 227 227 / 10%);
+  --navis-color-state-pressed: rgb(227 227 227 / 16%);
+  --navis-color-danger: #ffb4ab;
+  --navis-color-warning: #ffb95c;
+  --navis-color-success: #7ddc91;
+}
+
+:root[data-appearance]:not([data-theme="private"]) {
+  --navis-color-accent: light-dark(var(--navis-user-accent, #0b57d0), color-mix(in srgb, var(--navis-user-accent, #0b57d0) 45%, white));
+  --navis-color-accent-container: color-mix(in srgb, var(--navis-color-accent) 18%, var(--navis-color-surface));
+  --navis-color-on-accent: light-dark(white, #062e6f);
 }
 
 :root[data-theme="private"] {
@@ -182,6 +239,10 @@ button {
 
 .navis-icon .icon-fill {
   fill: currentColor;
+  stroke: none;
+}
+
+.navis-icon[data-icon="navis"] {
   stroke: none;
 }
 
@@ -484,6 +545,8 @@ xul|menupopup.navis-context-menu > xul|menuseparator {
     --navis-color-divider: ButtonBorder;
     --navis-color-accent: Highlight;
     --navis-color-on-accent: HighlightText;
+    --navis-color-selection: Highlight;
+    --navis-color-on-selection: HighlightText;
     --navis-color-danger: Mark;
     --navis-color-warning: Mark;
     --navis-color-success: CanvasText;

@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="downloads_title">下载内容</string>
+    <string name="download_search">搜索下载内容</string>
+    <string name="download_empty">没有下载内容</string>
+    <string name="download_private_history">关闭所有隐私标签页后，隐私下载记录会被移除。已保存的文件会保留在设备上。</string>
+    <string name="download_clear_finished">清除已结束记录</string>
+    <string name="download_clear_message">从列表中移除已结束的下载记录？已保存的文件和正在进行的下载会保留。</string>
+    <string name="download_actions">下载操作</string>
+    <string name="download_open_source">打开来源链接</string>
+    <string name="download_cancel_remove">取消并从列表中移除</string>
+    <string name="download_remove_record">从列表中移除</string>
+    <string name="download_state_downloading">正在下载</string>
+    <string name="download_state_paused">已暂停</string>
+    <string name="download_state_complete">已完成</string>
+    <string name="download_state_missing">文件已不可用</string>
+    <string name="download_state_cancelled">已取消</string>
+    <string name="download_state_failed">已中断</string>
+    <string name="download_progress_bytes">%1$s，共 %2$s</string>
+    <string name="download_status_bytes">%1$s · %2$s</string>
+    <string name="download_pause">暂停</string>
+    <string name="download_resume">继续</string>
+    <string name="download_open">打开</string>
+    <string name="download_retry">重试</string>
+    <string name="download_action_failed">无法完成此下载操作。文件或原来的浏览会话可能已不可用。</string>
+</resources>

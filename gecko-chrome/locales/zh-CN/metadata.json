@@ -1,0 +1,18 @@
+{
+  "schema": 1,
+  "locale": "zh-CN",
+  "id": "langpack-zh-CN@firefox.mozilla.org",
+  "name": "Language: 简体中文 (Simplified Chinese)",
+  "version": "153.1.20260811.201151",
+  "artifact": "langpack-zh-CN@firefox.mozilla.org.xpi",
+  "size": 514112,
+  "sha256": "e8d90163d6923dc5414eb2f757b2f67284ceafbf530e0f801e76aac2545842e6",
+  "release": "https://archive.mozilla.org/pub/firefox/releases/153.1.0esr/",
+  "download": "https://archive.mozilla.org/pub/firefox/releases/153.1.0esr/linux-x86_64/xpi/zh-CN.xpi",
+  "checksums": "https://archive.mozilla.org/pub/firefox/releases/153.1.0esr/SHA256SUMS",
+  "source_repository": "https://github.com/mozilla-l10n/firefox-l10n",
+  "license": "MPL-2.0",
+  "gecko_min_version": "153.0",
+  "gecko_max_version": "153.*",
+  "translation_revision": "20260811220530"
+}

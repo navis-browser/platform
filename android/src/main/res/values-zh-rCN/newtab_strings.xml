@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="newtab_shortcuts">快捷入口</string>
+    <string name="newtab_manage">管理</string>
+    <string name="newtab_manage_bookmarks">管理书签</string>
+    <string name="newtab_empty_shortcuts">你的书签和文件夹会显示在这里。添加一个书签即可开始使用。</string>
+    <string name="newtab_empty_folder">此文件夹为空。你可以添加书签，或通过“管理书签”将已有书签移至此处。</string>
+</resources>
