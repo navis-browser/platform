@@ -1,0 +1,1671 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Navis logo scene showcase">
+  <title>Navis · Logo 场景展示页</title>
+  <style>
+    :root {
+      --bg: #0d1119;
+      --panel: #111a2b;
+      --card: #101a2f;
+      --line: #27334f;
+      --muted: #90a0bf;
+      --title: #eff4ff;
+      --text: #c6d4ef;
+      --white: #f5f8ff;
+      --blue: #448aff;
+      --contour-rx: 40;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html, body {
+      margin: 0;
+      min-height: 100%;
+    }
+
+    body {
+      background:
+        linear-gradient(180deg, #101827 0%, #0b0f17 52%, #09101a 100%);
+      color: var(--text);
+      font-family: "Inter", "SF Pro Text", "Segoe UI", "PingFang SC", "Hiragino Sans GB", sans-serif;
+      font-size: 14px;
+      line-height: 1.65;
+    }
+
+    .wrap {
+      width: min(1220px, 94vw);
+      margin: 0 auto;
+      padding: 36px 0 54px;
+    }
+
+    .top {
+      padding: 12px 0 26px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .eyebrow {
+      margin: 0 0 12px;
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      padding: 5px 11px;
+      border: 1px solid var(--line);
+      border-radius: 999px;
+      color: #9cb0da;
+      font-size: 11px;
+      letter-spacing: .16em;
+      text-transform: uppercase;
+    }
+
+    .title {
+      margin: 0;
+      color: var(--title);
+      font-size: clamp(32px, 5vw, 56px);
+      letter-spacing: .09em;
+      line-height: 1.06;
+      text-transform: uppercase;
+    }
+
+    .intro {
+      margin: 12px 0 0;
+      max-width: 880px;
+      color: var(--muted);
+      font-size: 15px;
+    }
+
+    .structure-map { margin-top: 22px; max-width: 1060px; }
+    .structure-map svg { display: block; width: 100%; height: auto; }
+    .structure-map .callout { fill: #b8c7e5; font-size: 13px; font-weight: 650; letter-spacing: .04em; }
+    .structure-map .callout-line { fill: none; stroke: #7185ae; stroke-width: 1.35; marker-end: url(#structure-arrow); }
+    .structure-map .shape-contour { fill: url(#structure-contour); }
+    .structure-map .shape-channel { fill: none; stroke: url(#structure-channel); stroke-width: 22.5; stroke-linecap: round; stroke-linejoin: round; stroke-opacity: .8; }
+    .structure-map .shape-seam { fill: none; stroke: #fff; stroke-width: 6.8; stroke-linecap: round; stroke-linejoin: round; }
+
+    .contour { rx: calc(var(--contour-rx) * 1px); }
+
+    .rx-control {
+      margin-top: 16px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .rx-control input[type="range"] {
+      width: min(260px, 56vw);
+      accent-color: var(--blue);
+    }
+
+    .rx-control output {
+      min-width: 2ch;
+      color: var(--white);
+      font-weight: 700;
+    }
+
+    .rx-preset {
+      min-height: 26px;
+      padding: 0 10px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      color: var(--text);
+      background: #111e33;
+      cursor: pointer;
+      font-size: 11px;
+      font-weight: 700;
+    }
+
+    .section {
+      margin-top: 32px;
+    }
+
+    .section-head {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 14px;
+      margin-bottom: 14px;
+      border-bottom: 1px solid var(--line);
+      padding-bottom: 8px;
+    }
+
+    .section-head h2 {
+      margin: 0;
+      color: #eaf1ff;
+      font-size: 18px;
+      letter-spacing: .05em;
+      text-transform: uppercase;
+    }
+
+    .section-head p {
+      margin: 0;
+      color: #96a6c6;
+      font-size: 12px;
+    }
+
+    .two-col {
+      display: grid;
+      gap: 14px;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .three-col {
+      display: grid;
+      gap: 14px;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    @media (max-width: 980px) {
+      .two-col,
+      .three-col {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .card {
+      border: 1px solid var(--line);
+      background: linear-gradient(180deg, rgba(16, 27, 46, .88), rgba(16, 22, 35, .84));
+      border-radius: 16px;
+      padding: 14px;
+      display: grid;
+      gap: 12px;
+    }
+
+    .card h3 {
+      margin: 0;
+      color: #d9e4ff;
+      font-size: 13px;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+    }
+
+    .hint {
+      margin: 0;
+      color: #a5b3d4;
+      font-size: 12px;
+    }
+
+    .stage {
+      border: 1px solid #27345a;
+      border-radius: 13px;
+      display: grid;
+      place-items: center;
+      padding: 16px;
+      min-height: 300px;
+      background: #f4f3ef;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .stage.dark {
+      background: #101113;
+      color: #fff;
+    }
+
+    .stage.glass {
+      background:
+        linear-gradient(45deg, rgba(255, 255, 255, 0.2) 25%, transparent 25%, transparent 75%, rgba(255, 255, 255, 0.2) 75%),
+        linear-gradient(45deg, rgba(255, 255, 255, 0.18) 25%, #f8f7f2 25%, #f8f7f2 75%, rgba(255, 255, 255, 0.18) 75%);
+      background-size: 18px 18px, 18px 18px;
+      background-position: 0 0, 9px 9px;
+    }
+
+    .stage.phone {
+      background:
+        radial-gradient(circle at 78% 18%, rgba(90, 120, 210, .18) 0 140px, transparent 141px),
+        linear-gradient(180deg, #2a3550 0%, #141b2c 58%, #0d1320 100%);
+    }
+
+    .app-row {
+      display: flex;
+      align-items: flex-start;
+      gap: 18px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    .app-tile {
+      display: grid;
+      justify-items: center;
+      gap: 6px;
+    }
+
+    .app-tile .tile {
+      width: 54px;
+      height: 54px;
+      border-radius: 14px;
+      background: linear-gradient(180deg, rgba(255, 255, 255, .07), rgba(255, 255, 255, .02));
+      border: 1px solid rgba(255, 255, 255, .10);
+      display: grid;
+      place-items: center;
+    }
+
+    .app-label {
+      color: rgba(240, 245, 255, .88);
+      font-size: 11px;
+      text-shadow: 0 1px 2px rgba(0, 0, 0, .55);
+    }
+
+    .stage.tray {
+      background: linear-gradient(180deg, #3b4a66 0%, #24304a 100%);
+      align-items: end;
+      padding: 0;
+    }
+
+    .tray-bar {
+      width: 100%;
+      background: rgba(16, 20, 30, .92);
+      border-top: 1px solid rgba(255, 255, 255, .08);
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 11px;
+      padding: 9px 14px;
+      color: #c7d2ea;
+      font-size: 11px;
+    }
+
+    .tray-glyph {
+      width: 16px;
+      height: 16px;
+      border-radius: 4px;
+      background: rgba(255, 255, 255, .16);
+    }
+
+    .tray-clock {
+      margin-left: 6px;
+      text-align: right;
+      line-height: 1.3;
+      color: #e8eefc;
+    }
+
+    .stage.desk {
+      background:
+        radial-gradient(circle at 18% 24%, rgba(90, 120, 210, .2) 0 150px, transparent 151px),
+        linear-gradient(180deg, #31405f 0%, #16203a 60%, #101728 100%);
+      align-items: start;
+      justify-items: start;
+    }
+
+    .desk-icons {
+      display: flex;
+      align-items: flex-start;
+      gap: 16px;
+      padding: 18px;
+    }
+
+    .desk-icon {
+      width: 72px;
+      display: grid;
+      justify-items: center;
+      gap: 5px;
+    }
+
+    .desk-ph {
+      width: 46px;
+      height: 46px;
+      border-radius: 8px;
+      background: rgba(255, 255, 255, .08);
+      border: 1px solid rgba(255, 255, 255, .14);
+    }
+
+    .desk-label {
+      color: #f2f6ff;
+      font-size: 11px;
+      text-shadow: 0 1px 2px rgba(0, 0, 0, .6);
+      padding: 1px 6px;
+      border-radius: 4px;
+      white-space: nowrap;
+    }
+
+    .desk-icon.selected .desk-label {
+      background: rgba(68, 138, 255, .55);
+    }
+
+    .stage.newtab {
+      background: #f2f4f8;
+    }
+
+    .nt-box {
+      width: min(360px, 100%);
+      display: grid;
+      justify-items: center;
+      gap: 18px;
+    }
+
+    .nt-search {
+      width: 100%;
+      height: 40px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 0 16px;
+      background: #fff;
+      border: 1px solid #d7dce6;
+      border-radius: 999px;
+      color: #9aa5b8;
+      font-size: 12px;
+      box-shadow: 0 1px 3px rgba(23, 32, 54, .06);
+    }
+
+    .nt-search .lens {
+      width: 11px;
+      height: 11px;
+      border: 2px solid #9aa5b8;
+      border-radius: 50%;
+      position: relative;
+      flex: none;
+    }
+
+    .nt-search .lens::after {
+      content: "";
+      position: absolute;
+      width: 6px;
+      height: 2px;
+      background: #9aa5b8;
+      border-radius: 1px;
+      transform: rotate(45deg);
+      right: -6px;
+      bottom: -2px;
+    }
+
+    .nt-shortcuts {
+      display: flex;
+      gap: 12px;
+    }
+
+    .nt-shortcut {
+      width: 52px;
+      height: 52px;
+      border-radius: 12px;
+      background: #fff;
+      border: 1px solid #dfe4ee;
+      display: grid;
+      place-items: center;
+      color: #a8b2c5;
+      font-size: 13px;
+      font-weight: 700;
+    }
+
+    .sq-figure {
+      display: grid;
+      justify-items: center;
+      gap: 16px;
+    }
+
+    .sq-variants {
+      display: flex;
+      align-items: end;
+      gap: 18px;
+    }
+
+    .sq-variant {
+      margin: 0;
+      display: grid;
+      justify-items: center;
+      gap: 6px;
+    }
+
+    .sq-variant figcaption {
+      color: #94a7ca;
+      font-size: 11px;
+    }
+
+    .logo-box {
+      width: min(320px, 80vw);
+      max-width: 320px;
+      height: auto;
+    }
+
+    .label-list {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .chip {
+      border: 1px solid #2f3d62;
+      color: #aebbe1;
+      font-size: 11px;
+      padding: 4px 8px;
+      border-radius: 999px;
+    }
+
+    .size-row {
+      margin-top: 14px;
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      align-items: flex-end;
+      justify-content: space-between;
+    }
+
+    .size-box {
+      width: min(130px, 24vw);
+      display: grid;
+      justify-items: center;
+      gap: 9px;
+      color: #94a7ca;
+      font-size: 11px;
+      text-align: center;
+    }
+
+    .size-box .logo-box {
+      width: auto;
+    }
+
+    .caption {
+      margin: 0;
+      color: #8ea0c4;
+      font-size: 12px;
+      border-top: 1px dashed #2d3a59;
+      padding-top: 12px;
+    }
+
+    .foot {
+      margin: 38px 0 0;
+      color: #8ea0c4;
+      font-size: 12px;
+      border-top: 1px solid var(--line);
+      padding-top: 14px;
+      text-align: center;
+    }
+
+    .motion-grid {
+      display: grid;
+      gap: 14px;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+
+    .motion-card {
+      display: grid;
+      gap: 10px;
+    }
+
+    .motion-full {
+      order: 3;
+    }
+
+    .motion-stage {
+      min-height: 300px;
+      position: relative;
+      border: 1px solid #27345a;
+      border-radius: 13px;
+      display: grid;
+      place-items: center;
+      background: #101113;
+      overflow: hidden;
+    }
+
+    .motion-stage .motion-svg {
+      width: min(310px, 80vw);
+      max-width: 310px;
+      height: auto;
+    }
+
+    .motion-counterflow .nvs-logo {
+      transform-origin: 50% 50%;
+      transform-box: fill-box;
+    }
+
+    .motion-counterflow .nvs-channel {
+      opacity: 1;
+    }
+
+    .motion-counterflow .nvs-seam {
+      stroke-dasharray: 260;
+      stroke-dashoffset: 260;
+      opacity: 0;
+    }
+
+    .motion-counterflow.playing .nvs-logo {
+      animation: nvs-logo-in .72s cubic-bezier(.2,.82,.22,1) both;
+    }
+
+    .motion-counterflow.playing .nvs-seam {
+      animation: nvs-seam-draw .92s .42s cubic-bezier(.62,.02,.22,1) both;
+    }
+
+    .motion-full .full-logo {
+      transform-origin: 50% 50%;
+      transform-box: fill-box;
+    }
+
+    .motion-full .full-seam {
+      stroke-dasharray: 260;
+      stroke-dashoffset: 260;
+      opacity: 0;
+    }
+
+    .motion-full.playing .full-logo {
+      animation: nvs-logo-in .72s cubic-bezier(.2,.82,.22,1) both;
+    }
+
+    .motion-full.playing .full-seam {
+      animation: nvs-seam-draw .92s .42s cubic-bezier(.62,.02,.22,1) both;
+    }
+
+    .motion-full .comet-overlay {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+      opacity: 0;
+    }
+
+    .motion-full.playing .comet-overlay {
+      animation: nvs-full-overlay .32s ease-out 1.34s both;
+    }
+
+    .motion-full.playing .comet-head {
+      animation: nvs-comet-head 1.6s cubic-bezier(.45,0,.35,1) 1.34s infinite;
+    }
+
+    .replay {
+      justify-self: start;
+      min-height: 30px;
+      padding: 0 10px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      color: var(--text);
+      background: #111e33;
+      cursor: pointer;
+      font-size: 11px;
+      font-weight: 700;
+    }
+
+    .motion-idle .comet-overlay {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      pointer-events: none;
+    }
+
+    .comet-head {
+      fill: #fff;
+      filter: drop-shadow(0 0 2.4px rgba(255,255,255,.82));
+      transform-box: fill-box;
+      transform-origin: center;
+    }
+
+    .motion-idle.playing .comet-head {
+      animation: nvs-comet-head 1.6s cubic-bezier(.45,0,.35,1) infinite;
+    }
+
+    .comet-particle {
+      fill: rgba(255,255,255,.94);
+      filter: drop-shadow(0 0 2.4px rgba(255,255,255,.92));
+    }
+
+    @keyframes nvs-logo-in {
+      0% { opacity: 0; }
+      62% { opacity: 1; }
+      100% { opacity: 1; }
+    }
+
+    @keyframes nvs-seam-draw {
+      0% { opacity: 0; stroke-dasharray: 260; stroke-dashoffset: 260; }
+      1% { opacity: 1; }
+      100% { opacity: 1; stroke-dasharray: 260; stroke-dashoffset: 0; }
+    }
+
+    @keyframes nvs-full-overlay {
+      from { opacity: 0; transform: scale(.982); }
+      to { opacity: 1; transform: scale(1); }
+    }
+
+    @keyframes nvs-comet-head {
+      0%,
+      100% { transform: scale(.94); }
+      45% { transform: scale(1.1); }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .motion-full .full-seam,
+      .motion-full.playing .full-logo,
+      .motion-full.playing .comet-overlay,
+      .motion-full.playing .comet-head,
+      .motion-idle.playing .comet-head {
+        animation-duration: 0.01ms !important;
+        animation-delay: 0ms !important;
+        transition: none !important;
+      }
+    }
+
+    @media (max-width: 980px) {
+      .motion-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+    <defs>
+      <filter id="fx-relief-disc" x="-20%" y="-20%" width="140%" height="140%" color-interpolation-filters="sRGB">
+        <feDropShadow dx="-0.8" dy="-1.2" stdDeviation="1.1" flood-color="#d7e4ff" flood-opacity=".22"/>
+        <feDropShadow dx="1.2" dy="1.4" stdDeviation="1.5" flood-color="#07122f" flood-opacity=".2"/>
+      </filter>
+      <filter id="fx-relief-channel" x="-30%" y="-30%" width="160%" height="160%" color-interpolation-filters="sRGB">
+        <feDropShadow dx="-0.5" dy="-0.9" stdDeviation="0.8" flood-color="#dce8ff" flood-opacity=".30"/>
+        <feDropShadow dx="0.8" dy="1.4" stdDeviation="1.1" flood-color="#071136" flood-opacity=".38"/>
+      </filter>
+      <filter id="fx-relief-seam" x="-30%" y="-30%" width="160%" height="160%" color-interpolation-filters="sRGB">
+        <feDropShadow dx="-0.6" dy="-0.6" stdDeviation="0.7" flood-color="#ffffff" flood-opacity=".32"/>
+        <feDropShadow dx="0.5" dy="0.8" stdDeviation="0.7" flood-color="#0b1438" flood-opacity=".30"/>
+      </filter>
+      <radialGradient id="frost-diffuse" cx="48%" cy="42%" r="68%">
+        <stop offset="0" stop-color="#f7f9ff" stop-opacity=".20"/>
+        <stop offset=".42" stop-color="#edf1ff" stop-opacity=".09"/>
+        <stop offset="1" stop-color="#dfe6ff" stop-opacity="0"/>
+      </radialGradient>
+      <radialGradient id="frost-fog" cx="62%" cy="78%" r="86%">
+        <stop offset="0" stop-color="#ffffff" stop-opacity="0"/>
+        <stop offset=".56" stop-color="#e8eeff" stop-opacity=".08"/>
+        <stop offset="1" stop-color="#9ca7d6" stop-opacity=".24"/>
+      </radialGradient>
+      <linearGradient id="rim-light" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0" stop-color="#eff4ff" stop-opacity=".24"/>
+        <stop offset=".58" stop-color="#d3ddef" stop-opacity=".16"/>
+        <stop offset="1" stop-color="#6f7aaf" stop-opacity=".18"/>
+      </linearGradient>
+    </defs>
+  </svg>
+  <main class="wrap">
+    <header class="top">
+      <p class="eyebrow">Navis · Logo Scene</p>
+      <h1 class="title">Logo 场景展示页</h1>
+      <p class="intro">静态几何由三层叠加而成：底层是外廓——以正方形为基础、圆角半径 rx 可调（rx=88 即回到正圆），图示取 rx 40；中间是一条通道，整体倾斜 42°，两端止于外廓边缘，宽度为外廓边长的 12.8%；顶层是两段白色内线，宽度为通道的 30.2%，沿通道的中心线排布，分别从通道两端出发，朝外廓中心方向收束。</p>
+      <div class="structure-map" aria-label="Logo static geometry callouts">
+        <svg viewBox="0 0 1060 300" role="img" aria-label="静态 Logo 几何结构标注">
+          <defs>
+            <marker id="structure-arrow" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto"><path d="M0 0L8 4L0 8Z" fill="#7185ae"/></marker>
+            <clipPath id="clip-structure"><rect class="contour" x="442" y="62" width="176" height="176" rx="40"/></clipPath>
+            <linearGradient id="structure-contour" x1="455" y1="72" x2="596" y2="230" gradientUnits="userSpaceOnUse">
+              <stop stop-color="#448aff"/>
+              <stop offset=".54" stop-color="#536fe7"/>
+              <stop offset="1" stop-color="#7355db"/>
+            </linearGradient>
+            <linearGradient id="structure-channel" x1="455" y1="72" x2="596" y2="230" gradientUnits="userSpaceOnUse">
+              <stop stop-color="#4082f0"/>
+              <stop offset=".54" stop-color="#4e68d9"/>
+              <stop offset="1" stop-color="#6c50ce"/>
+            </linearGradient>
+          </defs>
+          <rect class="contour shape-contour" x="442" y="62" width="176" height="176" rx="40"/>
+          <g clip-path="url(#clip-structure)">
+            <g transform="rotate(42 530 150)">
+              <path class="shape-channel" d="M547.4 279.9 L528 257 C511 237 482 194 484 173 C486 152 503 145 523 148 C543 151 579 131 585 101 C588 86 584 72 580 65 L565.1 39"/>
+              <path class="shape-seam" d="M547.4 279.9 L528 257 C511 237 482 194 484 173 C486 152 503 145 523 148"/>
+              <path class="shape-seam" d="M565.1 39 L580 65 C584 72 588 86 585 101 C581 120.5 564.5 135.8 547.9 143.3"/>
+            </g>
+          </g>
+          <path class="callout-line" d="M174 54 C300 50 440 54 530 62"/><text class="callout" x="24" y="50">外廓 / Contour</text>
+          <path class="callout-line" d="M174 246 C280 246 390 232 466 216"/><text class="callout" x="24" y="270">通道 / Channel</text>
+          <path class="callout-line" d="M886 70 C800 82 700 110 600 152"/><text class="callout" x="886" y="52">两段白色内线 / Seams</text>
+          <path class="callout-line" d="M886 244 C790 236 650 195 537 151"/><text class="callout" x="886" y="267">中部收束点 / Seam Join</text>
+        </svg>
+      </div>
+      <div class="rx-control" role="group" aria-label="全局外廓圆角控制">
+        <label for="contour-rx">外廓圆角 rx</label>
+        <input type="range" id="contour-rx" min="0" max="88" step="1" value="40">
+        <output id="contour-rx-value" for="contour-rx">40</output>
+        <button class="rx-preset" type="button" data-rx-preset="0">方 · 0</button>
+        <button class="rx-preset" type="button" data-rx-preset="40">主推 · 40</button>
+        <button class="rx-preset" type="button" data-rx-preset="88">正圆 · 88</button>
+      </div>
+    </header>
+
+    <section class="section">
+      <div class="section-head">
+        <h2>标志核心</h2>
+        <p>立体为基础的统一输出 · 圆形 / 方形外廓</p>
+      </div>
+      <div class="two-col">
+        <article class="card">
+          <h3>01 · 标准形态（立体基础）</h3>
+          <p class="hint">立体层内建于形状基础：外壳体积、路径浮雕与白线高低关系统一应用，所有场景与动效共用同一套渲染参数。</p>
+          <div class="stage">
+            <svg class="logo-box" viewBox="0 0 220 220" role="img" aria-label="Navis flat logo">
+              <title>Navis flat logo</title>
+              <defs>
+                <linearGradient id="disc-base" x1="35" y1="32" x2="176" y2="190" gradientUnits="userSpaceOnUse">
+                  <stop stop-color="#448aff"/>
+                  <stop offset=".54" stop-color="#536fe7"/>
+                  <stop offset="1" stop-color="#7355db"/>
+                </linearGradient>
+                <linearGradient id="channel-base" x1="35" y1="32" x2="176" y2="190" gradientUnits="userSpaceOnUse">
+                  <stop stop-color="#4082f0"/>
+                  <stop offset=".54" stop-color="#4e68d9"/>
+                  <stop offset="1" stop-color="#6c50ce"/>
+                </linearGradient>
+                <clipPath id="clip-base"><rect class="contour" x="22" y="22" width="176" height="176" rx="88"/></clipPath>
+              </defs>
+              <g clip-path="url(#clip-base)">
+                <rect class="contour" x="22" y="22" width="176" height="176" rx="88" fill="url(#disc-base)" filter="url(#fx-relief-disc)"/>
+                <rect class="contour" x="22" y="22" width="176" height="176" rx="88" fill="url(#frost-diffuse)"/>
+                <rect class="contour" x="22" y="22" width="176" height="176" rx="88" fill="url(#frost-fog)"/>
+                <rect class="contour" x="22" y="22" width="176" height="176" rx="88" fill="none" stroke="url(#rim-light)" stroke-width="0.95" opacity=".42"/>
+                <g transform="rotate(42 110 110)">
+                  <path d="M127.4 239.9 L108 217 C91 197 62 154 64 133 C66 112 83 105 103 108 C123 111 159 91 165 61 C168 46 164 32 160 25 L145.1 -1"
+                    fill="none"
+                    stroke="url(#channel-base)"
+                    stroke-opacity=".8"
+                    stroke-width="22.5"
+                    stroke-linecap="round"
+                    stroke-linejoin="round" filter="url(#fx-relief-channel)"/>
+                  <path d="M127.4 239.9 L108 217 C91 197 62 154 64 133 C66 112 83 105 103 108"
+                    fill="none"
+                    stroke="#ffffff"
+                    stroke-width="6.8"
+                    stroke-linecap="round"
+                    stroke-linejoin="round" filter="url(#fx-relief-seam)"/>
+                  <path d="M145.1 -1 L160 25 C164 32 168 46 165 61 C161.1 80.5 144.525 95.775 127.908 103.255"
+                    fill="none"
+                    stroke="#ffffff"
+                    stroke-width="6.8"
+                    stroke-linecap="round"
+                    stroke-linejoin="round" filter="url(#fx-relief-seam)"/>
+                </g>
+              </g>
+            </svg>
+          </div>
+          <p class="caption">应用场景：全局统一的立体基准，正圆外廓版本。</p>
+        </article>
+
+
+        <article class="card">
+          <h3>02 · 方形外廓（应用图标）</h3>
+          <p class="hint">应用图标位使用：外廓为 176×176 正方形底（与正圆盘面同一外接框），圆角半径 rx 可调，等价于 border-radius；rx 取边长一半（88，即 50%）时外廓回到正圆，与标准版重合。通道与白线沿切线略作外延，端头由外廓裁切收边，任何圆角档位下都不露出线端圆头。</p>
+          <div class="stage">
+            <div class="sq-figure">
+              <svg width="150" viewBox="0 0 220 220" role="img" aria-label="Navis square app icon, rx 40">
+                <defs>
+                  <linearGradient id="disc-sq" x1="35" y1="32" x2="176" y2="190" gradientUnits="userSpaceOnUse">
+                    <stop stop-color="#448aff"/>
+                    <stop offset=".54" stop-color="#536fe7"/>
+                    <stop offset="1" stop-color="#7355db"/>
+                  </linearGradient>
+                  <linearGradient id="channel-sq" x1="35" y1="32" x2="176" y2="190" gradientUnits="userSpaceOnUse">
+                    <stop stop-color="#4082f0"/>
+                    <stop offset=".54" stop-color="#4e68d9"/>
+                    <stop offset="1" stop-color="#6c50ce"/>
+                  </linearGradient>
+                  <clipPath id="clip-sq"><rect class="contour" x="22" y="22" width="176" height="176" rx="40"/></clipPath>
+                </defs>
+                <g clip-path="url(#clip-sq)">
+                  <rect class="contour" x="22" y="22" width="176" height="176" rx="40" fill="url(#disc-sq)" filter="url(#fx-relief-disc)"/>
+                  <rect class="contour" x="22" y="22" width="176" height="176" rx="40" fill="url(#frost-diffuse)"/>
+                  <rect class="contour" x="22" y="22" width="176" height="176" rx="40" fill="url(#frost-fog)"/>
+                  <rect class="contour" x="22" y="22" width="176" height="176" rx="40" fill="none" stroke="url(#rim-light)" stroke-width="0.95" opacity=".42"/>
+                  <g transform="rotate(42 110 110)">
+                    <path d="M127.4 239.9 L108 217 C91 197 62 154 64 133 C66 112 83 105 103 108 C123 111 159 91 165 61 C168 46 164 32 160 25 L145.1 -1"
+                      fill="none" stroke="url(#channel-sq)" stroke-opacity=".8" stroke-width="22.5" stroke-linecap="round" stroke-linejoin="round" filter="url(#fx-relief-channel)"/>
+                    <path d="M127.4 239.9 L108 217 C91 197 62 154 64 133 C66 112 83 105 103 108"
+                      fill="none" stroke="#ffffff" stroke-width="6.8" stroke-linecap="round" stroke-linejoin="round" filter="url(#fx-relief-seam)"/>
+                    <path d="M145.1 -1 L160 25 C164 32 168 46 165 61 C161.1 80.5 144.525 95.775 127.908 103.255"
+                      fill="none" stroke="#ffffff" stroke-width="6.8" stroke-linecap="round" stroke-linejoin="round" filter="url(#fx-relief-seam)"/>
+                  </g>
+                </g>
+              </svg>
+              <div class="sq-variants">
+                <figure class="sq-variant">
+                  <svg width="62" viewBox="0 0 220 220" role="img" aria-label="Square contour, rx 24">
+                    <defs>
+                      <linearGradient id="disc-sq24" x1="35" y1="32" x2="176" y2="190" gradientUnits="userSpaceOnUse">
+                        <stop stop-color="#448aff"/><stop offset=".54" stop-color="#536fe7"/><stop offset="1" stop-color="#7355db"/>
+                      </linearGradient>
+                      <linearGradient id="channel-sq24" x1="35" y1="32" x2="176" y2="190" gradientUnits="userSpaceOnUse">
+                        <stop stop-color="#4082f0"/><stop offset=".54" stop-color="#4e68d9"/><stop offset="1" stop-color="#6c50ce"/>
+                      </linearGradient>
+                      <clipPath id="clip-sq24"><rect x="22" y="22" width="176" height="176" rx="24"/></clipPath>
+                    </defs>
+                    <g clip-path="url(#clip-sq24)">
+                      <rect x="22" y="22" width="176" height="176" rx="24" fill="url(#disc-sq24)" filter="url(#fx-relief-disc)"/>
+                      <rect x="22" y="22" width="176" height="176" rx="24" fill="url(#frost-diffuse)"/>
+                      <rect x="22" y="22" width="176" height="176" rx="24" fill="url(#frost-fog)"/>
+                      <rect x="22" y="22" width="176" height="176" rx="24" fill="none" stroke="url(#rim-light)" stroke-width="0.95" opacity=".42"/>
+                      <g transform="rotate(42 110 110)">
+                        <path d="M127.4 239.9 L108 217 C91 197 62 154 64 133 C66 112 83 105 103 108 C123 111 159 91 165 61 C168 46 164 32 160 25 L145.1 -1" fill="none" stroke="url(#channel-sq24)" stroke-opacity=".8" stroke-width="22.5" stroke-linecap="round" stroke-linejoin="round" filter="url(#fx-relief-channel)"/>
+                        <path d="M127.4 239.9 L108 217 C91 197 62 154 64 133 C66 112 83 105 103 108" fill="none" stroke="#ffffff" stroke-width="6.8" stroke-linecap="round" stroke-linejoin="round" filter="url(#fx-relief-seam)"/>
+                        <path d="M145.1 -1 L160 25 C164 32 168 46 165 61 C161.1 80.5 144.525 95.775 127.908 103.255" fill="none" stroke="#ffffff" stroke-width="6.8" stroke-linecap="round" stroke-linejoin="round" filter="url(#fx-relief-seam)"/>
+                      </g>
+                    </g>
+                  </svg>
+                  <figcaption>rx 24 · 更方</figcaption>
+                </figure>
+                <figure class="sq-variant">
+                  <svg width="62" viewBox="0 0 220 220" role="img" aria-label="Square contour, rx 40">
+                    <defs>
+                      <linearGradient id="disc-sq40" x1="35" y1="32" x2="176" y2="190" gradientUnits="userSpaceOnUse">
+                        <stop stop-color="#448aff"/><stop offset=".54" stop-color="#536fe7"/><stop offset="1" stop-color="#7355db"/>
+                      </linearGradient>
+                      <linearGradient id="channel-sq40" x1="35" y1="32" x2="176" y2="190" gradientUnits="userSpaceOnUse">
+                        <stop stop-color="#4082f0"/><stop offset=".54" stop-color="#4e68d9"/><stop offset="1" stop-color="#6c50ce"/>
+                      </linearGradient>
+                      <clipPath id="clip-sq40"><rect x="22" y="22" width="176" height="176" rx="40"/></clipPath>
+                    </defs>
+                    <g clip-path="url(#clip-sq40)">
+                      <rect x="22" y="22" width="176" height="176" rx="40" fill="url(#disc-sq40)" filter="url(#fx-relief-disc)"/>
+                      <rect x="22" y="22" width="176" height="176" rx="40" fill="url(#frost-diffuse)"/>
+                      <rect x="22" y="22" width="176" height="176" rx="40" fill="url(#frost-fog)"/>
+                      <rect x="22" y="22" width="176" height="176" rx="40" fill="none" stroke="url(#rim-light)" stroke-width="0.95" opacity=".42"/>
+                      <g transform="rotate(42 110 110)">
+                        <path d="M127.4 239.9 L108 217 C91 197 62 154 64 133 C66 112 83 105 103 108 C123 111 159 91 165 61 C168 46 164 32 160 25 L145.1 -1" fill="none" stroke="url(#channel-sq40)" stroke-opacity=".8" stroke-width="22.5" stroke-linecap="round" stroke-linejoin="round" filter="url(#fx-relief-channel)"/>
+                        <path d="M127.4 239.9 L108 217 C91 197 62 154 64 133 C66 112 83 105 103 108" fill="none" stroke="#ffffff" stroke-width="6.8" stroke-linecap="round" stroke-linejoin="round" filter="url(#fx-relief-seam)"/>
+                        <path d="M145.1 -1 L160 25 C164 32 168 46 165 61 C161.1 80.5 144.525 95.775 127.908 103.255" fill="none" stroke="#ffffff" stroke-width="6.8" stroke-linecap="round" stroke-linejoin="round" filter="url(#fx-relief-seam)"/>
+                      </g>
+                    </g>
+                  </svg>
+                  <figcaption>rx 40 · 主推</figcaption>
+                </figure>
+                <figure class="sq-variant">
+                  <svg width="62" viewBox="0 0 220 220" role="img" aria-label="Square contour, rx 88, equals circle">
+                    <defs>
+                      <linearGradient id="disc-sq88" x1="35" y1="32" x2="176" y2="190" gradientUnits="userSpaceOnUse">
+                        <stop stop-color="#448aff"/><stop offset=".54" stop-color="#536fe7"/><stop offset="1" stop-color="#7355db"/>
+                      </linearGradient>
+                      <linearGradient id="channel-sq88" x1="35" y1="32" x2="176" y2="190" gradientUnits="userSpaceOnUse">
+                        <stop stop-color="#4082f0"/><stop offset=".54" stop-color="#4e68d9"/><stop offset="1" stop-color="#6c50ce"/>
+                      </linearGradient>
+                      <clipPath id="clip-sq88"><rect x="22" y="22" width="176" height="176" rx="88"/></clipPath>
+                    </defs>
+                    <g clip-path="url(#clip-sq88)">
+                      <rect x="22" y="22" width="176" height="176" rx="88" fill="url(#disc-sq88)" filter="url(#fx-relief-disc)"/>
+                      <rect x="22" y="22" width="176" height="176" rx="88" fill="url(#frost-diffuse)"/>
+                      <rect x="22" y="22" width="176" height="176" rx="88" fill="url(#frost-fog)"/>
+                      <rect x="22" y="22" width="176" height="176" rx="88" fill="none" stroke="url(#rim-light)" stroke-width="0.95" opacity=".42"/>
+                      <g transform="rotate(42 110 110)">
+                        <path d="M127.4 239.9 L108 217 C91 197 62 154 64 133 C66 112 83 105 103 108 C123 111 159 91 165 61 C168 46 164 32 160 25 L145.1 -1" fill="none" stroke="url(#channel-sq88)" stroke-opacity=".8" stroke-width="22.5" stroke-linecap="round" stroke-linejoin="round" filter="url(#fx-relief-channel)"/>
+                        <path d="M127.4 239.9 L108 217 C91 197 62 154 64 133 C66 112 83 105 103 108" fill="none" stroke="#ffffff" stroke-width="6.8" stroke-linecap="round" stroke-linejoin="round" filter="url(#fx-relief-seam)"/>
+                        <path d="M145.1 -1 L160 25 C164 32 168 46 165 61 C161.1 80.5 144.525 95.775 127.908 103.255" fill="none" stroke="#ffffff" stroke-width="6.8" stroke-linecap="round" stroke-linejoin="round" filter="url(#fx-relief-seam)"/>
+                      </g>
+                    </g>
+                  </svg>
+                  <figcaption>rx 88 · 50% 即正圆</figcaption>
+                </figure>
+              </div>
+            </div>
+          </div>
+          <p class="caption">外廓参数化：正方形底 + 可调圆角，rx ∈ (0, 88]；通道与白线起点不随圆角改动，端头统一由外廓裁切收边。</p>
+        </article>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="section-head">
+        <h2>动效展示</h2>
+        <p>Counterflow / Comet Loading / Full</p>
+      </div>
+
+      <div class="motion-grid">
+        <article class="card motion-card motion-counterflow playing" data-motion-card>
+          <h3>Counterflow</h3>
+          <p class="hint">两段白线从圆周两端同步向中央对冲，最后在中央定格。</p>
+          <div class="motion-stage">
+            <svg class="motion-svg" viewBox="0 0 220 220" role="img" aria-label="Counterflow motion preview">
+              <defs>
+                <linearGradient id="disc-counterflow" x1="35" y1="32" x2="176" y2="190" gradientUnits="userSpaceOnUse">
+                  <stop stop-color="#448aff"/>
+                  <stop offset=".54" stop-color="#536fe7"/>
+                  <stop offset="1" stop-color="#7355db"/>
+                </linearGradient>
+                <linearGradient id="channel-counterflow" x1="35" y1="32" x2="176" y2="190" gradientUnits="userSpaceOnUse">
+                  <stop stop-color="#4082f0"/>
+                  <stop offset=".54" stop-color="#4e68d9"/>
+                  <stop offset="1" stop-color="#6c50ce"/>
+                </linearGradient>
+                <clipPath id="clip-counterflow"><rect class="contour" x="22" y="22" width="176" height="176" rx="88"/></clipPath>
+              </defs>
+              <g clip-path="url(#clip-counterflow)">
+                <g class="nvs-logo">
+                  <rect class="contour class="nvs-disc"" x="22" y="22" width="176" height="176" rx="88" fill="url(#disc-counterflow)" filter="url(#fx-relief-disc)"/>
+                  <rect class="contour" x="22" y="22" width="176" height="176" rx="88" fill="url(#frost-diffuse)"/>
+                  <rect class="contour" x="22" y="22" width="176" height="176" rx="88" fill="url(#frost-fog)"/>
+                  <rect class="contour" x="22" y="22" width="176" height="176" rx="88" fill="none" stroke="url(#rim-light)" stroke-width="0.95" opacity=".42"/>
+                <g transform="rotate(42 110 110)">
+                  <path class="nvs-channel"
+                    d="M127.4 239.9 L108 217 C91 197 62 154 64 133 C66 112 83 105 103 108 C123 111 159 91 165 61 C168 46 164 32 160 25 L145.1 -1"
+                    fill="none" stroke="url(#channel-counterflow)" stroke-opacity=".8" stroke-width="22.5" stroke-linecap="round" stroke-linejoin="round" filter="url(#fx-relief-channel)"/>
+                  <path class="nvs-seam nvs-seam-a"
+                    d="M127.4 239.9 L108 217 C91 197 62 154 64 133 C66 112 83 105 103 108"
+                    fill="none" stroke="#ffffff" stroke-width="6.8" stroke-linecap="round" stroke-linejoin="round" filter="url(#fx-relief-seam)"/>
+                  <path class="nvs-seam nvs-seam-b"
+                    d="M145.1 -1 L160 25 C164 32 168 46 165 61 C161.1 80.5 144.525 95.775 127.908 103.255"
+                    fill="none" stroke="#ffffff" stroke-width="6.8" stroke-linecap="round" stroke-linejoin="round" filter="url(#fx-relief-seam)"/>
+                </g>
+                </g>
+              </g>
+            </svg>
+          </div>
+          <button class="replay" type="button" data-replay>重播</button>
+        </article>
+
+        <article class="card motion-card motion-full playing" data-motion-card>
+          <h3>Full</h3>
+          <p class="hint">完整流程：先以 Counterflow 入场——底盘淡入，两段白线自圆周两端同步向中央对冲；收束完成后自动切入 Comet Loading，彗星头脉冲、粒子沿两条尾迹循环散开。</p>
+          <div class="motion-stage">
+            <svg class="motion-svg" viewBox="0 0 220 220" role="img" aria-label="Full motion preview">
+              <defs>
+                <linearGradient id="disc-full" x1="35" y1="32" x2="176" y2="190" gradientUnits="userSpaceOnUse">
+                  <stop stop-color="#448aff"/>
+                  <stop offset=".54" stop-color="#536fe7"/>
+                  <stop offset="1" stop-color="#7355db"/>
+                </linearGradient>
+                <linearGradient id="channel-full" x1="35" y1="32" x2="176" y2="190" gradientUnits="userSpaceOnUse">
+                  <stop stop-color="#4082f0"/>
+                  <stop offset=".54" stop-color="#4e68d9"/>
+                  <stop offset="1" stop-color="#6c50ce"/>
+                </linearGradient>
+                <clipPath id="clip-full"><rect class="contour" x="22" y="22" width="176" height="176" rx="88"/></clipPath>
+              </defs>
+              <g clip-path="url(#clip-full)">
+                <g class="full-logo">
+                  <rect class="contour class="full-disc"" x="22" y="22" width="176" height="176" rx="88" fill="url(#disc-full)" filter="url(#fx-relief-disc)"/>
+                  <rect class="contour" x="22" y="22" width="176" height="176" rx="88" fill="url(#frost-diffuse)"/>
+                  <rect class="contour" x="22" y="22" width="176" height="176" rx="88" fill="url(#frost-fog)"/>
+                  <rect class="contour" x="22" y="22" width="176" height="176" rx="88" fill="none" stroke="url(#rim-light)" stroke-width="0.95" opacity=".42"/>
+                  <g transform="rotate(42 110 110)">
+                    <path class="full-channel" d="M127.4 239.9 L108 217 C91 197 62 154 64 133 C66 112 83 105 103 108 C123 111 159 91 165 61 C168 46 164 32 160 25 L145.1 -1"
+                      fill="none" stroke="url(#channel-full)" stroke-opacity=".8" stroke-width="22.5" stroke-linecap="round" stroke-linejoin="round" filter="url(#fx-relief-channel)"/>
+                    <path class="full-seam full-seam-a" d="M127.4 239.9 L108 217 C91 197 62 154 64 133 C66 112 83 105 103 108"
+                      fill="none" stroke="#ffffff" stroke-width="6.8" stroke-linecap="round" stroke-linejoin="round" filter="url(#fx-relief-seam)"/>
+                    <path class="full-seam full-seam-b" d="M145.1 -1 L160 25 C164 32 168 46 165 61 C161.1 80.5 144.525 95.775 127.908 103.255"
+                      fill="none" stroke="#ffffff" stroke-width="6.8" stroke-linecap="round" stroke-linejoin="round" filter="url(#fx-relief-seam)"/>
+                  </g>
+                </g>
+              </g>
+            </svg>
+            <svg class="comet-overlay" viewBox="0 0 220 220" aria-hidden="true">
+              <defs>
+                <clipPath id="clip-full-comet"><rect class="contour" x="22" y="22" width="176" height="176" rx="88"/></clipPath>
+              </defs>
+              <g clip-path="url(#clip-full-comet)" transform="rotate(42 110 110)">
+                <path id="full-track-a" d="M127.4 239.9 L108 217 C91 197 62 154 64 133 C66 112 83 105 103 108" fill="none"/>
+                <path id="full-track-b" d="M145.1 -1 L160 25 C164 32 168 46 165 61 C161.1 80.5 144.525 95.775 127.908 103.255" fill="none"/>
+                <circle class="comet-head" cx="103" cy="108" r="4.5"/>
+                <circle class="comet-head" cx="127.908" cy="103.255" r="4.5"/>
+
+                <circle class="comet-particle" cy="-5" r="2" fill-opacity=".9" opacity="0">
+                  <animateMotion data-comet-animation begin="indefinite" dur="2.6s" repeatCount="indefinite" rotate="auto" calcMode="linear" keyPoints="1;.74;.74;1" keyTimes="0;.34;.76;1"><mpath href="#full-track-a"/></animateMotion>
+                  <animate data-comet-animation attributeName="opacity" begin="indefinite" dur="2.6s" repeatCount="indefinite" values="0;.9;0;0" keyTimes="0;.04;.36;1"/>
+                </circle>
+                <circle class="comet-particle" cy="6.5" r="1.55" fill-opacity=".78" opacity="0">
+                  <animateMotion data-comet-animation begin="indefinite" dur="2.6s" repeatCount="indefinite" rotate="auto" calcMode="linear" keyPoints="1;1;.7;.7;1" keyTimes="0;.2;.54;.8;1"><mpath href="#full-track-a"/></animateMotion>
+                  <animate data-comet-animation attributeName="opacity" begin="indefinite" dur="2.6s" repeatCount="indefinite" values="0;0;.82;0;0" keyTimes="0;.2;.24;.56;1"/>
+                </circle>
+                <circle class="comet-particle" cy="-8" r="1.2" fill-opacity=".68" opacity="0">
+                  <animateMotion data-comet-animation begin="indefinite" dur="2.6s" repeatCount="indefinite" rotate="auto" calcMode="linear" keyPoints="1;1;.66;.66;1" keyTimes="0;.4;.74;.84;1"><mpath href="#full-track-a"/></animateMotion>
+                  <animate data-comet-animation attributeName="opacity" begin="indefinite" dur="2.6s" repeatCount="indefinite" values="0;0;.74;0;0" keyTimes="0;.4;.44;.76;1"/>
+                </circle>
+                <circle class="comet-particle" cy="5" r=".9" fill-opacity=".58" opacity="0">
+                  <animateMotion data-comet-animation begin="indefinite" dur="2.6s" repeatCount="indefinite" rotate="auto" calcMode="linear" keyPoints="1;1;.62;.62;1" keyTimes="0;.6;.94;.97;1"><mpath href="#full-track-a"/></animateMotion>
+                  <animate data-comet-animation attributeName="opacity" begin="indefinite" dur="2.6s" repeatCount="indefinite" values="0;0;.66;0;0" keyTimes="0;.6;.64;.96;1"/>
+                </circle>
+
+                <circle class="comet-particle" cy="5" r="2" fill-opacity=".9" opacity="0">
+                  <animateMotion data-comet-animation begin="indefinite" dur="2.6s" repeatCount="indefinite" rotate="auto" calcMode="linear" keyPoints="1;.74;.74;1" keyTimes="0;.34;.76;1"><mpath href="#full-track-b"/></animateMotion>
+                  <animate data-comet-animation attributeName="opacity" begin="indefinite" dur="2.6s" repeatCount="indefinite" values="0;.9;0;0" keyTimes="0;.04;.36;1"/>
+                </circle>
+                <circle class="comet-particle" cy="-6.5" r="1.55" fill-opacity=".78" opacity="0">
+                  <animateMotion data-comet-animation begin="indefinite" dur="2.6s" repeatCount="indefinite" rotate="auto" calcMode="linear" keyPoints="1;1;.7;.7;1" keyTimes="0;.2;.54;.8;1"><mpath href="#full-track-b"/></animateMotion>
+                  <animate data-comet-animation attributeName="opacity" begin="indefinite" dur="2.6s" repeatCount="indefinite" values="0;0;.82;0;0" keyTimes="0;.2;.24;.56;1"/>
+                </circle>
+                <circle class="comet-particle" cy="8" r="1.2" fill-opacity=".68" opacity="0">
+                  <animateMotion data-comet-animation begin="indefinite" dur="2.6s" repeatCount="indefinite" rotate="auto" calcMode="linear" keyPoints="1;1;.66;.66;1" keyTimes="0;.4;.74;.84;1"><mpath href="#full-track-b"/></animateMotion>
+                  <animate data-comet-animation attributeName="opacity" begin="indefinite" dur="2.6s" repeatCount="indefinite" values="0;0;.74;0;0" keyTimes="0;.4;.44;.76;1"/>
+                </circle>
+                <circle class="comet-particle" cy="-5" r=".9" fill-opacity=".58" opacity="0">
+                  <animateMotion data-comet-animation begin="indefinite" dur="2.6s" repeatCount="indefinite" rotate="auto" calcMode="linear" keyPoints="1;1;.62;.62;1" keyTimes="0;.6;.94;.97;1"><mpath href="#full-track-b"/></animateMotion>
+                  <animate data-comet-animation attributeName="opacity" begin="indefinite" dur="2.6s" repeatCount="indefinite" values="0;0;.66;0;0" keyTimes="0;.6;.64;.96;1"/>
+                </circle>
+              </g>
+            </svg>
+          </div>
+          <button class="replay" type="button" data-replay>重播</button>
+        </article>
+
+        <article class="card motion-card motion-idle playing" data-motion-card>
+          <h3>Comet Loading</h3>
+          <p class="hint">两端白线固定为“彗星头”表现，粒子沿两条尾部循环散开。</p>
+          <div class="motion-stage">
+            <svg class="motion-svg" viewBox="0 0 220 220" role="img" aria-label="Comet loading motion preview">
+              <defs>
+                <linearGradient id="disc-comet" x1="35" y1="32" x2="176" y2="190" gradientUnits="userSpaceOnUse">
+                  <stop stop-color="#448aff"/>
+                  <stop offset=".54" stop-color="#536fe7"/>
+                  <stop offset="1" stop-color="#7355db"/>
+                </linearGradient>
+                <linearGradient id="channel-comet" x1="35" y1="32" x2="176" y2="190" gradientUnits="userSpaceOnUse">
+                  <stop stop-color="#4082f0"/>
+                  <stop offset=".54" stop-color="#4e68d9"/>
+                  <stop offset="1" stop-color="#6c50ce"/>
+                </linearGradient>
+                <clipPath id="clip-comet"><rect class="contour" x="22" y="22" width="176" height="176" rx="88"/></clipPath>
+              </defs>
+              <g clip-path="url(#clip-comet)">
+                <rect class="contour class="nvs-disc"" x="22" y="22" width="176" height="176" rx="88" fill="url(#disc-comet)" filter="url(#fx-relief-disc)"/>
+                <rect class="contour" x="22" y="22" width="176" height="176" rx="88" fill="url(#frost-diffuse)"/>
+                <rect class="contour" x="22" y="22" width="176" height="176" rx="88" fill="url(#frost-fog)"/>
+                <rect class="contour" x="22" y="22" width="176" height="176" rx="88" fill="none" stroke="url(#rim-light)" stroke-width="0.95" opacity=".42"/>
+                <g transform="rotate(42 110 110)">
+                  <path d="M127.4 239.9 L108 217 C91 197 62 154 64 133 C66 112 83 105 103 108 C123 111 159 91 165 61 C168 46 164 32 160 25 L145.1 -1" fill="none" stroke="url(#channel-comet)" stroke-opacity=".8" stroke-width="22.5" stroke-linecap="round" stroke-linejoin="round" filter="url(#fx-relief-channel)"/>
+                  <path d="M127.4 239.9 L108 217 C91 197 62 154 64 133 C66 112 83 105 103 108" fill="none" stroke="#ffffff" stroke-width="6.8" stroke-linecap="round" stroke-linejoin="round" filter="url(#fx-relief-seam)"/>
+                  <path d="M145.1 -1 L160 25 C164 32 168 46 165 61 C161.1 80.5 144.525 95.775 127.908 103.255" fill="none" stroke="#ffffff" stroke-width="6.8" stroke-linecap="round" stroke-linejoin="round" filter="url(#fx-relief-seam)"/>
+                </g>
+              </g>
+            </svg>
+            <svg class="comet-overlay" viewBox="0 0 220 220" aria-hidden="true">
+              <defs>
+                <clipPath id="clip-idle-comet"><rect class="contour" x="22" y="22" width="176" height="176" rx="88"/></clipPath>
+              </defs>
+              <g clip-path="url(#clip-idle-comet)" transform="rotate(42 110 110)">
+                <path id="idle-track-a" d="M127.4 239.9 L108 217 C91 197 62 154 64 133 C66 112 83 105 103 108" fill="none"/>
+                <path id="idle-track-b" d="M145.1 -1 L160 25 C164 32 168 46 165 61 C161.1 80.5 144.525 95.775 127.908 103.255" fill="none"/>
+                <circle class="comet-head" cx="103" cy="108" r="4.5"/>
+                <circle class="comet-head" cx="127.908" cy="103.255" r="4.5"/>
+
+                <circle class="comet-particle" cy="-5" r="2" fill-opacity=".9" opacity="0">
+                  <animateMotion data-comet-animation begin="indefinite" dur="2.6s" repeatCount="indefinite" rotate="auto" calcMode="linear" keyPoints="1;.74;.74;1" keyTimes="0;.34;.76;1"><mpath href="#idle-track-a"/></animateMotion>
+                  <animate data-comet-animation attributeName="opacity" begin="indefinite" dur="2.6s" repeatCount="indefinite" values="0;.9;0;0" keyTimes="0;.04;.36;1"/>
+                </circle>
+                <circle class="comet-particle" cy="6.5" r="1.55" fill-opacity=".78" opacity="0">
+                  <animateMotion data-comet-animation begin="indefinite" dur="2.6s" repeatCount="indefinite" rotate="auto" calcMode="linear" keyPoints="1;1;.7;.7;1" keyTimes="0;.2;.54;.8;1"><mpath href="#idle-track-a"/></animateMotion>
+                  <animate data-comet-animation attributeName="opacity" begin="indefinite" dur="2.6s" repeatCount="indefinite" values="0;0;.82;0;0" keyTimes="0;.2;.24;.56;1"/>
+                </circle>
+                <circle class="comet-particle" cy="-8" r="1.2" fill-opacity=".68" opacity="0">
+                  <animateMotion data-comet-animation begin="indefinite" dur="2.6s" repeatCount="indefinite" rotate="auto" calcMode="linear" keyPoints="1;1;.66;.66;1" keyTimes="0;.4;.74;.84;1"><mpath href="#idle-track-a"/></animateMotion>
+                  <animate data-comet-animation attributeName="opacity" begin="indefinite" dur="2.6s" repeatCount="indefinite" values="0;0;.74;0;0" keyTimes="0;.4;.44;.76;1"/>
+                </circle>
+                <circle class="comet-particle" cy="5" r=".9" fill-opacity=".58" opacity="0">
+                  <animateMotion data-comet-animation begin="indefinite" dur="2.6s" repeatCount="indefinite" rotate="auto" calcMode="linear" keyPoints="1;1;.62;.62;1" keyTimes="0;.6;.94;.97;1"><mpath href="#idle-track-a"/></animateMotion>
+                  <animate data-comet-animation attributeName="opacity" begin="indefinite" dur="2.6s" repeatCount="indefinite" values="0;0;.66;0;0" keyTimes="0;.6;.64;.96;1"/>
+                </circle>
+
+                <circle class="comet-particle" cy="5" r="2" fill-opacity=".9" opacity="0">
+                  <animateMotion data-comet-animation begin="indefinite" dur="2.6s" repeatCount="indefinite" rotate="auto" calcMode="linear" keyPoints="1;.74;.74;1" keyTimes="0;.34;.76;1"><mpath href="#idle-track-b"/></animateMotion>
+                  <animate data-comet-animation attributeName="opacity" begin="indefinite" dur="2.6s" repeatCount="indefinite" values="0;.9;0;0" keyTimes="0;.04;.36;1"/>
+                </circle>
+                <circle class="comet-particle" cy="-6.5" r="1.55" fill-opacity=".78" opacity="0">
+                  <animateMotion data-comet-animation begin="indefinite" dur="2.6s" repeatCount="indefinite" rotate="auto" calcMode="linear" keyPoints="1;1;.7;.7;1" keyTimes="0;.2;.54;.8;1"><mpath href="#idle-track-b"/></animateMotion>
+                  <animate data-comet-animation attributeName="opacity" begin="indefinite" dur="2.6s" repeatCount="indefinite" values="0;0;.82;0;0" keyTimes="0;.2;.24;.56;1"/>
+                </circle>
+                <circle class="comet-particle" cy="8" r="1.2" fill-opacity=".68" opacity="0">
+                  <animateMotion data-comet-animation begin="indefinite" dur="2.6s" repeatCount="indefinite" rotate="auto" calcMode="linear" keyPoints="1;1;.66;.66;1" keyTimes="0;.4;.74;.84;1"><mpath href="#idle-track-b"/></animateMotion>
+                  <animate data-comet-animation attributeName="opacity" begin="indefinite" dur="2.6s" repeatCount="indefinite" values="0;0;.74;0;0" keyTimes="0;.4;.44;.76;1"/>
+                </circle>
+                <circle class="comet-particle" cy="-5" r=".9" fill-opacity=".58" opacity="0">
+                  <animateMotion data-comet-animation begin="indefinite" dur="2.6s" repeatCount="indefinite" rotate="auto" calcMode="linear" keyPoints="1;1;.62;.62;1" keyTimes="0;.6;.94;.97;1"><mpath href="#idle-track-b"/></animateMotion>
+                  <animate data-comet-animation attributeName="opacity" begin="indefinite" dur="2.6s" repeatCount="indefinite" values="0;0;.66;0;0" keyTimes="0;.6;.64;.96;1"/>
+                </circle>
+              </g>
+            </svg>
+          </div>
+          <button class="replay" type="button" data-replay>重播</button>
+        </article>
+
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="section-head">
+        <h2>场景落地</h2>
+        <p>手机桌面 / PC 托盘 / PC 桌面 / New Tab / 深浅底承载</p>
+      </div>
+      <div class="two-col">
+        <article class="card">
+          <h3>界面场景</h3>
+          <div class="stage dark">
+            <svg class="logo-box" viewBox="0 0 220 220" role="img" aria-label="Navis logo on dark">
+              <defs>
+                <linearGradient id="disc-scene-dark" x1="35" y1="32" x2="176" y2="190" gradientUnits="userSpaceOnUse">
+                  <stop stop-color="#448aff"/>
+                  <stop offset=".54" stop-color="#536fe7"/>
+                  <stop offset="1" stop-color="#7355db"/>
+                </linearGradient>
+                <linearGradient id="channel-scene-dark" x1="35" y1="32" x2="176" y2="190" gradientUnits="userSpaceOnUse">
+                  <stop stop-color="#4082f0"/>
+                  <stop offset=".54" stop-color="#4e68d9"/>
+                  <stop offset="1" stop-color="#6c50ce"/>
+                </linearGradient>
+                <clipPath id="clip-scene-dark"><rect class="contour" x="22" y="22" width="176" height="176" rx="88"/></clipPath>
+              </defs>
+              <g clip-path="url(#clip-scene-dark)">
+                <rect class="contour" x="22" y="22" width="176" height="176" rx="88" fill="url(#disc-scene-dark)" filter="url(#fx-relief-disc)"/>
+                <rect class="contour" x="22" y="22" width="176" height="176" rx="88" fill="url(#frost-diffuse)"/>
+                <rect class="contour" x="22" y="22" width="176" height="176" rx="88" fill="url(#frost-fog)"/>
+                <rect class="contour" x="22" y="22" width="176" height="176" rx="88" fill="none" stroke="url(#rim-light)" stroke-width="0.95" opacity=".42"/>
+                <g transform="rotate(42 110 110)">
+                  <path d="M127.4 239.9 L108 217 C91 197 62 154 64 133 C66 112 83 105 103 108 C123 111 159 91 165 61 C168 46 164 32 160 25 L145.1 -1"
+                    fill="none"
+                    stroke="url(#channel-scene-dark)"
+                    stroke-opacity=".8"
+                    stroke-width="22.5"
+                    stroke-linecap="round"
+                    stroke-linejoin="round" filter="url(#fx-relief-channel)"/>
+                  <path d="M127.4 239.9 L108 217 C91 197 62 154 64 133 C66 112 83 105 103 108"
+                    fill="none"
+                    stroke="#ffffff"
+                    stroke-width="6.8"
+                    stroke-linecap="round"
+                    stroke-linejoin="round" filter="url(#fx-relief-seam)"/>
+                  <path d="M145.1 -1 L160 25 C164 32 168 46 165 61 C161.1 80.5 144.525 95.775 127.908 103.255"
+                    fill="none"
+                    stroke="#ffffff"
+                    stroke-width="6.8"
+                    stroke-linecap="round"
+                    stroke-linejoin="round" filter="url(#fx-relief-seam)"/>
+                </g>
+              </g>
+            </svg>
+          </div>
+          <p class="caption">适配深色界面；路径不透明度和粗细与基础标识一致。</p>
+        </article>
+
+        <article class="card">
+          <h3>文本/卡片场景</h3>
+          <div class="stage">
+            <svg class="logo-box" viewBox="0 0 220 220" role="img" aria-label="Navis logo on paper">
+              <defs>
+                <linearGradient id="disc-paper" x1="35" y1="32" x2="176" y2="190" gradientUnits="userSpaceOnUse">
+                  <stop stop-color="#448aff"/>
+                  <stop offset=".54" stop-color="#536fe7"/>
+                  <stop offset="1" stop-color="#7355db"/>
+                </linearGradient>
+                <linearGradient id="channel-paper" x1="35" y1="32" x2="176" y2="190" gradientUnits="userSpaceOnUse">
+                  <stop stop-color="#4082f0"/>
+                  <stop offset=".54" stop-color="#4e68d9"/>
+                  <stop offset="1" stop-color="#6c50ce"/>
+                </linearGradient>
+                <clipPath id="clip-paper"><rect class="contour" x="22" y="22" width="176" height="176" rx="88"/></clipPath>
+              </defs>
+              <g clip-path="url(#clip-paper)">
+                <rect class="contour" x="22" y="22" width="176" height="176" rx="88" fill="url(#disc-paper)" filter="url(#fx-relief-disc)"/>
+                <rect class="contour" x="22" y="22" width="176" height="176" rx="88" fill="url(#frost-diffuse)"/>
+                <rect class="contour" x="22" y="22" width="176" height="176" rx="88" fill="url(#frost-fog)"/>
+                <rect class="contour" x="22" y="22" width="176" height="176" rx="88" fill="none" stroke="url(#rim-light)" stroke-width="0.95" opacity=".42"/>
+                <g transform="rotate(42 110 110)">
+                  <path d="M127.4 239.9 L108 217 C91 197 62 154 64 133 C66 112 83 105 103 108 C123 111 159 91 165 61 C168 46 164 32 160 25 L145.1 -1"
+                    fill="none"
+                    stroke="url(#channel-paper)"
+                    stroke-opacity=".8"
+                    stroke-width="22.5"
+                    stroke-linecap="round"
+                    stroke-linejoin="round" filter="url(#fx-relief-channel)"/>
+                  <path d="M127.4 239.9 L108 217 C91 197 62 154 64 133 C66 112 83 105 103 108"
+                    fill="none"
+                    stroke="#ffffff"
+                    stroke-width="6.8"
+                    stroke-linecap="round"
+                    stroke-linejoin="round" filter="url(#fx-relief-seam)"/>
+                  <path d="M145.1 -1 L160 25 C164 32 168 46 165 61 C161.1 80.5 144.525 95.775 127.908 103.255"
+                    fill="none"
+                    stroke="#ffffff"
+                    stroke-width="6.8"
+                    stroke-linecap="round"
+                    stroke-linejoin="round" filter="url(#fx-relief-seam)"/>
+                </g>
+              </g>
+            </svg>
+          </div>
+          <p class="caption">适配浅色面板；高对比白缝线保持清晰。</p>
+        </article>
+
+        <article class="card">
+          <h3>手机桌面</h3>
+          <p class="hint">应用图标形态：圆角容器承载标志，参与桌面图标网格，下方带名称标签。</p>
+          <div class="stage phone">
+            <div class="app-row">
+              <div class="app-tile"><div class="tile"></div></div>
+              <div class="app-tile"><div class="tile"></div></div>
+              <div class="app-tile">
+                <div class="tile">
+                  <svg width="40" viewBox="0 0 220 220" role="img" aria-label="Navis app icon on phone home screen">
+                    <defs>
+                      <linearGradient id="disc-home" x1="35" y1="32" x2="176" y2="190" gradientUnits="userSpaceOnUse">
+                        <stop stop-color="#448aff"/><stop offset=".54" stop-color="#536fe7"/><stop offset="1" stop-color="#7355db"/>
+                      </linearGradient>
+                      <linearGradient id="channel-home" x1="35" y1="32" x2="176" y2="190" gradientUnits="userSpaceOnUse">
+                        <stop stop-color="#4082f0"/><stop offset=".54" stop-color="#4e68d9"/><stop offset="1" stop-color="#6c50ce"/>
+                      </linearGradient>
+                      <clipPath id="clip-home"><rect class="contour" x="22" y="22" width="176" height="176" rx="40"/></clipPath>
+                    </defs>
+                    <g clip-path="url(#clip-home)">
+                      <rect class="contour" x="22" y="22" width="176" height="176" rx="40" fill="url(#disc-home)" filter="url(#fx-relief-disc)"/>
+                      <rect class="contour" x="22" y="22" width="176" height="176" rx="40" fill="url(#frost-diffuse)"/>
+                      <rect class="contour" x="22" y="22" width="176" height="176" rx="40" fill="url(#frost-fog)"/>
+                      <rect class="contour" x="22" y="22" width="176" height="176" rx="40" fill="none" stroke="url(#rim-light)" stroke-width="0.95" opacity=".42"/>
+                      <g transform="rotate(42 110 110)">
+                        <path d="M127.4 239.9 L108 217 C91 197 62 154 64 133 C66 112 83 105 103 108 C123 111 159 91 165 61 C168 46 164 32 160 25 L145.1 -1" fill="none" stroke="url(#channel-home)" stroke-opacity=".8" stroke-width="22.5" stroke-linecap="round" stroke-linejoin="round" filter="url(#fx-relief-channel)"/>
+                        <path d="M127.4 239.9 L108 217 C91 197 62 154 64 133 C66 112 83 105 103 108" fill="none" stroke="#ffffff" stroke-width="6.8" stroke-linecap="round" stroke-linejoin="round" filter="url(#fx-relief-seam)"/>
+                        <path d="M145.1 -1 L160 25 C164 32 168 46 165 61 C161.1 80.5 144.525 95.775 127.908 103.255" fill="none" stroke="#ffffff" stroke-width="6.8" stroke-linecap="round" stroke-linejoin="round" filter="url(#fx-relief-seam)"/>
+                      </g>
+                    </g>
+                  </svg>
+                </div>
+                <span class="app-label">Navis</span>
+              </div>
+              <div class="app-tile"><div class="tile"></div></div>
+              <div class="app-tile"><div class="tile"></div></div>
+            </div>
+          </div>
+          <p class="caption">深色壁纸下的应用图标：正圆标志置于圆角容器内，标签保证首次识别。</p>
+        </article>
+
+        <article class="card">
+          <h3>PC 托盘</h3>
+          <p class="hint">托盘常驻形态：16px 极小尺寸下与相邻系统图标并排的可辨识度。</p>
+          <div class="stage tray">
+            <div class="tray-bar">
+              <span class="tray-glyph"></span>
+              <span class="tray-glyph"></span>
+              <svg width="16" viewBox="0 0 220 220" role="img" aria-label="Navis tray icon">
+                <defs>
+                  <linearGradient id="disc-tray" x1="35" y1="32" x2="176" y2="190" gradientUnits="userSpaceOnUse">
+                    <stop stop-color="#448aff"/><stop offset=".54" stop-color="#536fe7"/><stop offset="1" stop-color="#7355db"/>
+                  </linearGradient>
+                  <linearGradient id="channel-tray" x1="35" y1="32" x2="176" y2="190" gradientUnits="userSpaceOnUse">
+                    <stop stop-color="#4082f0"/><stop offset=".54" stop-color="#4e68d9"/><stop offset="1" stop-color="#6c50ce"/>
+                  </linearGradient>
+                  <clipPath id="clip-tray"><rect class="contour" x="22" y="22" width="176" height="176" rx="24"/></clipPath>
+                </defs>
+                <g clip-path="url(#clip-tray)">
+                  <rect class="contour" x="22" y="22" width="176" height="176" rx="24" fill="url(#disc-tray)" filter="url(#fx-relief-disc)"/>
+                  <rect class="contour" x="22" y="22" width="176" height="176" rx="24" fill="url(#frost-diffuse)"/>
+                  <rect class="contour" x="22" y="22" width="176" height="176" rx="24" fill="url(#frost-fog)"/>
+                  <rect class="contour" x="22" y="22" width="176" height="176" rx="24" fill="none" stroke="url(#rim-light)" stroke-width="0.95" opacity=".42"/>
+                  <g transform="rotate(42 110 110)">
+                    <path d="M127.4 239.9 L108 217 C91 197 62 154 64 133 C66 112 83 105 103 108 C123 111 159 91 165 61 C168 46 164 32 160 25 L145.1 -1" fill="none" stroke="url(#channel-tray)" stroke-opacity=".8" stroke-width="22.5" stroke-linecap="round" stroke-linejoin="round" filter="url(#fx-relief-channel)"/>
+                    <path d="M127.4 239.9 L108 217 C91 197 62 154 64 133 C66 112 83 105 103 108" fill="none" stroke="#ffffff" stroke-width="6.8" stroke-linecap="round" stroke-linejoin="round" filter="url(#fx-relief-seam)"/>
+                    <path d="M145.1 -1 L160 25 C164 32 168 46 165 61 C161.1 80.5 144.525 95.775 127.908 103.255" fill="none" stroke="#ffffff" stroke-width="6.8" stroke-linecap="round" stroke-linejoin="round" filter="url(#fx-relief-seam)"/>
+                  </g>
+                </g>
+              </svg>
+              <span class="tray-glyph"></span>
+              <div class="tray-clock">21:37<br>2026/09/06</div>
+            </div>
+          </div>
+          <p class="caption">任务栏托盘：16px 时白色内线仍可辨，作为常驻入口保持低调。</p>
+        </article>
+
+        <article class="card">
+          <h3>PC 桌面</h3>
+          <p class="hint">桌面快捷方式形态：图标 + 文本标签，展示与系统选中态的组合。</p>
+          <div class="stage desk">
+            <div class="desk-icons">
+              <div class="desk-icon selected">
+                <svg width="46" viewBox="0 0 220 220" role="img" aria-label="Navis desktop shortcut icon">
+                  <defs>
+                    <linearGradient id="disc-desk" x1="35" y1="32" x2="176" y2="190" gradientUnits="userSpaceOnUse">
+                      <stop stop-color="#448aff"/><stop offset=".54" stop-color="#536fe7"/><stop offset="1" stop-color="#7355db"/>
+                    </linearGradient>
+                    <linearGradient id="channel-desk" x1="35" y1="32" x2="176" y2="190" gradientUnits="userSpaceOnUse">
+                      <stop stop-color="#4082f0"/><stop offset=".54" stop-color="#4e68d9"/><stop offset="1" stop-color="#6c50ce"/>
+                    </linearGradient>
+                    <clipPath id="clip-desk"><rect class="contour" x="22" y="22" width="176" height="176" rx="40"/></clipPath>
+                  </defs>
+                  <g clip-path="url(#clip-desk)">
+                    <rect class="contour" x="22" y="22" width="176" height="176" rx="40" fill="url(#disc-desk)" filter="url(#fx-relief-disc)"/>
+                    <rect class="contour" x="22" y="22" width="176" height="176" rx="40" fill="url(#frost-diffuse)"/>
+                    <rect class="contour" x="22" y="22" width="176" height="176" rx="40" fill="url(#frost-fog)"/>
+                    <rect class="contour" x="22" y="22" width="176" height="176" rx="40" fill="none" stroke="url(#rim-light)" stroke-width="0.95" opacity=".42"/>
+                    <g transform="rotate(42 110 110)">
+                      <path d="M127.4 239.9 L108 217 C91 197 62 154 64 133 C66 112 83 105 103 108 C123 111 159 91 165 61 C168 46 164 32 160 25 L145.1 -1" fill="none" stroke="url(#channel-desk)" stroke-opacity=".8" stroke-width="22.5" stroke-linecap="round" stroke-linejoin="round" filter="url(#fx-relief-channel)"/>
+                      <path d="M127.4 239.9 L108 217 C91 197 62 154 64 133 C66 112 83 105 103 108" fill="none" stroke="#ffffff" stroke-width="6.8" stroke-linecap="round" stroke-linejoin="round" filter="url(#fx-relief-seam)"/>
+                      <path d="M145.1 -1 L160 25 C164 32 168 46 165 61 C161.1 80.5 144.525 95.775 127.908 103.255" fill="none" stroke="#ffffff" stroke-width="6.8" stroke-linecap="round" stroke-linejoin="round" filter="url(#fx-relief-seam)"/>
+                    </g>
+                  </g>
+                </svg>
+                <span class="desk-label">Navis</span>
+              </div>
+              <div class="desk-icon">
+                <div class="desk-ph"></div>
+                <span class="desk-label">README.txt</span>
+              </div>
+            </div>
+          </div>
+          <p class="caption">桌面图标 46px：选中态使用品牌蓝高亮，白线细节保持清晰。</p>
+        </article>
+
+        <article class="card">
+          <h3>浏览器 New Tab</h3>
+          <p class="hint">新标签页形态：居中标志 + 搜索框 + 常用入口，作为品牌气氛层。</p>
+          <div class="stage newtab">
+            <div class="nt-box">
+              <svg width="88" viewBox="0 0 220 220" role="img" aria-label="Navis logo on new tab page">
+                <defs>
+                  <linearGradient id="disc-newtab" x1="35" y1="32" x2="176" y2="190" gradientUnits="userSpaceOnUse">
+                    <stop stop-color="#448aff"/><stop offset=".54" stop-color="#536fe7"/><stop offset="1" stop-color="#7355db"/>
+                  </linearGradient>
+                  <linearGradient id="channel-newtab" x1="35" y1="32" x2="176" y2="190" gradientUnits="userSpaceOnUse">
+                    <stop stop-color="#4082f0"/><stop offset=".54" stop-color="#4e68d9"/><stop offset="1" stop-color="#6c50ce"/>
+                  </linearGradient>
+                  <clipPath id="clip-newtab"><rect class="contour" x="22" y="22" width="176" height="176" rx="88"/></clipPath>
+                </defs>
+                <g clip-path="url(#clip-newtab)">
+                  <rect class="contour" x="22" y="22" width="176" height="176" rx="88" fill="url(#disc-newtab)" filter="url(#fx-relief-disc)"/>
+                  <rect class="contour" x="22" y="22" width="176" height="176" rx="88" fill="url(#frost-diffuse)"/>
+                  <rect class="contour" x="22" y="22" width="176" height="176" rx="88" fill="url(#frost-fog)"/>
+                  <rect class="contour" x="22" y="22" width="176" height="176" rx="88" fill="none" stroke="url(#rim-light)" stroke-width="0.95" opacity=".42"/>
+                  <g transform="rotate(42 110 110)">
+                    <path d="M127.4 239.9 L108 217 C91 197 62 154 64 133 C66 112 83 105 103 108 C123 111 159 91 165 61 C168 46 164 32 160 25 L145.1 -1" fill="none" stroke="url(#channel-newtab)" stroke-opacity=".8" stroke-width="22.5" stroke-linecap="round" stroke-linejoin="round" filter="url(#fx-relief-channel)"/>
+                    <path d="M127.4 239.9 L108 217 C91 197 62 154 64 133 C66 112 83 105 103 108" fill="none" stroke="#ffffff" stroke-width="6.8" stroke-linecap="round" stroke-linejoin="round" filter="url(#fx-relief-seam)"/>
+                    <path d="M145.1 -1 L160 25 C164 32 168 46 165 61 C161.1 80.5 144.525 95.775 127.908 103.255" fill="none" stroke="#ffffff" stroke-width="6.8" stroke-linecap="round" stroke-linejoin="round" filter="url(#fx-relief-seam)"/>
+                  </g>
+                </g>
+              </svg>
+              <div class="nt-search"><span class="lens"></span>搜索或输入网址</div>
+              <div class="nt-shortcuts">
+                <span class="nt-shortcut">N</span>
+                <span class="nt-shortcut">M</span>
+                <span class="nt-shortcut">G</span>
+                <span class="nt-shortcut">D</span>
+              </div>
+            </div>
+          </div>
+          <p class="caption">浅色 New Tab：88px 居中展示，与搜索框、快捷入口保持一致呼吸空间。</p>
+        </article>
+      </div>
+    </section>
+
+    <section class="section">
+      <div class="section-head">
+        <h2>比例与规格</h2>
+        <p>常用场景尺寸抽样</p>
+      </div>
+      <div class="card">
+        <div class="label-list">
+          <span class="chip">16px</span>
+          <span class="chip">24px</span>
+          <span class="chip">32px</span>
+          <span class="chip">48px</span>
+          <span class="chip">64px</span>
+          <span class="chip">96px</span>
+          <span class="chip">128px</span>
+        </div>
+
+        <div class="size-row">
+          <div class="size-box">
+            <span>16</span>
+            <svg class="logo-box" width="16" viewBox="0 0 220 220" role="img" aria-label="Navis icon 16">
+              <defs>
+                <linearGradient id="disc-s16" x1="35" y1="32" x2="176" y2="190" gradientUnits="userSpaceOnUse">
+                  <stop stop-color="#448aff"/><stop offset=".54" stop-color="#536fe7"/><stop offset="1" stop-color="#7355db"/>
+                </linearGradient>
+                <linearGradient id="channel-s16" x1="35" y1="32" x2="176" y2="190" gradientUnits="userSpaceOnUse">
+                  <stop stop-color="#4082f0"/><stop offset=".54" stop-color="#4e68d9"/><stop offset="1" stop-color="#6c50ce"/>
+                </linearGradient>
+                <clipPath id="clip-s16"><rect class="contour" x="22" y="22" width="176" height="176" rx="88"/></clipPath>
+              </defs>
+              <g clip-path="url(#clip-s16)">
+                <rect class="contour" x="22" y="22" width="176" height="176" rx="88" fill="url(#disc-s16)" filter="url(#fx-relief-disc)"/>
+                <rect class="contour" x="22" y="22" width="176" height="176" rx="88" fill="url(#frost-diffuse)"/>
+                <rect class="contour" x="22" y="22" width="176" height="176" rx="88" fill="url(#frost-fog)"/>
+                <rect class="contour" x="22" y="22" width="176" height="176" rx="88" fill="none" stroke="url(#rim-light)" stroke-width="0.95" opacity=".42"/>
+                <g transform="rotate(42 110 110)">
+                  <path d="M127.4 239.9 L108 217 C91 197 62 154 64 133 C66 112 83 105 103 108 C123 111 159 91 165 61 C168 46 164 32 160 25 L145.1 -1" fill="none" stroke="url(#channel-s16)" stroke-opacity=".8" stroke-width="22.5" stroke-linecap="round" stroke-linejoin="round" filter="url(#fx-relief-channel)"/>
+                  <path d="M127.4 239.9 L108 217 C91 197 62 154 64 133 C66 112 83 105 103 108" fill="none" stroke="#ffffff" stroke-width="6.8" stroke-linecap="round" stroke-linejoin="round" filter="url(#fx-relief-seam)"/>
+                  <path d="M145.1 -1 L160 25 C164 32 168 46 165 61 C161.1 80.5 144.525 95.775 127.908 103.255" fill="none" stroke="#ffffff" stroke-width="6.8" stroke-linecap="round" stroke-linejoin="round" filter="url(#fx-relief-seam)"/>
+                </g>
+              </g>
+            </svg>
+          </div>
+
+          <div class="size-box">
+            <span>24</span>
+            <svg class="logo-box" width="24" viewBox="0 0 220 220" role="img" aria-label="Navis icon 24">
+              <defs>
+                <linearGradient id="disc-s24" x1="35" y1="32" x2="176" y2="190" gradientUnits="userSpaceOnUse">
+                  <stop stop-color="#448aff"/><stop offset=".54" stop-color="#536fe7"/><stop offset="1" stop-color="#7355db"/>
+                </linearGradient>
+                <linearGradient id="channel-s24" x1="35" y1="32" x2="176" y2="190" gradientUnits="userSpaceOnUse">
+                  <stop stop-color="#4082f0"/><stop offset=".54" stop-color="#4e68d9"/><stop offset="1" stop-color="#6c50ce"/>
+                </linearGradient>
+                <clipPath id="clip-s24"><rect class="contour" x="22" y="22" width="176" height="176" rx="88"/></clipPath>
+              </defs>
+              <g clip-path="url(#clip-s24)">
+                <rect class="contour" x="22" y="22" width="176" height="176" rx="88" fill="url(#disc-s24)" filter="url(#fx-relief-disc)"/>
+                <rect class="contour" x="22" y="22" width="176" height="176" rx="88" fill="url(#frost-diffuse)"/>
+                <rect class="contour" x="22" y="22" width="176" height="176" rx="88" fill="url(#frost-fog)"/>
+                <rect class="contour" x="22" y="22" width="176" height="176" rx="88" fill="none" stroke="url(#rim-light)" stroke-width="0.95" opacity=".42"/>
+                <g transform="rotate(42 110 110)">
+                  <path d="M127.4 239.9 L108 217 C91 197 62 154 64 133 C66 112 83 105 103 108 C123 111 159 91 165 61 C168 46 164 32 160 25 L145.1 -1" fill="none" stroke="url(#channel-s24)" stroke-opacity=".8" stroke-width="22.5" stroke-linecap="round" stroke-linejoin="round" filter="url(#fx-relief-channel)"/>
+                  <path d="M127.4 239.9 L108 217 C91 197 62 154 64 133 C66 112 83 105 103 108" fill="none" stroke="#ffffff" stroke-width="6.8" stroke-linecap="round" stroke-linejoin="round" filter="url(#fx-relief-seam)"/>
+                  <path d="M145.1 -1 L160 25 C164 32 168 46 165 61 C161.1 80.5 144.525 95.775 127.908 103.255" fill="none" stroke="#ffffff" stroke-width="6.8" stroke-linecap="round" stroke-linejoin="round" filter="url(#fx-relief-seam)"/>
+                </g>
+              </g>
+            </svg>
+          </div>
+
+          <div class="size-box">
+            <span>32</span>
+            <svg class="logo-box" width="32" viewBox="0 0 220 220" role="img" aria-label="Navis icon 32">
+              <defs>
+                <linearGradient id="disc-s32" x1="35" y1="32" x2="176" y2="190" gradientUnits="userSpaceOnUse">
+                  <stop stop-color="#448aff"/><stop offset=".54" stop-color="#536fe7"/><stop offset="1" stop-color="#7355db"/>
+                </linearGradient>
+                <linearGradient id="channel-s32" x1="35" y1="32" x2="176" y2="190" gradientUnits="userSpaceOnUse">
+                  <stop stop-color="#4082f0"/><stop offset=".54" stop-color="#4e68d9"/><stop offset="1" stop-color="#6c50ce"/>
+                </linearGradient>
+                <clipPath id="clip-s32"><rect class="contour" x="22" y="22" width="176" height="176" rx="88"/></clipPath>
+              </defs>
+              <g clip-path="url(#clip-s32)">
+                <rect class="contour" x="22" y="22" width="176" height="176" rx="88" fill="url(#disc-s32)" filter="url(#fx-relief-disc)"/>
+                <rect class="contour" x="22" y="22" width="176" height="176" rx="88" fill="url(#frost-diffuse)"/>
+                <rect class="contour" x="22" y="22" width="176" height="176" rx="88" fill="url(#frost-fog)"/>
+                <rect class="contour" x="22" y="22" width="176" height="176" rx="88" fill="none" stroke="url(#rim-light)" stroke-width="0.95" opacity=".42"/>
+                <g transform="rotate(42 110 110)">
+                  <path d="M127.4 239.9 L108 217 C91 197 62 154 64 133 C66 112 83 105 103 108 C123 111 159 91 165 61 C168 46 164 32 160 25 L145.1 -1" fill="none" stroke="url(#channel-s32)" stroke-opacity=".8" stroke-width="22.5" stroke-linecap="round" stroke-linejoin="round" filter="url(#fx-relief-channel)"/>
+                  <path d="M127.4 239.9 L108 217 C91 197 62 154 64 133 C66 112 83 105 103 108" fill="none" stroke="#ffffff" stroke-width="6.8" stroke-linecap="round" stroke-linejoin="round" filter="url(#fx-relief-seam)"/>
+                  <path d="M145.1 -1 L160 25 C164 32 168 46 165 61 C161.1 80.5 144.525 95.775 127.908 103.255" fill="none" stroke="#ffffff" stroke-width="6.8" stroke-linecap="round" stroke-linejoin="round" filter="url(#fx-relief-seam)"/>
+                </g>
+              </g>
+            </svg>
+          </div>
+
+          <div class="size-box">
+            <span>48</span>
+            <svg class="logo-box" width="48" viewBox="0 0 220 220" role="img" aria-label="Navis icon 48">
+              <defs>
+                <linearGradient id="disc-s48" x1="35" y1="32" x2="176" y2="190" gradientUnits="userSpaceOnUse">
+                  <stop stop-color="#448aff"/><stop offset=".54" stop-color="#536fe7"/><stop offset="1" stop-color="#7355db"/>
+                </linearGradient>
+                <linearGradient id="channel-s48" x1="35" y1="32" x2="176" y2="190" gradientUnits="userSpaceOnUse">
+                  <stop stop-color="#4082f0"/><stop offset=".54" stop-color="#4e68d9"/><stop offset="1" stop-color="#6c50ce"/>
+                </linearGradient>
+                <clipPath id="clip-s48"><rect class="contour" x="22" y="22" width="176" height="176" rx="88"/></clipPath>
+              </defs>
+              <g clip-path="url(#clip-s48)">
+                <rect class="contour" x="22" y="22" width="176" height="176" rx="88" fill="url(#disc-s48)" filter="url(#fx-relief-disc)"/>
+                <rect class="contour" x="22" y="22" width="176" height="176" rx="88" fill="url(#frost-diffuse)"/>
+                <rect class="contour" x="22" y="22" width="176" height="176" rx="88" fill="url(#frost-fog)"/>
+                <rect class="contour" x="22" y="22" width="176" height="176" rx="88" fill="none" stroke="url(#rim-light)" stroke-width="0.95" opacity=".42"/>
+                <g transform="rotate(42 110 110)">
+                  <path d="M127.4 239.9 L108 217 C91 197 62 154 64 133 C66 112 83 105 103 108 C123 111 159 91 165 61 C168 46 164 32 160 25 L145.1 -1" fill="none" stroke="url(#channel-s48)" stroke-opacity=".8" stroke-width="22.5" stroke-linecap="round" stroke-linejoin="round" filter="url(#fx-relief-channel)"/>
+                  <path d="M127.4 239.9 L108 217 C91 197 62 154 64 133 C66 112 83 105 103 108" fill="none" stroke="#ffffff" stroke-width="6.8" stroke-linecap="round" stroke-linejoin="round" filter="url(#fx-relief-seam)"/>
+                  <path d="M145.1 -1 L160 25 C164 32 168 46 165 61 C161.1 80.5 144.525 95.775 127.908 103.255" fill="none" stroke="#ffffff" stroke-width="6.8" stroke-linecap="round" stroke-linejoin="round" filter="url(#fx-relief-seam)"/>
+                </g>
+              </g>
+            </svg>
+          </div>
+
+          <div class="size-box">
+            <span>64</span>
+            <svg class="logo-box" width="64" viewBox="0 0 220 220" role="img" aria-label="Navis icon 64">
+              <defs>
+                <linearGradient id="disc-s64" x1="35" y1="32" x2="176" y2="190" gradientUnits="userSpaceOnUse">
+                  <stop stop-color="#448aff"/><stop offset=".54" stop-color="#536fe7"/><stop offset="1" stop-color="#7355db"/>
+                </linearGradient>
+                <linearGradient id="channel-s64" x1="35" y1="32" x2="176" y2="190" gradientUnits="userSpaceOnUse">
+                  <stop stop-color="#4082f0"/><stop offset=".54" stop-color="#4e68d9"/><stop offset="1" stop-color="#6c50ce"/>
+                </linearGradient>
+                <clipPath id="clip-s64"><rect class="contour" x="22" y="22" width="176" height="176" rx="88"/></clipPath>
+              </defs>
+              <g clip-path="url(#clip-s64)">
+                <rect class="contour" x="22" y="22" width="176" height="176" rx="88" fill="url(#disc-s64)" filter="url(#fx-relief-disc)"/>
+                <rect class="contour" x="22" y="22" width="176" height="176" rx="88" fill="url(#frost-diffuse)"/>
+                <rect class="contour" x="22" y="22" width="176" height="176" rx="88" fill="url(#frost-fog)"/>
+                <rect class="contour" x="22" y="22" width="176" height="176" rx="88" fill="none" stroke="url(#rim-light)" stroke-width="0.95" opacity=".42"/>
+                <g transform="rotate(42 110 110)">
+                  <path d="M127.4 239.9 L108 217 C91 197 62 154 64 133 C66 112 83 105 103 108 C123 111 159 91 165 61 C168 46 164 32 160 25 L145.1 -1" fill="none" stroke="url(#channel-s64)" stroke-opacity=".8" stroke-width="22.5" stroke-linecap="round" stroke-linejoin="round" filter="url(#fx-relief-channel)"/>
+                  <path d="M127.4 239.9 L108 217 C91 197 62 154 64 133 C66 112 83 105 103 108" fill="none" stroke="#ffffff" stroke-width="6.8" stroke-linecap="round" stroke-linejoin="round" filter="url(#fx-relief-seam)"/>
+                  <path d="M145.1 -1 L160 25 C164 32 168 46 165 61 C161.1 80.5 144.525 95.775 127.908 103.255" fill="none" stroke="#ffffff" stroke-width="6.8" stroke-linecap="round" stroke-linejoin="round" filter="url(#fx-relief-seam)"/>
+                </g>
+              </g>
+            </svg>
+          </div>
+
+          <div class="size-box">
+            <span>96</span>
+            <svg class="logo-box" width="96" viewBox="0 0 220 220" role="img" aria-label="Navis icon 96">
+              <defs>
+                <linearGradient id="disc-s96" x1="35" y1="32" x2="176" y2="190" gradientUnits="userSpaceOnUse">
+                  <stop stop-color="#448aff"/><stop offset=".54" stop-color="#536fe7"/><stop offset="1" stop-color="#7355db"/>
+                </linearGradient>
+                <linearGradient id="channel-s96" x1="35" y1="32" x2="176" y2="190" gradientUnits="userSpaceOnUse">
+                  <stop stop-color="#4082f0"/><stop offset=".54" stop-color="#4e68d9"/><stop offset="1" stop-color="#6c50ce"/>
+                </linearGradient>
+                <clipPath id="clip-s96"><rect class="contour" x="22" y="22" width="176" height="176" rx="88"/></clipPath>
+              </defs>
+              <g clip-path="url(#clip-s96)">
+                <rect class="contour" x="22" y="22" width="176" height="176" rx="88" fill="url(#disc-s96)" filter="url(#fx-relief-disc)"/>
+                <rect class="contour" x="22" y="22" width="176" height="176" rx="88" fill="url(#frost-diffuse)"/>
+                <rect class="contour" x="22" y="22" width="176" height="176" rx="88" fill="url(#frost-fog)"/>
+                <rect class="contour" x="22" y="22" width="176" height="176" rx="88" fill="none" stroke="url(#rim-light)" stroke-width="0.95" opacity=".42"/>
+                <g transform="rotate(42 110 110)">
+                  <path d="M127.4 239.9 L108 217 C91 197 62 154 64 133 C66 112 83 105 103 108 C123 111 159 91 165 61 C168 46 164 32 160 25 L145.1 -1" fill="none" stroke="url(#channel-s96)" stroke-opacity=".8" stroke-width="22.5" stroke-linecap="round" stroke-linejoin="round" filter="url(#fx-relief-channel)"/>
+                  <path d="M127.4 239.9 L108 217 C91 197 62 154 64 133 C66 112 83 105 103 108" fill="none" stroke="#ffffff" stroke-width="6.8" stroke-linecap="round" stroke-linejoin="round" filter="url(#fx-relief-seam)"/>
+                  <path d="M145.1 -1 L160 25 C164 32 168 46 165 61 C161.1 80.5 144.525 95.775 127.908 103.255" fill="none" stroke="#ffffff" stroke-width="6.8" stroke-linecap="round" stroke-linejoin="round" filter="url(#fx-relief-seam)"/>
+                </g>
+              </g>
+            </svg>
+          </div>
+
+          <div class="size-box">
+            <span>128</span>
+            <svg class="logo-box" width="128" viewBox="0 0 220 220" role="img" aria-label="Navis icon 128">
+              <defs>
+                <linearGradient id="disc-s128" x1="35" y1="32" x2="176" y2="190" gradientUnits="userSpaceOnUse">
+                  <stop stop-color="#448aff"/><stop offset=".54" stop-color="#536fe7"/><stop offset="1" stop-color="#7355db"/>
+                </linearGradient>
+                <linearGradient id="channel-s128" x1="35" y1="32" x2="176" y2="190" gradientUnits="userSpaceOnUse">
+                  <stop stop-color="#4082f0"/><stop offset=".54" stop-color="#4e68d9"/><stop offset="1" stop-color="#6c50ce"/>
+                </linearGradient>
+                <clipPath id="clip-s128"><rect class="contour" x="22" y="22" width="176" height="176" rx="88"/></clipPath>
+              </defs>
+              <g clip-path="url(#clip-s128)">
+                <rect class="contour" x="22" y="22" width="176" height="176" rx="88" fill="url(#disc-s128)" filter="url(#fx-relief-disc)"/>
+                <rect class="contour" x="22" y="22" width="176" height="176" rx="88" fill="url(#frost-diffuse)"/>
+                <rect class="contour" x="22" y="22" width="176" height="176" rx="88" fill="url(#frost-fog)"/>
+                <rect class="contour" x="22" y="22" width="176" height="176" rx="88" fill="none" stroke="url(#rim-light)" stroke-width="0.95" opacity=".42"/>
+                <g transform="rotate(42 110 110)">
+                  <path d="M127.4 239.9 L108 217 C91 197 62 154 64 133 C66 112 83 105 103 108 C123 111 159 91 165 61 C168 46 164 32 160 25 L145.1 -1" fill="none" stroke="url(#channel-s128)" stroke-opacity=".8" stroke-width="22.5" stroke-linecap="round" stroke-linejoin="round" filter="url(#fx-relief-channel)"/>
+                  <path d="M127.4 239.9 L108 217 C91 197 62 154 64 133 C66 112 83 105 103 108" fill="none" stroke="#ffffff" stroke-width="6.8" stroke-linecap="round" stroke-linejoin="round" filter="url(#fx-relief-seam)"/>
+                  <path d="M145.1 -1 L160 25 C164 32 168 46 165 61 C161.1 80.5 144.525 95.775 127.908 103.255" fill="none" stroke="#ffffff" stroke-width="6.8" stroke-linecap="round" stroke-linejoin="round" filter="url(#fx-relief-seam)"/>
+                </g>
+              </g>
+            </svg>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <footer class="foot">
+      <p>Navis Logo Scene · 仅用于标志展示与评审</p>
+    </footer>
+  </main>
+
+  <script>
+    "use strict";
+
+    const replayButtons = document.querySelectorAll("[data-replay]");
+    const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
+
+    const FULL_COMET_DELAY_MS = 1340;
+
+    const startComet = function (card) {
+      card.querySelectorAll("[data-comet-animation]").forEach(function (animation) {
+        if (typeof animation.beginElement === "function") {
+          animation.beginElement();
+        }
+      });
+    };
+
+    const scheduleComet = function (card) {
+      if (card._cometTimer) {
+        window.clearTimeout(card._cometTimer);
+      }
+      card._cometTimer = window.setTimeout(function () {
+        card._cometTimer = null;
+        startComet(card);
+      }, FULL_COMET_DELAY_MS);
+    };
+
+    const playMotion = function (card) {
+      card.classList.remove("playing");
+      void card.offsetWidth;
+      card.classList.add("playing");
+
+      if (reduceMotion.matches) {
+        return;
+      }
+
+      if (card.classList.contains("motion-full")) {
+        scheduleComet(card);
+      } else {
+        startComet(card);
+      }
+    };
+
+    replayButtons.forEach(function (button) {
+      button.addEventListener("click", function () {
+        const card = button.closest("[data-motion-card]");
+        if (card) {
+          playMotion(card);
+        }
+      });
+    });
+
+    const motionCards = document.querySelectorAll("[data-motion-card]");
+    motionCards.forEach(function (card) {
+      if (reduceMotion.matches) {
+        return;
+      }
+
+      if (card.classList.contains("motion-idle")) {
+        startComet(card);
+      } else if (card.classList.contains("motion-full")) {
+        scheduleComet(card);
+      }
+    });
+
+    const rootStyle = document.documentElement.style;
+    const rxInput = document.getElementById("contour-rx");
+    const rxOutput = document.getElementById("contour-rx-value");
+
+    const applyContourRx = function (value) {
+      rootStyle.setProperty("--contour-rx", String(value));
+      rxOutput.textContent = String(value);
+    };
+
+    rxInput.addEventListener("input", function () {
+      applyContourRx(rxInput.value);
+    });
+
+    document.querySelectorAll("[data-rx-preset]").forEach(function (button) {
+      button.addEventListener("click", function () {
+        rxInput.value = button.getAttribute("data-rx-preset");
+        applyContourRx(rxInput.value);
+      });
+    });
+  </script>
+</body>
+</html>
