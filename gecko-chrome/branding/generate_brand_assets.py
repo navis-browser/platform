@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# SPDX-License-Identifier: MPL-2.0
 """Generate committed brand assets from navis-mark.json; never build Gecko.
 
 SVG/JS/ICO assembly uses the standard library. Raster regeneration additionally

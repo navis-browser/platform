@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: MPL-2.0
+
 import("./main.mjs").catch(error => {
   console.error("Navis startup failed", error);
   dump(`Navis startup failed: ${error}\n${error.stack || ""}\n`);

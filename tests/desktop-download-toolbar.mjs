@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: MPL-2.0
+
 /* Executes production toolbar/panel handlers with focused boundary stubs. */
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";

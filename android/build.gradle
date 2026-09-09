@@ -10,6 +10,7 @@ plugins {
 }
 
 apply plugin: 'com.android.application'
+apply from: 'licenses.gradle'
 
 def navisWorkspaceRoot = project.projectDir.canonicalFile.parentFile.parentFile
 def readProductVersion = { String fileName ->

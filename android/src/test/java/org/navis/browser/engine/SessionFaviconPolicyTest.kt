@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: MPL-2.0
+
 package org.navis.browser.engine
 
 import org.junit.Assert.assertFalse

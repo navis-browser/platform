@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: MPL-2.0
+
 /* Focused logic/DOM-boundary checks; does not launch or inspect a browser. */
 import assert from "node:assert/strict";
 import vm from "node:vm";

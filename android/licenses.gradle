@@ -1,0 +1,36 @@
+// SPDX-License-Identifier: MPL-2.0
+import groovy.json.JsonOutput
+import org.gradle.api.artifacts.component.ModuleComponentIdentifier
+
+def licenseScriptDirectory = file(buildscript.getSourceFile()).parentFile
+
+// Consume the runtime graph only. No GMS runtime, build plugin or online license fetch.
+androidComponents.onVariants(androidComponents.selector().all()) { variant ->
+    def capitalized = variant.name.capitalize()
+    def output = layout.buildDirectory.dir("generated/navis-licenses/${variant.name}/assets")
+    def generate = tasks.register("generate${capitalized}NavisLicenses") {
+        notCompatibleWithConfigurationCache('Resolves the reviewed runtime artifact graph at execution time')
+        // Always resolve and verify: a changed graph may never reuse a stale notice file.
+        outputs.upToDateWhen { false }
+        outputs.dir(output)
+        doLast {
+            def runtime = configurations.getByName("${variant.name}RuntimeClasspath")
+            def artifacts = runtime.incoming.artifactView {
+                componentFilter { it instanceof ModuleComponentIdentifier }
+            }.artifacts.artifacts.collect {
+                def id = it.id.componentIdentifier
+                [coordinate: "${id.group}:${id.module}:${id.version}", file: it.file.absolutePath]
+            }
+            def inventory = layout.buildDirectory.file("intermediates/navis-licenses/${variant.name}.json").get().asFile
+            inventory.parentFile.mkdirs()
+            inventory.text = JsonOutput.toJson(artifacts)
+            providers.exec {
+                commandLine 'python3', new File(licenseScriptDirectory, '../scripts/android-license-report.py'),
+                    '--inventory', inventory, '--policy', new File(licenseScriptDirectory, 'licenses/dependencies.json'),
+                    '--variant', variant.name, '--output', new File(output.get().asFile, 'navis-licenses')
+            }.result.get().assertNormalExitValue()
+        }
+    }
+    android.sourceSets.getByName(variant.name).assets.srcDir(output)
+    tasks.matching { it.name == "merge${capitalized}Assets" }.configureEach { dependsOn generate }
+}

@@ -4,7 +4,7 @@ Navis-owned source is MPL-2.0 unless otherwise marked; see LICENSE. Upstream fil
 
 ## uBlock Origin 1.74.0
 
-GPL-3.0-or-later. The signed XPI and its exact source commit/download/hash are in `gecko-chrome/builtin/ublock-origin/{SOURCE.md,metadata.json}`. The XPI includes `LICENSE.txt` and notices for its embedded libraries/filter data. Do not modify or re-sign it while claiming the original signature/hash.
+GPL-3.0-or-later. The signed source XPI and its exact source commit/download/hash are in `gecko-chrome/builtin/ublock-origin/{SOURCE.md,metadata.json}`. Desktop distributes the original XPI; Android extracts its unchanged entries into APK assets. The XPI includes `LICENSE.txt` and notices for its embedded libraries, fonts and filter data; preserve those in either form. Do not modify or re-sign the archive while claiming the original signature/hash.
 
 Corresponding source, build scripts and subdependency references: https://github.com/gorhill/uBlock/tree/6dd2d95e50d134a477a4e183343c0b26e9147123
 
@@ -18,4 +18,4 @@ MPL-2.0. The unmodified Firefox ESR language archive is pinned by `gecko-chrome/
 
 ## Android resolved dependencies
 
-Kotlin, AndroidX/Compose and Material dependencies remain Gradle-resolved, not vendored binaries in this repository. See `android/build.gradle`. The selected colorpicker-compose Apache-2.0 notice is owned/packaged by the sibling Runtime. Gecko-derived desktop styles/resources retain their upstream file headers. This source notice is not a complete binary-distribution license inventory.
+Kotlin, AndroidX/Compose, Material, Guava, JSpecify, JetBrains annotations, SnakeYAML and ColorPicker Compose dependencies remain Gradle-resolved, not vendored binaries in this repository. `android/licenses/dependencies.json` records reviewed artifact identities, licenses and upstream sources. The variant-specific license task checks the actual runtime artifacts against that inventory, retains embedded notices and packages an offline report. A new or changed artifact requires review; Gradle resolution alone does not establish licensing compliance. Gecko-derived desktop styles/resources retain their upstream file headers. Native Gecko dependencies additionally retain their upstream license catalogue and corresponding-source obligations.

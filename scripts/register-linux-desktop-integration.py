@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+# SPDX-License-Identifier: MPL-2.0
+
 """Register one portable Navis runtime with the current Linux desktop.
 
 The Gecko/GTK runtime already carries the canonical window icons.  Wayland

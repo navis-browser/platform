@@ -260,8 +260,8 @@ internal fun CreditsSurface(runtime: AndroidWindowRuntime, onBack: () -> Unit, o
         SettingsAction("Mozilla Public License 2.0", "Mozilla Gecko") {
             onNavigate("https://www.mozilla.org/MPL/2.0/")
         }
-        SettingsAction("uBlock Origin", "Copyright Raymond Hill and contributors · GNU GPL v3") {
-            onNavigate("https://github.com/gorhill/uBlock")
+        SettingsAction("uBlock Origin", "Copyright Raymond Hill and contributors · GPL-3.0-or-later") {
+            onNavigate("https://github.com/gorhill/uBlock/tree/6dd2d95e50d134a477a4e183343c0b26e9147123")
         }
         Text(stringResource(R.string.credits_licenses), style = MaterialTheme.typography.titleLarge)
         if (licenses == null && !failed) CircularProgressIndicator()

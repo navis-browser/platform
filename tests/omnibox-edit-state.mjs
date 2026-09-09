@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: MPL-2.0
+
 import assert from "node:assert/strict";
 
 import { OmniboxEditState } from "../gecko-chrome/chrome/content/omnibox-edit-state.mjs";

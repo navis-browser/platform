@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: MPL-2.0
+
 import assert from "node:assert/strict";
 import { OmniboxSuggestions } from "../gecko-chrome/chrome/content/omnibox-suggestions.mjs";
 const pendingLocal = [], pendingRemote = [], emitted = [];

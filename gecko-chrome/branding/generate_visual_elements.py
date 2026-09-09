@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+# SPDX-License-Identifier: MPL-2.0
 
 """Stage the canonical Windows identity tile without build-time SVG tooling."""
 
