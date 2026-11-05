@@ -50,6 +50,10 @@ Gecko-generated presentation strings for semantic browser decisions do not cross
 
 An unknown requested locale resolves to `en-US`. An intentionally omitted `zh-CN` message may use the verified `en-US` fallback only while developing; catalogue parity blocks packaging and release. Unknown message IDs, missing placeholders, extra placeholders and invalid plural records fail unit/source gates. Product startup keeps a bounded English fatal-error fallback so a catalogue defect cannot leave a blank window. The normal browser frame remains hidden until its catalogue has been applied, preventing a Chinese process from briefly exposing the declarative English fallback labels.
 
+## Android Activity configuration
+
+Android resolves the same frozen process language into a locale-only `Configuration`. Activities apply it through `applyOverrideConfiguration` before attaching the original base context. They retain the Activity as the owner of framework services such as `PrintManager`; replacing that base with `createConfigurationContext` loses the Activity identity required by system printing. Application-only localized resources may use a configuration context. Native validation must cover both localized product labels and a real system print launch, in addition to language relaunch.
+
 ## Acceptance
 
 The Linux and Windows release matrices must each prove:

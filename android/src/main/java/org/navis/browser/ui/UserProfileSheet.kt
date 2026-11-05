@@ -35,7 +35,6 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -258,7 +257,7 @@ internal fun UserProfileSheet(
     }
     if (asPage) {
         ProductPageScaffold(stringResource(R.string.user_profile_manage), onDismiss, content = content)
-    } else ModalBottomSheet(onDismissRequest = onDismiss) {
+    } else NavisModalBottomSheet(onDismissRequest = onDismiss) {
         Column(Modifier.fillMaxWidth().navigationBarsPadding().verticalScroll(rememberScrollState())
             .padding(horizontal = 16.dp, vertical = 16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp), content = content)

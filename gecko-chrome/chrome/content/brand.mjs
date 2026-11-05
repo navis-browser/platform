@@ -11,7 +11,7 @@ export { NAVIS_MARK } from "./brand-geometry.mjs";
 const SVG_NAMESPACE = "http://www.w3.org/2000/svg";
 const documentIds = new WeakMap();
 
-function markGeometry(id, { compact = false } = {}) {
+function markGeometry(id, { compact = false, tab = false } = {}) {
   if (!/^navis-[a-z0-9-]+$/u.test(id)) {
     throw new TypeError("A Navis mark requires an application-owned SVG ID");
   }
@@ -29,7 +29,7 @@ function markGeometry(id, { compact = false } = {}) {
   }])];
   const seam = (name, d) => ["path", {
     class: `navis-mark-seam navis-mark-seam-${name}`, d, fill: "none", stroke: NAVIS_MARK.seams.color,
-    "stroke-width": NAVIS_MARK.seams.strokeWidth, "stroke-linecap": NAVIS_MARK.seams.linecap,
+    "stroke-width": tab ? NAVIS_MARK.tabIcon.seamStrokeWidth : NAVIS_MARK.seams.strokeWidth, "stroke-linecap": NAVIS_MARK.seams.linecap,
     "stroke-linejoin": NAVIS_MARK.seams.linejoin,
     ...(!compact && { filter: `url(#${id}-relief-seam)` }),
   }];
@@ -62,7 +62,7 @@ function markGeometry(id, { compact = false } = {}) {
 }
 
 /** Native namespace construction works in both XHTML chrome and HTML. */
-export function appendNavisMark(ownerDocument, svg) {
+export function appendNavisMark(ownerDocument, svg, { tab = false } = {}) {
   const next = (documentIds.get(ownerDocument) || 0) + 1;
   documentIds.set(ownerDocument, next);
   const append = (parent, geometry) => {
@@ -73,8 +73,8 @@ export function appendNavisMark(ownerDocument, svg) {
       parent.append(node);
     }
   };
-  svg.setAttribute("viewBox", NAVIS_MARK.viewBox.join(" "));
-  append(svg, markGeometry(`navis-icon-${next}`, { compact: true }));
+  svg.setAttribute("viewBox", (tab ? NAVIS_MARK.tabIcon.viewBox : NAVIS_MARK.viewBox).join(" "));
+  append(svg, markGeometry(`navis-icon-${next}`, { compact: true, tab }));
 }
 
 /** Only fixed geometry and validated IDs reach markup; no page data/innerHTML. */
@@ -113,6 +113,7 @@ export function installBrandEntrances(ownerWindow) {
   const visible = new Set();
   let observer;
   const finish = mark => {
+    if (mark.dataset.brandEntrance === "done") return;
     mark.dataset.brandEntrance = "done";
     visible.delete(mark);
     observer?.unobserve(mark);
@@ -150,11 +151,14 @@ export function installBrandEntrances(ownerWindow) {
   document.addEventListener("visibilitychange", update);
   reducedMotion.addEventListener("change", update);
   ownerWindow.addEventListener("pagehide", () => {
-    marks.forEach(finish);
+    // Release resources without mutating a dying document. BFCache restoration
+    // settles the one-shot visual state on pageshow instead of replaying it.
     observer.disconnect();
+    visible.clear();
     document.removeEventListener("animationend", complete);
     document.removeEventListener("visibilitychange", update);
     reducedMotion.removeEventListener("change", update);
+    ownerWindow.addEventListener("pageshow", () => marks.forEach(finish), { once: true });
   }, { once: true });
 }
 

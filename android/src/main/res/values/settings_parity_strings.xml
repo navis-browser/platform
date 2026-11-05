@@ -3,6 +3,8 @@
     <string name="settings_appearance">Appearance</string>
     <string name="settings_theme">Theme</string>
     <string name="settings_history_button">Show history button</string>
+    <string name="settings_show_certificate_organization">Show certificate organization</string>
+    <string name="settings_show_certificate_organization_summary">Show the certificate organization in the address bar when available. Turn off to show only the site information icon.</string>
     <string name="settings_history_button_summary">Add a toolbar shortcut to open browsing history in a bottom sheet. Closing the sheet keeps the shortcut available.</string>
     <string name="settings_theme_system">Follow system</string>
     <string name="settings_theme_light">Light</string>

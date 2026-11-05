@@ -143,6 +143,9 @@ internal fun SupportSurface(runtime: AndroidWindowRuntime, onBack: () -> Unit) {
         "multiprocess" to R.string.support_remote_content,
         "fission" to R.string.support_site_isolation,
         "remoteType" to R.string.support_process_type,
+        "diagnostics.certificateTransparency" to R.string.support_certificate_transparency,
+        "diagnostics.ctExpiration" to R.string.support_ct_expiration,
+        "diagnostics.revocationsDate" to R.string.support_revocations_date,
         "diagnostics.cpuDetails" to R.string.support_cpu_details,
         "diagnostics.adapterDescription2" to R.string.support_gpu_secondary,
         "diagnostics.adapterRAM" to R.string.support_gpu_memory,
@@ -154,6 +157,11 @@ internal fun SupportSurface(runtime: AndroidWindowRuntime, onBack: () -> Unit) {
     )) {
         support.facts[key]?.takeIf(String::isNotBlank)?.let { value ->
             rows += stringResource(label) to when (value) {
+                "ct-expired" -> stringResource(R.string.support_ct_expired)
+                "ct-expiring" -> stringResource(R.string.support_ct_expiring)
+                "ct-current" -> stringResource(R.string.support_ct_current)
+                "disabled" -> disabled
+                "unavailable" -> stringResource(R.string.support_engine_unavailable)
                 "true" -> enabled
                 "false" -> disabled
                 else -> value

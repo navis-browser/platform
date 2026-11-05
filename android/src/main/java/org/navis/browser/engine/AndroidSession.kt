@@ -61,6 +61,7 @@ internal class AndroidSession(
         fun onFullscreenChanged(sessionId: SessionId, enabled: Boolean)
 
         fun onContextMenuRequested(sessionId: SessionId, request: AndroidContextMenuRequest) {}
+        fun onPrintRequested(sessionId: SessionId) {}
 
         fun onContextMenuUpdated(sessionId: SessionId, request: AndroidContextMenuRequest) {}
 
@@ -75,6 +76,7 @@ internal class AndroidSession(
     }
 
     private var active = false
+    private var devices = org.navis.browser.api.DeviceUseState()
     private var contentTermination = ContentTermination.NONE
     private var nativeNewTab = false
     private var nativeRoute: String? = null
@@ -273,6 +275,13 @@ internal class AndroidSession(
         executeNavigation(CoreNavigationCommand.RELOAD, null, engineSession::reload)
     }
 
+    fun beginPrint(): CompletionStage<org.navis.browser.engine.runtime.EnginePrintDocument> {
+        check(isLive() && !nativeNewTab && nativeRoute == null && contentTermination == ContentTermination.NONE) {
+            "Print document is unavailable"
+        }
+        return engineSession.beginPrint()
+    }
+
     fun stop() {
         if (contentTermination != ContentTermination.NONE) {
             return
@@ -445,6 +454,8 @@ internal class AndroidSession(
             navigation = navigation,
             nativeNewTab = nativeNewTab,
             nativeRoute = nativeRoute,
+            devices = devices,
+            presentationIndex = nativeHistory.position,
         )
     }
 
@@ -507,6 +518,14 @@ internal class AndroidSession(
             !SessionFaviconPolicy.accepts(png)) return
         if (faviconPng == png) return
         faviconPng = png
+        emit(persist = false)
+    }
+
+    override fun onDeviceUseChanged(camera: Boolean, microphone: Boolean) {
+        if (!isLive() || contentTermination != ContentTermination.NONE) return
+        val next = org.navis.browser.api.DeviceUseState(camera, microphone)
+        if (next == devices) return
+        devices = next
         emit(persist = false)
     }
 
@@ -619,6 +638,10 @@ internal class AndroidSession(
         if (isLive()) owner.onContextMenuRequested(id, request)
     }
 
+    override fun onPrintRequested() {
+        if (isLive()) owner.onPrintRequested(id)
+    }
+
     override fun onContextMenuUpdated(request: AndroidContextMenuRequest) {
         if (isLive()) owner.onContextMenuUpdated(id, request)
     }
@@ -726,6 +749,7 @@ internal class AndroidSession(
         } else {
             previous.takeUnless { it == ContentTermination.NONE } ?: reason
         }
+        devices = org.navis.browser.api.DeviceUseState()
         targetDelegate.cancelRequests(id)
         core.setCrashed(id.value, true)
         emit(persist = false)

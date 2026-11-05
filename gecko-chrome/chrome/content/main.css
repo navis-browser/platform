@@ -128,6 +128,8 @@ html[data-l10n-ready="false"] body {
 
   position: relative;
   display: flex;
+  /* Let the close affordance follow the actual tab width as tabs compress. */
+  container-type: inline-size;
   width: var(--navis-size-tab-standard);
   min-width: 48px;
   max-width: 256px;
@@ -295,6 +297,18 @@ html[data-l10n-ready="false"] body {
 
 .session-tab[aria-selected="true"] .close-session {
   display: inline-grid;
+}
+
+/*
+ * An inactive tab reveals its close affordance while hovered when there is
+ * enough room for a reliable target. Very compressed tabs keep it hidden to
+ * avoid accidental activation. Keyboard focus follows hover.
+ */
+@container (min-width: 96px) {
+  .session-tab:not([aria-selected="true"]):is(:hover, :focus-within)
+    .close-session {
+    display: inline-grid;
+  }
 }
 
 #new-session {
@@ -757,7 +771,9 @@ html[data-l10n-ready="false"] body {
 
 .omnibox-identity {
   display: flex;
+  flex: 0 1 auto;
   min-width: 28px;
+  max-width: calc(100% - min(12rem, 50%) - var(--navis-space-1));
   height: 28px;
   align-items: center;
   gap: var(--navis-space-2);
@@ -782,6 +798,7 @@ html[data-l10n-ready="false"] body {
 }
 
 .omnibox-identity .navis-icon {
+  flex-shrink: 0;
   width: var(--navis-size-icon-small);
   height: var(--navis-size-icon-small);
 }
@@ -812,7 +829,7 @@ html[data-l10n-ready="false"] body {
 }
 
 #security-label {
-  max-width: min(180px, 24vw);
+  min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
 }
@@ -1353,6 +1370,42 @@ html[data-browser-fullscreen] #session-host {
 .crash-card p {
   margin: var(--navis-space-4) 0 var(--navis-space-7);
   color: var(--navis-color-text-secondary);
+}
+
+.permission-device-choice {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--navis-space-5);
+  margin-block: var(--navis-space-4);
+}
+
+.permission-device-choice select {
+  min-width: 0;
+  max-width: 70%;
+  min-height: var(--navis-size-field);
+  padding-inline: var(--navis-space-4);
+  border: 1px solid var(--navis-color-outline);
+  border-radius: var(--navis-radius-control);
+  color: var(--navis-color-text);
+  background: var(--navis-color-field);
+  font: var(--navis-font-body);
+}
+
+#site-permissions-section {
+  margin-block: var(--navis-space-5);
+}
+
+.site-permission-origin {
+  font: var(--navis-font-body);
+  color: var(--navis-color-text-secondary);
+  overflow-wrap: anywhere;
+  unicode-bidi: plaintext;
+}
+
+.permission-device-choice select:focus-visible {
+  outline: none;
+  box-shadow: var(--navis-focus-ring);
 }
 
 #permission-panel,
@@ -1990,8 +2043,7 @@ html[data-browser-fullscreen] #session-host {
     flex-basis: var(--navis-size-tab-compact);
   }
 
-  .toolbar-chip,
-  #security-label {
+  .toolbar-chip {
     display: none;
   }
 

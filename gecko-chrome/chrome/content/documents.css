@@ -1,0 +1,89 @@
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
+
+.desktop-engine-print-stack {
+  /* SubDialogManager uses this stack's offsetParent for click routing.
+   * The chrome body fills the viewport and is its ordinary containing block. */
+  position: absolute;
+  inset: 0;
+  z-index: 1000;
+  background: var(--navis-color-scrim);
+  color: var(--navis-color-text);
+
+  &.temporarilyHidden { visibility: hidden; }
+
+  .dialogOverlay {
+    position: absolute;
+    inset: var(--navis-space-6);
+    display: flex;
+    /* Toolkit preloads its next dialog. Only an opened dialog overrides this. */
+    visibility: hidden;
+
+    &[topmost="true"] { z-index: 1; }
+  }
+
+  .dialogBox {
+    display: flex;
+    flex: 1;
+    min-width: 0;
+    min-height: 0;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+    border: 1px solid var(--navis-color-outline);
+    border-radius: var(--navis-radius-card);
+    background: var(--navis-color-surface);
+    box-shadow: var(--navis-elevation-3);
+  }
+
+  print-preview {
+    display: flex;
+    flex: 1;
+    min-width: 0;
+    min-height: 0;
+  }
+
+  .previewStack {
+    flex: 1;
+    min-width: 0;
+    background: var(--navis-color-content-underlay);
+    color: var(--navis-color-text);
+  }
+
+  .printSettingsBrowser {
+    flex: 0 1 var(--navis-size-print-settings);
+    width: var(--navis-size-print-settings) !important;
+    min-width: min(250px, 60vw);
+    height: 100% !important;
+    border: 0;
+    border-inline-start: 1px solid var(--navis-color-divider);
+  }
+}
+
+/* The engine settings document keeps its Fluent/validation/focus behavior.
+ * Its presentation consumes the same tokens as the surrounding product. */
+:root[data-navis-print] {
+  --in-content-page-background: var(--navis-color-surface);
+  --in-content-page-color: var(--navis-color-text);
+  --in-content-box-background: var(--navis-color-field);
+  --in-content-box-border-color: var(--navis-color-outline);
+  --in-content-primary-button-background: var(--navis-color-accent);
+  --in-content-primary-button-text-color: var(--navis-color-on-accent);
+  --button-background-color-primary: var(--navis-color-accent);
+  --button-text-color-primary: var(--navis-color-on-accent);
+  font: var(--navis-font-body);
+  background: var(--navis-color-surface);
+  color: var(--navis-color-text);
+
+  body { margin: 0; }
+  button { border-radius: var(--navis-radius-control); }
+  select, input[type="text"], input[type="number"] {
+    border-radius: var(--navis-radius-toolbar);
+  }
+}
+
+@media (max-width: 700px) {
+  .desktop-engine-print-stack .dialogOverlay { inset: var(--navis-space-2); }
+  .desktop-engine-print-stack .printSettingsBrowser { flex-basis: 50%; width: 50% !important; }
+}

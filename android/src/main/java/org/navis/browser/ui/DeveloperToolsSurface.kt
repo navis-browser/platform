@@ -31,6 +31,7 @@ import org.navis.browser.api.BrowserStateObserver
 import org.navis.browser.api.ContentTermination
 import org.navis.browser.engine.AndroidBrowserView
 import org.navis.browser.engine.AndroidWindowRuntime
+import org.navis.browser.engine.operationFailureDetail
 
 @Composable
 internal fun DeveloperToolsSurface(
@@ -49,9 +50,11 @@ internal fun DeveloperToolsSurface(
         val policy = window?.let(AndroidDevToolsWindowPolicy::acquire)
         onDispose { policy?.close() }
     }
-    val host = remember(runtime, target, initialTool) {
-        runCatching { runtime.createDevToolsHost(target, initialTool) }.getOrNull()
+    val creation = remember(runtime, target, initialTool) {
+        runCatching { runtime.createDevToolsHost(target, initialTool) }
     }
+    val host = creation.getOrNull()
+    var failure by remember(host) { mutableStateOf(creation.exceptionOrNull()?.let(::operationFailureDetail)) }
     var ready by remember(host) { mutableStateOf<Boolean?>(if (host == null) false else null) }
     var busy by remember(host) { mutableStateOf(false) }
     var closing by remember(host) { mutableStateOf(false) }
@@ -113,7 +116,10 @@ internal fun DeveloperToolsSurface(
     DisposableEffect(host) {
         var disposed = false
         host?.ready?.whenComplete { accepted, error ->
-            main.post { if (!disposed) ready = error == null && accepted == true }
+            main.post { if (!disposed) {
+                failure = error?.let(::operationFailureDetail)
+                ready = error == null && accepted == true
+            } }
         }
         onDispose { disposed = true; host?.close() }
     }
@@ -198,7 +204,8 @@ internal fun DeveloperToolsSurface(
                     Text(stringResource(R.string.developer_tools_loading), Modifier.padding(16.dp))
                 }
             } else if (ready == false) {
-                Text(stringResource(R.string.developer_tools_failed), Modifier.align(Alignment.Center).padding(24.dp))
+                Text(listOfNotNull(stringResource(R.string.developer_tools_failed), failure).joinToString("\n\n"),
+                    Modifier.align(Alignment.Center).padding(24.dp))
             }
         }
     }

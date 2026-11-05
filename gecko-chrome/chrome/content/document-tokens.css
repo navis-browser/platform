@@ -1,0 +1,48 @@
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/. */
+
+/* Shared document UI roles. Chrome's PDF surface stays dark in both themes.
+ * See docs/navis-ui-standard.md for the pinned reference and deviations. */
+:root {
+  --navis-document-font: 400 14px/20px system-ui, "Segoe UI", sans-serif;
+  --navis-document-toolbar-height: 56px;
+  --navis-document-toolbar-height-narrow: 96px;
+  --navis-document-control-size: 36px;
+  --navis-document-icon-size: 20px;
+  --navis-document-field-height: 28px;
+  --navis-document-page-field-width: 56px;
+  --navis-document-sidebar-width: 300px;
+  --navis-document-space-small: 4px;
+  --navis-document-space: 8px;
+  --navis-document-space-large: 16px;
+  --navis-document-radius: 4px;
+  --navis-document-menu-radius: 8px;
+  --navis-document-toolbar: #3c3c3c;
+  --navis-document-background: #282828;
+  --navis-document-sidebar: #28292a;
+  --navis-document-text: #f1f1f1;
+  --navis-document-border: #5e5e5e;
+  --navis-document-field: rgb(0 0 0 / 50%);
+  --navis-document-hover: rgb(255 255 255 / 10%);
+  --navis-document-selected: rgb(255 255 255 / 24%);
+  --navis-document-accent: #a8c7fa;
+  --navis-document-on-accent: #062e6f;
+  --navis-document-shadow: 0 2px 6px rgb(0 0 0 / 32%);
+}
+
+@media (forced-colors: active) {
+  :root {
+    --navis-document-toolbar: Canvas;
+    --navis-document-background: Canvas;
+    --navis-document-sidebar: Canvas;
+    --navis-document-text: CanvasText;
+    --navis-document-border: CanvasText;
+    --navis-document-field: Field;
+    --navis-document-hover: Highlight;
+    --navis-document-selected: Highlight;
+    --navis-document-accent: Highlight;
+    --navis-document-on-accent: HighlightText;
+    --navis-document-shadow: none;
+  }
+}

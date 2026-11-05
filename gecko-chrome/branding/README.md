@@ -9,13 +9,15 @@ python3 gecko-chrome/branding/generate_brand_assets.py --check
 
 Generation uses Python's standard library and `rsvg-convert`. The manifest records the full renderer/library version plus the canonical source and output SHA-256 hashes. Use that renderer stack for byte-identical regeneration; there are no timestamps, fonts, network inputs, or random seeds. `--check` regenerates in memory and never modifies the workspace. A normal Gecko build only packages the committed results and does **not** require an SVG renderer.
 
-Schema version 1 uses SVG viewBox units. `contour` is the rounded rectangle; `transform` applies to `channel` and both `seams.paths`, before contour clipping. The default radius is 40 (the design page's CSS default); `contourVariants.circle` is 88. All gradients, frost/rim layers and relief shadows are explicit. `motion` carries the original Counterflow and Comet timing in milliseconds, with a static reduced-motion policy. Platform motion/lifecycle belongs to the consumer, not to the static asset. The generated JS exports deep-frozen `NAVIS_MARK` (also default), `geometry`, `colors`, and `motion`.
+Schema version 1 uses SVG viewBox units. `contour` is a 176-unit circle, represented by an equal-sided rectangle with radius 88; `contourVariants.circle` selects that same contour for platform round-icon aliases. `transform` applies to `channel` and both `seams.paths`, before contour clipping. All gradients, frost/rim layers and relief shadows are explicit. `motion` carries the original Counterflow and Comet timing in milliseconds, with a static reduced-motion policy. Platform motion/lifecycle belongs to the consumer, not to the static asset. The generated JS exports deep-frozen `NAVIS_MARK` (also default), `geometry`, `colors`, and `motion`.
+
+`tabIcon` supplies only the desktop internal-page Tab variant: its tighter viewport preserves the circular contour while occupying approximately 15px of the normal 16px favicon slot, and its seam stroke width yields 1px at that size. Desktop consumes these values from the generated JS; native launcher files and full/compact page marks keep their existing geometry and rendering.
 
 Outputs and packaging:
 
 - `generated/navis-mark.svg`, `navis-mark-circle.svg`: self-contained color marks with the complete gradient/frost/rim/relief treatment.
 - `generated/navis-mark-mono.svg`: opaque white contour with the two seams cut out transparently, for platform tinting; no independent replacement glyph.
-- `generated/navis-{size}.png`: transparent RGBA at 16–512px, using the rounded mark. The source JSON lists the exact sizes.
+- `generated/navis-{size}.png`: transparent RGBA at 16–512px, using the circular mark. The source JSON lists the exact sizes.
 - `generated/navis.ico`: nine exact PNG entries from 16–256px for Windows Vista+ (Navis targets modern Windows). Its generated RC uses the existing Gecko resource IDs, including the private-window fallback, and contains the ICO hash so icon changes invalidate the RC dependency.
 - Windows `gecko-chrome/app/moz.build` sets only the product `RCINCLUDE` and icon define. Future builds must relink the launcher resource, not the engine.
 - Windows VisualElements 70/150px tiles and the adjacent executable manifest are installed regardless of whether notification activation is enabled.

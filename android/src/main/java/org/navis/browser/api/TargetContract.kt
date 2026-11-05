@@ -12,15 +12,12 @@ enum class PlatformPermission {
     MICROPHONE,
     COARSE_LOCATION,
     FINE_LOCATION,
-    BLUETOOTH_CONNECT,
-    BLUETOOTH_SCAN,
 }
 
 enum class SitePermissionKind {
     GEOLOCATION,
     NOTIFICATIONS,
     PERSISTENT_STORAGE,
-    XR,
     AUTOPLAY_AUDIBLE,
     AUTOPLAY_INAUDIBLE,
     MEDIA_KEY_SYSTEM_ACCESS,
@@ -245,6 +242,7 @@ data class TargetRequestState(
     val platformPermission: PlatformPermissionRequest? = null,
     val filePicker: FilePickerRequest? = null,
     val sitePermissionSaveFailed: Boolean = false,
+    val mediaPlatformGranted: Boolean = false,
     val fullscreenSessionId: SessionId? = null,
 )
 
@@ -267,6 +265,11 @@ interface BrowserTargetRuntime {
 
     fun respondToSitePermission(id: TargetRequestId, decision: SitePermissionDecision) =
         respondToSitePermission(id, decision.allows)
+
+    fun respondToMediaPlatformPermission(id: TargetRequestId, granted: Boolean) = Unit
+
+    fun respondToMediaPermission(id: TargetRequestId, decision: SitePermissionDecision, video: String?, audio: String?) =
+        respondToSitePermission(id, false)
 
     fun respondToPlatformPermission(id: TargetRequestId, granted: Boolean)
 

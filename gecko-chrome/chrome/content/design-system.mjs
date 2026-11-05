@@ -6,10 +6,33 @@ import { appendNavisMark } from "./brand.mjs";
 
 const SVG_NAMESPACE = "http://www.w3.org/2000/svg";
 
+export function updateSelectOptions(select, choices, { placeholder = null, fallbackLabel = "" } = {}) {
+  const previous = select.value;
+  const entries = placeholder === null ? choices : [{ id: "", label: placeholder }, ...choices];
+  const existing = new Map([...select.options].map(option => [option.value, option]));
+  const retained = new Set(entries.map(entry => entry.id));
+  for (const option of [...select.options]) if (!retained.has(option.value)) option.remove();
+  entries.forEach((entry, index) => {
+    const option = existing.get(entry.id) ?? select.ownerDocument.createElementNS("http://www.w3.org/1999/xhtml", "option");
+    option.value = entry.id;
+    option.textContent = entry.label || fallbackLabel;
+    option.disabled = placeholder !== null && entry.id === "";
+    if (select.options[index] !== option) select.insertBefore(option, select.options[index] ?? null);
+  });
+  select.value = retained.has(previous) ? previous : placeholder === null ? choices[0]?.id ?? "" : "";
+}
+
 // Navis-owned 20-DIP line icons. Keeping the geometry here gives every
 // Platform surface the same stroke, optical size, and state behavior without
 // depending on Gecko theme artwork or a Chromium asset.
 const ICONS = Object.freeze({
+  print: [
+    ["path", { d: "M5 6V2.5h10V6M5 14H3V7h14v7h-2M5 11h10v6.5H5z" }],
+    ["circle", { cx: "14.5", cy: "8.5", r: ".5" }],
+  ],
+  openFile: [
+    ["path", { d: "M2.5 16V4h6l2 2h7v10zM3 8h14" }],
+  ],
   profile: [
     ["circle", { cx: "10", cy: "6.5", r: "3" }],
     ["path", { d: "M3.5 17v-1a6.5 6.5 0 0 1 13 0v1" }],
@@ -79,6 +102,10 @@ const ICONS = Object.freeze({
     ["circle", { cx: "10", cy: "5", r: "2" }],
     ["circle", { cx: "14", cy: "10", r: "2" }],
     ["circle", { cx: "7", cy: "15", r: "2" }],
+  ],
+  shield: [
+    ["path", { d: "M10 2.5 16.5 5v5c0 3.6-2.6 6.2-6.5 7.5C6.1 16.2 3.5 13.6 3.5 10V5L10 2.5Z" }],
+    ["path", { d: "m7 10 2 2 4-4" }],
   ],
   warning: [
     ["path", { d: "M10 3.2 18 17H2L10 3.2Z" }],
@@ -203,7 +230,7 @@ function appendGeometry(ownerDocument, icon, geometry) {
 
 export function createIcon(ownerDocument, iconName) {
   const geometry = ICONS[iconName];
-  if (!geometry && iconName !== "navis") {
+  if (!geometry && iconName !== "navis" && iconName !== "navisTab") {
     throw new TypeError(`Unknown Navis icon: ${iconName}`);
   }
   const icon = ownerDocument.createElementNS(SVG_NAMESPACE, "svg");
@@ -212,7 +239,7 @@ export function createIcon(ownerDocument, iconName) {
   icon.setAttribute("aria-hidden", "true");
   icon.setAttribute("focusable", "false");
   icon.setAttribute("data-icon", iconName);
-  if (iconName === "navis") appendNavisMark(ownerDocument, icon);
+  if (iconName === "navis" || iconName === "navisTab") appendNavisMark(ownerDocument, icon, { tab: iconName === "navisTab" });
   else appendGeometry(ownerDocument, icon, geometry);
   return icon;
 }
@@ -228,17 +255,17 @@ export function setIcon(container, iconName) {
   }
   // Session status updates can be frequent; an unchanged brand mark keeps
   // its scoped gradients and filter nodes instead of rebuilding them.
-  if (iconName === "navis" && icon.getAttribute("data-icon") === "navis") {
+  if ((iconName === "navis" || iconName === "navisTab") && icon.getAttribute("data-icon") === iconName) {
     return icon;
   }
   const geometry = ICONS[iconName];
-  if (!geometry && iconName !== "navis") {
+  if (!geometry && iconName !== "navis" && iconName !== "navisTab") {
     throw new TypeError(`Unknown Navis icon: ${iconName}`);
   }
   icon.replaceChildren();
   icon.setAttribute("viewBox", "0 0 20 20");
   icon.setAttribute("data-icon", iconName);
-  if (iconName === "navis") appendNavisMark(container.ownerDocument, icon);
+  if (iconName === "navis" || iconName === "navisTab") appendNavisMark(container.ownerDocument, icon, { tab: iconName === "navisTab" });
   else appendGeometry(container.ownerDocument, icon, geometry);
   return icon;
 }

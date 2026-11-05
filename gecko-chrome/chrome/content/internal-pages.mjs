@@ -1849,6 +1849,9 @@ const DIAGNOSTICS_SCRIPT = String.raw`
   const copyButton = document.getElementById("copy-diagnostics");
   const copyStatus = document.getElementById("copy-diagnostics-status");
   const localizedDynamicValues = new Map([
+    ["ct-expired", "diagnostics.ctExpired"],
+    ["ct-expiring", "diagnostics.ctExpiring"],
+    ["ct-current", "diagnostics.ctCurrent"],
     ["active", "diagnostics.active"],
     ["not-active", "diagnostics.notActive"],
     ["enabled", "diagnostics.enabled"],
@@ -2226,6 +2229,7 @@ function settingsRoot(t) {
     <section class="settings-card" data-settings-card>
       <div class="settings-row"><label for="bookmark-bar-mode">${escapeHTML(t("settings.bookmarkBar"))}</label><select id="bookmark-bar-mode" class="settings-select" disabled><option value="newtab">${escapeHTML(t("settings.bookmarkBarNewtab"))}</option><option value="always">${escapeHTML(t("settings.bookmarkBarAlways"))}</option><option value="never">${escapeHTML(t("settings.bookmarkBarNever"))}</option></select></div>
       ${settingsToggle("historyButton", "settings.historyButton", "settings.historyButtonDescription", t, "appearance")}
+      ${settingsToggle("showCertificateOrganization", "settings.showCertificateOrganization", "settings.showCertificateOrganizationDescription", t, "appearance")}
     </section>
     <section class="settings-card" data-settings-card data-search="language locale english chinese 中文 语言">
       <div class="settings-row">

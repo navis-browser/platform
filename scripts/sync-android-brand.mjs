@@ -88,7 +88,8 @@ const res = "android/src/main/res/";
 await output(`${res}drawable/ic_navis_brand.xml`, vector());
 await output(`${res}drawable/ic_navis_brand_round.xml`, vector(mark.contourVariants.circle));
 await output(`${res}drawable/ic_navis_adaptive_foreground.xml`, vector(mark.contour.rx, true));
-await output(`${res}values/navis_brand_colors.xml`, `<?xml version="1.0" encoding="utf-8"?>\n<!-- ${generated} -->\n<resources><color name="navis_launcher_background">${mark.gradients.contour.stops[1].color}</color></resources>\n`);
+// Keep the circular foreground visible without painting the launcher's outer mask.
+await output(`${res}values/navis_brand_colors.xml`, `<?xml version="1.0" encoding="utf-8"?>\n<!-- ${generated} -->\n<resources><color name="navis_launcher_background">#00000000</color></resources>\n`);
 for (const [name, legacy] of [["ic_navis_launcher", "ic_navis_brand"], ["ic_navis_launcher_round", "ic_navis_brand_round"]]) {
   await output(`${res}mipmap-anydpi/${name}.xml`, `<?xml version="1.0" encoding="utf-8"?>\n<!-- ${generated} -->\n<layer-list ${ns}><item android:drawable="@drawable/${legacy}" /></layer-list>\n`);
   for (const api of [26, 33]) {

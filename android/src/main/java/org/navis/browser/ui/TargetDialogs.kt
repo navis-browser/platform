@@ -69,6 +69,7 @@ import org.navis.browser.api.SitePermissionKind
 import org.navis.browser.api.SitePermissionRequest
 import org.navis.browser.api.SitePermissionDecision
 import org.navis.browser.api.TargetRequestObserver
+import org.navis.browser.api.MediaSourceDescriptor
 
 @Composable
 internal fun TargetDialogs(
@@ -92,6 +93,7 @@ internal fun TargetDialogs(
         )
     } else {
         state.sitePermission?.takeIf { it.sessionId == activeSessionId }?.let { request ->
+            if (request is SitePermissionRequest.Media && !state.mediaPlatformGranted) return@let
             LaunchedEffect(request.id) {
                 runtime.notifySitePermissionShown(request.id)
             }
@@ -100,6 +102,9 @@ internal fun TargetDialogs(
                 saveFailed = state.sitePermissionSaveFailed,
                 onResponse = { decision ->
                     runtime.respondToSitePermission(request.id, decision)
+                },
+                onMediaResponse = { video, audio ->
+                    runtime.respondToMediaPermission(request.id, SitePermissionDecision.ALLOW_SESSION, video, audio)
                 },
             )
         }
@@ -160,7 +165,11 @@ private fun ChoicePromptDialog(
                 .mapTo(linkedSetOf()) { it.option.id },
         )
     }
+    val selectableIds = visibleChoices.filter { it.selectable }.mapTo(hashSetOf()) { it.option.id }
+    val currentSelection = selectedIds.intersect(selectableIds)
+    if (selectedIds != currentSelection) selectedIds = currentSelection
     val multiple = prompt.mode == ChoicePromptMode.MULTIPLE
+    val explicitConfirmation = multiple
     AlertDialog(
         onDismissRequest = { onResponse(PromptResponse.Dismiss) },
         title = { Text(prompt.title ?: stringResource(R.string.choose_option)) },
@@ -189,14 +198,14 @@ private fun ChoicePromptDialog(
                                 ),
                             )
                             else -> {
-                                val selected = choice.option.id in selectedIds
+                                val selected = choice.option.id in currentSelection
                                 val selectionModifier = if (multiple) {
                                     Modifier.toggleable(
                                         value = selected,
                                         enabled = choice.selectable,
                                         role = Role.Checkbox,
                                         onValueChange = { checked ->
-                                            selectedIds = selectedIds.toMutableSet().apply {
+                                            selectedIds = currentSelection.toMutableSet().apply {
                                                 if (checked) add(choice.option.id) else remove(choice.option.id)
                                             }
                                         },
@@ -207,7 +216,8 @@ private fun ChoicePromptDialog(
                                         enabled = choice.selectable,
                                         role = Role.RadioButton,
                                         onClick = {
-                                            onResponse(PromptResponse.ChoiceValue(listOf(choice.option.id)))
+                                            if (explicitConfirmation) selectedIds = setOf(choice.option.id)
+                                            else onResponse(PromptResponse.ChoiceValue(listOf(choice.option.id)))
                                         },
                                     )
                                 }
@@ -242,10 +252,10 @@ private fun ChoicePromptDialog(
             }
         },
         confirmButton = {
-            if (multiple) {
+            if (explicitConfirmation) {
                 TextButton(
                     onClick = {
-                        onResponse(PromptResponse.ChoiceValue(selectedIds.toList()))
+                        onResponse(PromptResponse.ChoiceValue(currentSelection.toList()))
                     },
                 ) {
                     Text(stringResource(R.string.ok))
@@ -253,8 +263,10 @@ private fun ChoicePromptDialog(
             }
         },
         dismissButton = {
-            TextButton(onClick = { onResponse(PromptResponse.Dismiss) }) {
-                Text(stringResource(R.string.cancel))
+            Row {
+                TextButton(onClick = { onResponse(PromptResponse.Dismiss) }) {
+                    Text(stringResource(R.string.cancel))
+                }
             }
         },
     )
@@ -642,15 +654,23 @@ private fun SitePermissionDialog(
     request: SitePermissionRequest,
     saveFailed: Boolean,
     onResponse: (SitePermissionDecision) -> Unit,
+    onMediaResponse: (String?, String?) -> Unit,
 ) {
     val origin = displayOrigin(request.uri)
     val action = sitePermissionAction(request)
+    val media = request as? SitePermissionRequest.Media
+    var video by remember(request.id) { mutableStateOf(media?.videoSources?.firstOrNull()?.id) }
+    var audio by remember(request.id) { mutableStateOf(media?.audioSources?.firstOrNull()?.id) }
     AlertDialog(
         onDismissRequest = { onResponse(SitePermissionDecision.DISMISS) },
         title = { Text(stringResource(R.string.site_permission_title)) },
         text = {
-            Column {
+            Column(Modifier.heightIn(max = 420.dp).verticalScroll(rememberScrollState())) {
                 Text(stringResource(R.string.site_permission_question, origin, action))
+                media?.let {
+                    MediaDeviceChoices(it.videoSources, video) { id -> video = id }
+                    MediaDeviceChoices(it.audioSources, audio) { id -> audio = id }
+                }
                 if (saveFailed) {
                     Spacer(Modifier.height(8.dp))
                     Text(stringResource(R.string.permission_save_failed))
@@ -676,7 +696,10 @@ private fun SitePermissionDialog(
         },
         confirmButton = {
             Column {
-                TextButton(onClick = { onResponse(SitePermissionDecision.ALLOW_SESSION) }) {
+                TextButton(onClick = {
+                    if (media != null) onMediaResponse(video, audio)
+                    else onResponse(SitePermissionDecision.ALLOW_SESSION)
+                }) {
                     Text(stringResource(if (request is SitePermissionRequest.Content) {
                         R.string.permission_allow_session
                     } else {
@@ -696,6 +719,26 @@ private fun SitePermissionDialog(
             }
         },
     )
+}
+
+@Composable
+private fun MediaDeviceChoices(sources: List<MediaSourceDescriptor>, selected: String?, onSelect: (String) -> Unit) {
+    if (sources.isEmpty()) return
+    Column(Modifier.selectableGroup()) {
+        sources.forEach { source ->
+            Row(
+                modifier = Modifier.fillMaxWidth().selectable(
+                    selected = source.id == selected,
+                    onClick = { onSelect(source.id) },
+                    role = Role.RadioButton,
+                ).padding(vertical = 8.dp),
+                verticalAlignment = androidx.compose.ui.Alignment.CenterVertically,
+            ) {
+                RadioButton(selected = source.id == selected, onClick = null)
+                Text(source.label)
+            }
+        }
+    }
 }
 
 @Composable
@@ -722,7 +765,6 @@ private fun sitePermissionAction(request: SitePermissionRequest): String = when 
             SitePermissionKind.GEOLOCATION -> R.string.permission_location
             SitePermissionKind.NOTIFICATIONS -> R.string.permission_notifications
             SitePermissionKind.PERSISTENT_STORAGE -> R.string.permission_persistent_storage
-            SitePermissionKind.XR -> R.string.permission_xr
             SitePermissionKind.AUTOPLAY_AUDIBLE -> R.string.permission_autoplay_audio
             SitePermissionKind.AUTOPLAY_INAUDIBLE -> R.string.permission_autoplay_silent
             SitePermissionKind.MEDIA_KEY_SYSTEM_ACCESS -> R.string.permission_protected_media

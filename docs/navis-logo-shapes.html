@@ -16,7 +16,6 @@
       --text: #c6d4ef;
       --white: #f5f8ff;
       --blue: #448aff;
-      --contour-rx: 40;
     }
 
     * {
@@ -85,41 +84,6 @@
     .structure-map .shape-contour { fill: url(#structure-contour); }
     .structure-map .shape-channel { fill: none; stroke: url(#structure-channel); stroke-width: 22.5; stroke-linecap: round; stroke-linejoin: round; stroke-opacity: .8; }
     .structure-map .shape-seam { fill: none; stroke: #fff; stroke-width: 6.8; stroke-linecap: round; stroke-linejoin: round; }
-
-    .contour { rx: calc(var(--contour-rx) * 1px); }
-
-    .rx-control {
-      margin-top: 16px;
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      flex-wrap: wrap;
-      color: var(--muted);
-      font-size: 12px;
-    }
-
-    .rx-control input[type="range"] {
-      width: min(260px, 56vw);
-      accent-color: var(--blue);
-    }
-
-    .rx-control output {
-      min-width: 2ch;
-      color: var(--white);
-      font-weight: 700;
-    }
-
-    .rx-preset {
-      min-height: 26px;
-      padding: 0 10px;
-      border: 1px solid var(--line);
-      border-radius: 8px;
-      color: var(--text);
-      background: #111e33;
-      cursor: pointer;
-      font-size: 11px;
-      font-weight: 700;
-    }
 
     .section {
       margin-top: 32px;
@@ -683,12 +647,12 @@
     <header class="top">
       <p class="eyebrow">Navis · Logo Scene</p>
       <h1 class="title">Logo 场景展示页</h1>
-      <p class="intro">静态几何由三层叠加而成：底层是外廓——以正方形为基础、圆角半径 rx 可调（rx=88 即回到正圆），图示取 rx 40；中间是一条通道，整体倾斜 42°，两端止于外廓边缘，宽度为外廓边长的 12.8%；顶层是两段白色内线，宽度为通道的 30.2%，沿通道的中心线排布，分别从通道两端出发，朝外廓中心方向收束。</p>
+      <p class="intro">静态几何由三层叠加而成：底层是外廓——所有场景统一使用直径 176、半径 88 的正圆；中间是一条通道，整体倾斜 42°，两端止于外廓边缘，宽度为外廓边长的 12.8%；顶层是两段白色内线，宽度为通道的 30.2%，沿通道的中心线排布，分别从通道两端出发，朝外廓中心方向收束。</p>
       <div class="structure-map" aria-label="Logo static geometry callouts">
         <svg viewBox="0 0 1060 300" role="img" aria-label="静态 Logo 几何结构标注">
           <defs>
             <marker id="structure-arrow" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto"><path d="M0 0L8 4L0 8Z" fill="#7185ae"/></marker>
-            <clipPath id="clip-structure"><rect class="contour" x="442" y="62" width="176" height="176" rx="40"/></clipPath>
+            <clipPath id="clip-structure"><rect class="contour" x="442" y="62" width="176" height="176" rx="88"/></clipPath>
             <linearGradient id="structure-contour" x1="455" y1="72" x2="596" y2="230" gradientUnits="userSpaceOnUse">
               <stop stop-color="#448aff"/>
               <stop offset=".54" stop-color="#536fe7"/>
@@ -700,7 +664,7 @@
               <stop offset="1" stop-color="#6c50ce"/>
             </linearGradient>
           </defs>
-          <rect class="contour shape-contour" x="442" y="62" width="176" height="176" rx="40"/>
+          <rect class="contour shape-contour" x="442" y="62" width="176" height="176" rx="88"/>
           <g clip-path="url(#clip-structure)">
             <g transform="rotate(42 530 150)">
               <path class="shape-channel" d="M547.4 279.9 L528 257 C511 237 482 194 484 173 C486 152 503 145 523 148 C543 151 579 131 585 101 C588 86 584 72 580 65 L565.1 39"/>
@@ -714,20 +678,12 @@
           <path class="callout-line" d="M886 244 C790 236 650 195 537 151"/><text class="callout" x="886" y="267">中部收束点 / Seam Join</text>
         </svg>
       </div>
-      <div class="rx-control" role="group" aria-label="全局外廓圆角控制">
-        <label for="contour-rx">外廓圆角 rx</label>
-        <input type="range" id="contour-rx" min="0" max="88" step="1" value="40">
-        <output id="contour-rx-value" for="contour-rx">40</output>
-        <button class="rx-preset" type="button" data-rx-preset="0">方 · 0</button>
-        <button class="rx-preset" type="button" data-rx-preset="40">主推 · 40</button>
-        <button class="rx-preset" type="button" data-rx-preset="88">正圆 · 88</button>
-      </div>
     </header>
 
     <section class="section">
       <div class="section-head">
         <h2>标志核心</h2>
-        <p>立体为基础的统一输出 · 圆形 / 方形外廓</p>
+        <p>立体为基础的统一输出 · 纯圆外廓</p>
       </div>
       <div class="two-col">
         <article class="card">
@@ -783,11 +739,11 @@
 
 
         <article class="card">
-          <h3>02 · 方形外廓（应用图标）</h3>
-          <p class="hint">应用图标位使用：外廓为 176×176 正方形底（与正圆盘面同一外接框），圆角半径 rx 可调，等价于 border-radius；rx 取边长一半（88，即 50%）时外廓回到正圆，与标准版重合。通道与白线沿切线略作外延，端头由外廓裁切收边，任何圆角档位下都不露出线端圆头。</p>
+          <h3>02 · 纯圆应用图标</h3>
+          <p class="hint">应用图标与标准标志共用直径 176、半径 88 的正圆外廓，圆外透明。通道与白线沿切线略作外延，端头由圆形外廓裁切收边。</p>
           <div class="stage">
             <div class="sq-figure">
-              <svg width="150" viewBox="0 0 220 220" role="img" aria-label="Navis square app icon, rx 40">
+              <svg width="150" viewBox="0 0 220 220" role="img" aria-label="Navis circular app icon">
                 <defs>
                   <linearGradient id="disc-sq" x1="35" y1="32" x2="176" y2="190" gradientUnits="userSpaceOnUse">
                     <stop stop-color="#448aff"/>
@@ -799,13 +755,13 @@
                     <stop offset=".54" stop-color="#4e68d9"/>
                     <stop offset="1" stop-color="#6c50ce"/>
                   </linearGradient>
-                  <clipPath id="clip-sq"><rect class="contour" x="22" y="22" width="176" height="176" rx="40"/></clipPath>
+                  <clipPath id="clip-sq"><rect class="contour" x="22" y="22" width="176" height="176" rx="88"/></clipPath>
                 </defs>
                 <g clip-path="url(#clip-sq)">
-                  <rect class="contour" x="22" y="22" width="176" height="176" rx="40" fill="url(#disc-sq)" filter="url(#fx-relief-disc)"/>
-                  <rect class="contour" x="22" y="22" width="176" height="176" rx="40" fill="url(#frost-diffuse)"/>
-                  <rect class="contour" x="22" y="22" width="176" height="176" rx="40" fill="url(#frost-fog)"/>
-                  <rect class="contour" x="22" y="22" width="176" height="176" rx="40" fill="none" stroke="url(#rim-light)" stroke-width="0.95" opacity=".42"/>
+                  <rect class="contour" x="22" y="22" width="176" height="176" rx="88" fill="url(#disc-sq)" filter="url(#fx-relief-disc)"/>
+                  <rect class="contour" x="22" y="22" width="176" height="176" rx="88" fill="url(#frost-diffuse)"/>
+                  <rect class="contour" x="22" y="22" width="176" height="176" rx="88" fill="url(#frost-fog)"/>
+                  <rect class="contour" x="22" y="22" width="176" height="176" rx="88" fill="none" stroke="url(#rim-light)" stroke-width="0.95" opacity=".42"/>
                   <g transform="rotate(42 110 110)">
                     <path d="M127.4 239.9 L108 217 C91 197 62 154 64 133 C66 112 83 105 103 108 C123 111 159 91 165 61 C168 46 164 32 160 25 L145.1 -1"
                       fill="none" stroke="url(#channel-sq)" stroke-opacity=".8" stroke-width="22.5" stroke-linecap="round" stroke-linejoin="round" filter="url(#fx-relief-channel)"/>
@@ -818,7 +774,7 @@
               </svg>
               <div class="sq-variants">
                 <figure class="sq-variant">
-                  <svg width="62" viewBox="0 0 220 220" role="img" aria-label="Square contour, rx 24">
+                  <svg width="48" viewBox="0 0 220 220" role="img" aria-label="Circular mark at 48 pixels">
                     <defs>
                       <linearGradient id="disc-sq24" x1="35" y1="32" x2="176" y2="190" gradientUnits="userSpaceOnUse">
                         <stop stop-color="#448aff"/><stop offset=".54" stop-color="#536fe7"/><stop offset="1" stop-color="#7355db"/>
@@ -826,13 +782,13 @@
                       <linearGradient id="channel-sq24" x1="35" y1="32" x2="176" y2="190" gradientUnits="userSpaceOnUse">
                         <stop stop-color="#4082f0"/><stop offset=".54" stop-color="#4e68d9"/><stop offset="1" stop-color="#6c50ce"/>
                       </linearGradient>
-                      <clipPath id="clip-sq24"><rect x="22" y="22" width="176" height="176" rx="24"/></clipPath>
+                      <clipPath id="clip-sq24"><rect x="22" y="22" width="176" height="176" rx="88"/></clipPath>
                     </defs>
                     <g clip-path="url(#clip-sq24)">
-                      <rect x="22" y="22" width="176" height="176" rx="24" fill="url(#disc-sq24)" filter="url(#fx-relief-disc)"/>
-                      <rect x="22" y="22" width="176" height="176" rx="24" fill="url(#frost-diffuse)"/>
-                      <rect x="22" y="22" width="176" height="176" rx="24" fill="url(#frost-fog)"/>
-                      <rect x="22" y="22" width="176" height="176" rx="24" fill="none" stroke="url(#rim-light)" stroke-width="0.95" opacity=".42"/>
+                      <rect x="22" y="22" width="176" height="176" rx="88" fill="url(#disc-sq24)" filter="url(#fx-relief-disc)"/>
+                      <rect x="22" y="22" width="176" height="176" rx="88" fill="url(#frost-diffuse)"/>
+                      <rect x="22" y="22" width="176" height="176" rx="88" fill="url(#frost-fog)"/>
+                      <rect x="22" y="22" width="176" height="176" rx="88" fill="none" stroke="url(#rim-light)" stroke-width="0.95" opacity=".42"/>
                       <g transform="rotate(42 110 110)">
                         <path d="M127.4 239.9 L108 217 C91 197 62 154 64 133 C66 112 83 105 103 108 C123 111 159 91 165 61 C168 46 164 32 160 25 L145.1 -1" fill="none" stroke="url(#channel-sq24)" stroke-opacity=".8" stroke-width="22.5" stroke-linecap="round" stroke-linejoin="round" filter="url(#fx-relief-channel)"/>
                         <path d="M127.4 239.9 L108 217 C91 197 62 154 64 133 C66 112 83 105 103 108" fill="none" stroke="#ffffff" stroke-width="6.8" stroke-linecap="round" stroke-linejoin="round" filter="url(#fx-relief-seam)"/>
@@ -840,10 +796,10 @@
                       </g>
                     </g>
                   </svg>
-                  <figcaption>rx 24 · 更方</figcaption>
+                  <figcaption>48 px · 正圆</figcaption>
                 </figure>
                 <figure class="sq-variant">
-                  <svg width="62" viewBox="0 0 220 220" role="img" aria-label="Square contour, rx 40">
+                  <svg width="62" viewBox="0 0 220 220" role="img" aria-label="Circular mark at 62 pixels">
                     <defs>
                       <linearGradient id="disc-sq40" x1="35" y1="32" x2="176" y2="190" gradientUnits="userSpaceOnUse">
                         <stop stop-color="#448aff"/><stop offset=".54" stop-color="#536fe7"/><stop offset="1" stop-color="#7355db"/>
@@ -851,13 +807,13 @@
                       <linearGradient id="channel-sq40" x1="35" y1="32" x2="176" y2="190" gradientUnits="userSpaceOnUse">
                         <stop stop-color="#4082f0"/><stop offset=".54" stop-color="#4e68d9"/><stop offset="1" stop-color="#6c50ce"/>
                       </linearGradient>
-                      <clipPath id="clip-sq40"><rect x="22" y="22" width="176" height="176" rx="40"/></clipPath>
+                      <clipPath id="clip-sq40"><rect x="22" y="22" width="176" height="176" rx="88"/></clipPath>
                     </defs>
                     <g clip-path="url(#clip-sq40)">
-                      <rect x="22" y="22" width="176" height="176" rx="40" fill="url(#disc-sq40)" filter="url(#fx-relief-disc)"/>
-                      <rect x="22" y="22" width="176" height="176" rx="40" fill="url(#frost-diffuse)"/>
-                      <rect x="22" y="22" width="176" height="176" rx="40" fill="url(#frost-fog)"/>
-                      <rect x="22" y="22" width="176" height="176" rx="40" fill="none" stroke="url(#rim-light)" stroke-width="0.95" opacity=".42"/>
+                      <rect x="22" y="22" width="176" height="176" rx="88" fill="url(#disc-sq40)" filter="url(#fx-relief-disc)"/>
+                      <rect x="22" y="22" width="176" height="176" rx="88" fill="url(#frost-diffuse)"/>
+                      <rect x="22" y="22" width="176" height="176" rx="88" fill="url(#frost-fog)"/>
+                      <rect x="22" y="22" width="176" height="176" rx="88" fill="none" stroke="url(#rim-light)" stroke-width="0.95" opacity=".42"/>
                       <g transform="rotate(42 110 110)">
                         <path d="M127.4 239.9 L108 217 C91 197 62 154 64 133 C66 112 83 105 103 108 C123 111 159 91 165 61 C168 46 164 32 160 25 L145.1 -1" fill="none" stroke="url(#channel-sq40)" stroke-opacity=".8" stroke-width="22.5" stroke-linecap="round" stroke-linejoin="round" filter="url(#fx-relief-channel)"/>
                         <path d="M127.4 239.9 L108 217 C91 197 62 154 64 133 C66 112 83 105 103 108" fill="none" stroke="#ffffff" stroke-width="6.8" stroke-linecap="round" stroke-linejoin="round" filter="url(#fx-relief-seam)"/>
@@ -865,10 +821,10 @@
                       </g>
                     </g>
                   </svg>
-                  <figcaption>rx 40 · 主推</figcaption>
+                  <figcaption>62 px · 正圆</figcaption>
                 </figure>
                 <figure class="sq-variant">
-                  <svg width="62" viewBox="0 0 220 220" role="img" aria-label="Square contour, rx 88, equals circle">
+                  <svg width="80" viewBox="0 0 220 220" role="img" aria-label="Circular mark at 80 pixels">
                     <defs>
                       <linearGradient id="disc-sq88" x1="35" y1="32" x2="176" y2="190" gradientUnits="userSpaceOnUse">
                         <stop stop-color="#448aff"/><stop offset=".54" stop-color="#536fe7"/><stop offset="1" stop-color="#7355db"/>
@@ -890,12 +846,12 @@
                       </g>
                     </g>
                   </svg>
-                  <figcaption>rx 88 · 50% 即正圆</figcaption>
+                  <figcaption>80 px · 正圆</figcaption>
                 </figure>
               </div>
             </div>
           </div>
-          <p class="caption">外廓参数化：正方形底 + 可调圆角，rx ∈ (0, 88]；通道与白线起点不随圆角改动，端头统一由外廓裁切收边。</p>
+          <p class="caption">不同尺寸共用相同的正圆外廓、通道和白线几何；圆外保持透明。</p>
         </article>
       </div>
     </section>
@@ -1221,7 +1177,7 @@
 
         <article class="card">
           <h3>手机桌面</h3>
-          <p class="hint">应用图标形态：圆角容器承载标志，参与桌面图标网格，下方带名称标签。</p>
+          <p class="hint">应用图标形态：纯圆标志参与桌面图标网格，下方带名称标签。</p>
           <div class="stage phone">
             <div class="app-row">
               <div class="app-tile"><div class="tile"></div></div>
@@ -1236,13 +1192,13 @@
                       <linearGradient id="channel-home" x1="35" y1="32" x2="176" y2="190" gradientUnits="userSpaceOnUse">
                         <stop stop-color="#4082f0"/><stop offset=".54" stop-color="#4e68d9"/><stop offset="1" stop-color="#6c50ce"/>
                       </linearGradient>
-                      <clipPath id="clip-home"><rect class="contour" x="22" y="22" width="176" height="176" rx="40"/></clipPath>
+                      <clipPath id="clip-home"><rect class="contour" x="22" y="22" width="176" height="176" rx="88"/></clipPath>
                     </defs>
                     <g clip-path="url(#clip-home)">
-                      <rect class="contour" x="22" y="22" width="176" height="176" rx="40" fill="url(#disc-home)" filter="url(#fx-relief-disc)"/>
-                      <rect class="contour" x="22" y="22" width="176" height="176" rx="40" fill="url(#frost-diffuse)"/>
-                      <rect class="contour" x="22" y="22" width="176" height="176" rx="40" fill="url(#frost-fog)"/>
-                      <rect class="contour" x="22" y="22" width="176" height="176" rx="40" fill="none" stroke="url(#rim-light)" stroke-width="0.95" opacity=".42"/>
+                      <rect class="contour" x="22" y="22" width="176" height="176" rx="88" fill="url(#disc-home)" filter="url(#fx-relief-disc)"/>
+                      <rect class="contour" x="22" y="22" width="176" height="176" rx="88" fill="url(#frost-diffuse)"/>
+                      <rect class="contour" x="22" y="22" width="176" height="176" rx="88" fill="url(#frost-fog)"/>
+                      <rect class="contour" x="22" y="22" width="176" height="176" rx="88" fill="none" stroke="url(#rim-light)" stroke-width="0.95" opacity=".42"/>
                       <g transform="rotate(42 110 110)">
                         <path d="M127.4 239.9 L108 217 C91 197 62 154 64 133 C66 112 83 105 103 108 C123 111 159 91 165 61 C168 46 164 32 160 25 L145.1 -1" fill="none" stroke="url(#channel-home)" stroke-opacity=".8" stroke-width="22.5" stroke-linecap="round" stroke-linejoin="round" filter="url(#fx-relief-channel)"/>
                         <path d="M127.4 239.9 L108 217 C91 197 62 154 64 133 C66 112 83 105 103 108" fill="none" stroke="#ffffff" stroke-width="6.8" stroke-linecap="round" stroke-linejoin="round" filter="url(#fx-relief-seam)"/>
@@ -1257,7 +1213,7 @@
               <div class="app-tile"><div class="tile"></div></div>
             </div>
           </div>
-          <p class="caption">深色壁纸下的应用图标：正圆标志置于圆角容器内，标签保证首次识别。</p>
+          <p class="caption">深色壁纸下的应用图标：正圆标志周围透明，标签保证首次识别。</p>
         </article>
 
         <article class="card">
@@ -1275,13 +1231,13 @@
                   <linearGradient id="channel-tray" x1="35" y1="32" x2="176" y2="190" gradientUnits="userSpaceOnUse">
                     <stop stop-color="#4082f0"/><stop offset=".54" stop-color="#4e68d9"/><stop offset="1" stop-color="#6c50ce"/>
                   </linearGradient>
-                  <clipPath id="clip-tray"><rect class="contour" x="22" y="22" width="176" height="176" rx="24"/></clipPath>
+                  <clipPath id="clip-tray"><rect class="contour" x="22" y="22" width="176" height="176" rx="88"/></clipPath>
                 </defs>
                 <g clip-path="url(#clip-tray)">
-                  <rect class="contour" x="22" y="22" width="176" height="176" rx="24" fill="url(#disc-tray)" filter="url(#fx-relief-disc)"/>
-                  <rect class="contour" x="22" y="22" width="176" height="176" rx="24" fill="url(#frost-diffuse)"/>
-                  <rect class="contour" x="22" y="22" width="176" height="176" rx="24" fill="url(#frost-fog)"/>
-                  <rect class="contour" x="22" y="22" width="176" height="176" rx="24" fill="none" stroke="url(#rim-light)" stroke-width="0.95" opacity=".42"/>
+                  <rect class="contour" x="22" y="22" width="176" height="176" rx="88" fill="url(#disc-tray)" filter="url(#fx-relief-disc)"/>
+                  <rect class="contour" x="22" y="22" width="176" height="176" rx="88" fill="url(#frost-diffuse)"/>
+                  <rect class="contour" x="22" y="22" width="176" height="176" rx="88" fill="url(#frost-fog)"/>
+                  <rect class="contour" x="22" y="22" width="176" height="176" rx="88" fill="none" stroke="url(#rim-light)" stroke-width="0.95" opacity=".42"/>
                   <g transform="rotate(42 110 110)">
                     <path d="M127.4 239.9 L108 217 C91 197 62 154 64 133 C66 112 83 105 103 108 C123 111 159 91 165 61 C168 46 164 32 160 25 L145.1 -1" fill="none" stroke="url(#channel-tray)" stroke-opacity=".8" stroke-width="22.5" stroke-linecap="round" stroke-linejoin="round" filter="url(#fx-relief-channel)"/>
                     <path d="M127.4 239.9 L108 217 C91 197 62 154 64 133 C66 112 83 105 103 108" fill="none" stroke="#ffffff" stroke-width="6.8" stroke-linecap="round" stroke-linejoin="round" filter="url(#fx-relief-seam)"/>
@@ -1310,13 +1266,13 @@
                     <linearGradient id="channel-desk" x1="35" y1="32" x2="176" y2="190" gradientUnits="userSpaceOnUse">
                       <stop stop-color="#4082f0"/><stop offset=".54" stop-color="#4e68d9"/><stop offset="1" stop-color="#6c50ce"/>
                     </linearGradient>
-                    <clipPath id="clip-desk"><rect class="contour" x="22" y="22" width="176" height="176" rx="40"/></clipPath>
+                    <clipPath id="clip-desk"><rect class="contour" x="22" y="22" width="176" height="176" rx="88"/></clipPath>
                   </defs>
                   <g clip-path="url(#clip-desk)">
-                    <rect class="contour" x="22" y="22" width="176" height="176" rx="40" fill="url(#disc-desk)" filter="url(#fx-relief-disc)"/>
-                    <rect class="contour" x="22" y="22" width="176" height="176" rx="40" fill="url(#frost-diffuse)"/>
-                    <rect class="contour" x="22" y="22" width="176" height="176" rx="40" fill="url(#frost-fog)"/>
-                    <rect class="contour" x="22" y="22" width="176" height="176" rx="40" fill="none" stroke="url(#rim-light)" stroke-width="0.95" opacity=".42"/>
+                    <rect class="contour" x="22" y="22" width="176" height="176" rx="88" fill="url(#disc-desk)" filter="url(#fx-relief-disc)"/>
+                    <rect class="contour" x="22" y="22" width="176" height="176" rx="88" fill="url(#frost-diffuse)"/>
+                    <rect class="contour" x="22" y="22" width="176" height="176" rx="88" fill="url(#frost-fog)"/>
+                    <rect class="contour" x="22" y="22" width="176" height="176" rx="88" fill="none" stroke="url(#rim-light)" stroke-width="0.95" opacity=".42"/>
                     <g transform="rotate(42 110 110)">
                       <path d="M127.4 239.9 L108 217 C91 197 62 154 64 133 C66 112 83 105 103 108 C123 111 159 91 165 61 C168 46 164 32 160 25 L145.1 -1" fill="none" stroke="url(#channel-desk)" stroke-opacity=".8" stroke-width="22.5" stroke-linecap="round" stroke-linejoin="round" filter="url(#fx-relief-channel)"/>
                       <path d="M127.4 239.9 L108 217 C91 197 62 154 64 133 C66 112 83 105 103 108" fill="none" stroke="#ffffff" stroke-width="6.8" stroke-linecap="round" stroke-linejoin="round" filter="url(#fx-relief-seam)"/>
@@ -1647,25 +1603,6 @@
       }
     });
 
-    const rootStyle = document.documentElement.style;
-    const rxInput = document.getElementById("contour-rx");
-    const rxOutput = document.getElementById("contour-rx-value");
-
-    const applyContourRx = function (value) {
-      rootStyle.setProperty("--contour-rx", String(value));
-      rxOutput.textContent = String(value);
-    };
-
-    rxInput.addEventListener("input", function () {
-      applyContourRx(rxInput.value);
-    });
-
-    document.querySelectorAll("[data-rx-preset]").forEach(function (button) {
-      button.addEventListener("click", function () {
-        rxInput.value = button.getAttribute("data-rx-preset");
-        applyContourRx(rxInput.value);
-      });
-    });
   </script>
 </body>
 </html>

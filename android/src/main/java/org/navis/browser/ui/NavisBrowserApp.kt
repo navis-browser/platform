@@ -5,6 +5,9 @@
 package org.navis.browser.ui
 
 import android.content.res.Configuration
+import android.view.View
+import androidx.compose.animation.core.Animatable
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
@@ -51,6 +54,7 @@ import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Star
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -58,12 +62,12 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.LinearProgressIndicator
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TextField
 import androidx.compose.material3.TextFieldDefaults
 import androidx.compose.runtime.Composable
@@ -75,6 +79,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.saveable.rememberSaveableStateHolder
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
@@ -97,6 +102,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.TextFieldValue
+import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -149,6 +155,7 @@ internal fun NavisBrowserApp(runtime: AndroidWindowRuntime) {
     var pageFullscreen by remember(runtime) { mutableStateOf(runtime.targetState.fullscreenSessionId != null) }
     val fullscreen = state.windowFullscreen || pageFullscreen
     var showTabs by remember { mutableStateOf(false) }
+    var printFailure by remember(runtime) { mutableStateOf<String?>(null) }
     var showHistory by remember(runtime) { mutableStateOf(false) }
     var showSiteInformation by remember { mutableStateOf(false) }
     var devToolsTarget by remember { mutableStateOf<org.navis.browser.api.SessionId?>(null) }
@@ -231,7 +238,8 @@ internal fun NavisBrowserApp(runtime: AndroidWindowRuntime) {
                     selected?.let { runtime.activateSession(it.id) }
                     selected != null
                 }
-                BrowserKeyboardAction.ToggleDevTools -> if (active.nativeRoute != null) false
+                BrowserKeyboardAction.ToggleDevTools -> if (active.nativeNewTab || active.nativeRoute != null ||
+                    active.navigation.contentTermination != ContentTermination.NONE) false
                     else { openDevTools(); true }
                 BrowserKeyboardAction.ExitFullscreen -> if (fullscreen) {
                     exitFullscreenPresentation(); true
@@ -255,12 +263,14 @@ internal fun NavisBrowserApp(runtime: AndroidWindowRuntime) {
             contextMenu = next
         }
         val shortcutObserver = { _: String -> navigate("navis://extensions/") }
+        runtime.onPrintFailure = { detail -> printFailure = detail }
         runtime.addObserver(observer)
         runtime.addTargetObserver(targetObserver)
         runtime.addContextMenuObserver(contextObserver)
         runtime.addShortcutSettingsObserver(shortcutObserver)
         onDispose {
             observing = false
+            runtime.onPrintFailure = null
             bookmarksSubscription.close()
             historySubscription.close()
             runtime.removeObserver(observer)
@@ -291,8 +301,16 @@ internal fun NavisBrowserApp(runtime: AndroidWindowRuntime) {
         if (showHistory) runtime.listHistory { history = it }
     }
 
-    BackHandler(enabled = devToolsTarget != null || showTabs || showHistory || showSiteInformation ||
-        (surface != AppSurface.BROWSER && state.activeSession?.navigation?.canGoBack == true)) {
+    printFailure?.let { detail ->
+        AlertDialog(
+            onDismissRequest = { printFailure = null },
+            title = { Text(stringResource(R.string.print_failed)) },
+            text = { androidx.compose.foundation.text.selection.SelectionContainer { Text(detail) } },
+            confirmButton = { TextButton(onClick = { printFailure = null }) { Text(stringResource(R.string.ok)) } },
+        )
+    }
+
+    BackHandler(enabled = devToolsTarget != null || showTabs || showHistory || showSiteInformation) {
         when {
             devToolsTarget != null -> devToolsTarget = null
             showSiteInformation -> showSiteInformation = false
@@ -322,43 +340,84 @@ internal fun NavisBrowserApp(runtime: AndroidWindowRuntime) {
     var showProfile by remember { androidx.compose.runtime.mutableStateOf(false) }
 
     NavisTheme(settings) {
+        val profileContent: @Composable (Boolean) -> Unit = { asPage ->
+            UserProfileSheet(
+                filesRoot = profileFilesRoot,
+                appName = appNameLabel,
+                onSwitchProfile = { selected ->
+                    activity?.openProfileWindow(selected.id)
+                },
+                onRestart = { safeMode ->
+                    // ModalBottomSheet owns a separate Android window. Release it before
+                    // prepareRelaunch waits for browser focus to dispatch beforeunload.
+                    showProfile = false
+                    activity?.relaunchBrowser(safeMode = safeMode)
+                },
+                onIdentityChanged = { user ->
+                    runtime.product.settings.setAppearance("accent", user.accent)
+                    profileGeneration++
+                },
+                onDismiss = {
+                    showProfile = false
+                    profileGeneration++
+                    if (asPage) backFromPage()
+                },
+                onManage = { showProfile = false; navigate("navis://profiles/") },
+                asPage = asPage,
+            )
+        }
         val toolsTarget = devToolsTarget
         if (toolsTarget != null) {
             DeveloperToolsSurface(runtime, toolsTarget, devToolsInitialTool) { devToolsTarget = null }
-        } else when (surface) {
-            AppSurface.BROWSER -> BrowserSurface(
-                runtime = runtime, state = state, fullscreen = fullscreen,
-                omniboxFocusRequest = omniboxFocusRequest,
-                onOmniboxFocusRequestHandled = { request ->
-                    if (omniboxFocusRequest == request) omniboxFocusRequest = 0
-                },
-                bookmarks = bookmarks,
-                onSaveBookmark = { draft, done ->
-                    runtime.saveBookmark(draft) { result ->
-                        runtime.listBookmarks { bookmarks = it; done(result) }
+        } else Box(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.surface)) {
+            NativePageHost(
+                active = state.activeSession,
+                backEnabled = !fullscreen && !showTabs && !showHistory && !showSiteInformation &&
+                    !showProfile && contextMenu == null && !showShortcutAddress &&
+                    state.activeSession?.navigation?.canGoBack == true,
+                currentSession = { runtime.state.activeSession },
+                onBack = runtime::goBack,
+                background = {
+                    val browserVisible = surface == AppSurface.BROWSER
+                    Box(Modifier.fillMaxSize().pageInputEnabled(browserVisible)) {
+                        BrowserSurface(
+                        runtime = runtime, state = state, fullscreen = fullscreen, visible = browserVisible,
+                        omniboxFocusRequest = omniboxFocusRequest,
+                        onOmniboxFocusRequestHandled = { request ->
+                            if (omniboxFocusRequest == request) omniboxFocusRequest = 0
+                        },
+                        bookmarks = bookmarks,
+                        onSaveBookmark = { draft, done ->
+                            runtime.saveBookmark(draft) { result ->
+                                runtime.listBookmarks { bookmarks = it; done(result) }
+                            }
+                        },
+                        onShowTabs = { showSiteInformation = false; showTabs = true },
+                        onToggleHistory = { showHistory = !showHistory },
+                        onProductPage = ::navigate,
+                        onShowSiteInformation = {
+                            runtime.extensions.dismissExtensionPopup()
+                            showSiteInformation = true
+                        },
+                        onOpenDevTools = { openDevTools() },
+                        onPrint = { runtime.print() },
+                        onBookmark = { active ->
+                            pageBookmarkDraft = org.navis.browser.persistence.BookmarkTreePolicy.draftForPage(
+                                bookmarks, active.navigation.url, active.navigation.title)
+                        },
+                        onShowProfile = { showProfile = true },
+                        avatarName = currentUserProfile?.userName.orEmpty(),
+                        avatarAccent = settings.accent,
+                        avatarAppName = appNameLabel,
+                    )
                     }
                 },
-                onShowTabs = { showSiteInformation = false; showTabs = true },
-                onToggleHistory = { showHistory = !showHistory },
-                onProductPage = ::navigate,
-                onShowSiteInformation = {
-                    runtime.extensions.dismissExtensionPopup()
-                    showSiteInformation = true
-                },
-                onOpenDevTools = { openDevTools() },
-                onBookmark = { active ->
-                    pageBookmarkDraft = org.navis.browser.persistence.BookmarkTreePolicy.draftForPage(
-                        bookmarks, active.navigation.url, active.navigation.title)
-                },
-                onShowProfile = { showProfile = true },
-                avatarName = currentUserProfile?.userName.orEmpty(),
-                avatarAccent = settings.accent,
-                avatarAppName = appNameLabel,
-            )
+            ) { route ->
+                when (pageSurface(route)) {
             AppSurface.SETTINGS -> SettingsSurface(
                 runtime = runtime, onBack = ::backFromPage, onNavigate = ::navigate,
                 onRelaunch = { activity?.relaunchBrowser() },
-                section = state.activeSession?.nativeRoute?.substringAfter("settings/", "").orEmpty(),
+                section = route.substringAfter("settings/", ""),
             )
             AppSurface.EXTENSIONS -> ExtensionManagerSurface(
                 host = runtime.extensions, developerMode = false,
@@ -428,12 +487,15 @@ internal fun NavisBrowserApp(runtime: AndroidWindowRuntime) {
             AppSurface.URLS -> InternalUrlsSurface(::backFromPage, ::navigate)
             AppSurface.PROCESSES -> ProcessManagementSurface(runtime, ::backFromPage)
             AppSurface.CREDITS -> CreditsSurface(runtime, ::backFromPage, ::navigate)
-            AppSurface.PROFILES -> Unit
+            AppSurface.PROFILES -> profileContent(true)
+            AppSurface.BROWSER -> Unit
+                }
+            }
         }
         if (showTabs && !fullscreen) TabsSheet(runtime, state) { showTabs = false }
         if (showHistory && surface == AppSurface.BROWSER && !fullscreen) {
             val closeHistory = { showHistory = false }
-            ModalBottomSheet(onDismissRequest = closeHistory) {
+            NavisModalBottomSheet(onDismissRequest = closeHistory) {
                 HistorySurface(
                     entries = history,
                     onBack = closeHistory,
@@ -454,32 +516,7 @@ internal fun NavisBrowserApp(runtime: AndroidWindowRuntime) {
         if (showSiteInformation) state.activeSession?.let { active ->
             SiteInformationSheet(runtime, active) { showSiteInformation = false }
         }
-        if (showProfile || surface == AppSurface.PROFILES) {
-            UserProfileSheet(
-                filesRoot = profileFilesRoot,
-                appName = appNameLabel,
-                onSwitchProfile = { selected ->
-                    activity?.openProfileWindow(selected.id)
-                },
-                onRestart = { safeMode ->
-                    // ModalBottomSheet owns a separate Android window. Release it before
-                    // prepareRelaunch waits for browser focus to dispatch beforeunload.
-                    showProfile = false
-                    activity?.relaunchBrowser(safeMode = safeMode)
-                },
-                onIdentityChanged = { user ->
-                    runtime.product.settings.setAppearance("accent", user.accent)
-                    profileGeneration++
-                },
-                onDismiss = {
-                    showProfile = false
-                    profileGeneration++
-                    if (surface == AppSurface.PROFILES) backFromPage()
-                },
-                onManage = { showProfile = false; navigate("navis://profiles/") },
-                asPage = surface == AppSurface.PROFILES,
-            )
-        }
+        if (showProfile) profileContent(false)
         pageBookmarkDraft?.let { draft ->
             BookmarkEditor(draft, bookmarks, onDismiss = { pageBookmarkDraft = null }) { changed, done ->
                 runtime.saveBookmark(changed) { result ->
@@ -507,11 +544,13 @@ private tailrec fun android.content.Context.navisActivity(): org.navis.browser.M
     else -> null
 }
 
+@OptIn(androidx.compose.material3.ExperimentalMaterial3ExpressiveApi::class)
 @Composable
 private fun BrowserSurface(
     runtime: AndroidWindowRuntime,
     state: BrowserState,
     fullscreen: Boolean,
+    visible: Boolean,
     omniboxFocusRequest: Long = 0,
     onOmniboxFocusRequestHandled: (Long) -> Unit,
     onShowTabs: () -> Unit,
@@ -521,6 +560,7 @@ private fun BrowserSurface(
     onProductPage: (String) -> Unit,
     onShowSiteInformation: () -> Unit,
     onOpenDevTools: () -> Unit,
+    onPrint: () -> Unit,
     onBookmark: (BrowserSessionState) -> Unit,
     onShowProfile: () -> Unit,
     avatarName: String,
@@ -531,8 +571,25 @@ private fun BrowserSurface(
     val settings = rememberBrowserSettings(runtime.product.settings)
     val omniboxFocusRequester = remember { FocusRequester() }
     var addressEditing by remember(active?.id) { mutableStateOf(false) }
+    val focus = LocalFocusManager.current
+    LaunchedEffect(visible) {
+        if (!visible) { addressEditing = false; focus.clearFocus() }
+    }
+    val newTabPages = rememberSaveableStateHolder()
+    val showNewTab = active?.nativeNewTab == true
+    val tabVeil = remember { Animatable(0f) }
+    var lastTab by remember { mutableStateOf(active?.id) }
+    val tabEffects = MaterialTheme.motionScheme.fastEffectsSpec<Float>()
+    LaunchedEffect(active?.id) {
+        if (lastTab != active?.id) {
+            lastTab = active?.id
+            tabVeil.snapTo(1f)
+            tabVeil.animateTo(0f, tabEffects)
+        }
+    }
     Scaffold(
         topBar = {
+            Column {
             if (!fullscreen) {
                 BrowserToolbar(
                     runtime = runtime,
@@ -560,6 +617,7 @@ private fun BrowserSurface(
                     onProductPage = onProductPage,
                     onShowSiteInformation = onShowSiteInformation,
                     onOpenDevTools = onOpenDevTools,
+                    onPrint = onPrint,
                     onBookmark = { active?.let(onBookmark) },
                     onShowProfile = onShowProfile,
                     avatarName = avatarName,
@@ -569,6 +627,9 @@ private fun BrowserSurface(
                     focusRequest = omniboxFocusRequest,
                     onFocusRequestHandled = onOmniboxFocusRequestHandled,
                 )
+            } else if (active?.devices?.active == true) {
+                ActiveDevicesButton(onShowSiteInformation)
+            }
             }
         },
     ) { padding ->
@@ -577,6 +638,21 @@ private fun BrowserSurface(
                 .fillMaxSize()
                 .navisPageContentPadding(padding),
         ) {
+            if (active != null) {
+                AndroidView(
+                    factory = { context -> AndroidBrowserView(context).also(runtime::attachView) },
+                    update = { view ->
+                        runtime.attachView(view)
+                        val contentVisible = visible && !showNewTab &&
+                            active.navigation.contentTermination == ContentTermination.NONE
+                        view.visibility = if (contentVisible) View.VISIBLE else View.INVISIBLE
+                        view.importantForAccessibility = if (contentVisible) View.IMPORTANT_FOR_ACCESSIBILITY_AUTO
+                            else View.IMPORTANT_FOR_ACCESSIBILITY_NO_HIDE_DESCENDANTS
+                    },
+                    onRelease = runtime::detachView,
+                    modifier = Modifier.fillMaxSize(),
+                )
+            }
             if (
                 active != null &&
                 active.navigation.contentTermination != ContentTermination.NONE
@@ -585,11 +661,11 @@ private fun BrowserSurface(
                     crashed = active.navigation.contentTermination == ContentTermination.CRASHED,
                     onRecover = { runtime.reload(active.id) },
                 )
-            } else if (active?.nativeNewTab == true) {
-                key(active.id) {
+            } else if (showNewTab) {
+                newTabPages.SaveableStateProvider("newtab:${active.id.value}") {
                     NativeNewTabSurface(
                         privateMode = active.mode == SessionMode.PRIVATE,
-                        backEnabled = !addressEditing,
+                        backEnabled = visible && !addressEditing,
                         bookmarks = bookmarks,
                         showShortcuts = settings.bookmarkBarVisible,
                         sessions = state.sessions,
@@ -598,18 +674,10 @@ private fun BrowserSurface(
                         onSaveBookmark = onSaveBookmark,
                     )
                 }
-            } else if (active != null) {
-                // Closing the final tab/window publishes an empty state before
-                // Activity disposal. No Session means no new engine View owner.
-                AndroidView(
-                    factory = { context ->
-                        AndroidBrowserView(context).also(runtime::attachView)
-                    },
-                    update = runtime::attachView,
-                    onRelease = runtime::detachView,
-                    modifier = Modifier.fillMaxSize(),
-                )
             }
+            if (tabVeil.value > 0f) Box(Modifier.fillMaxSize()
+                .graphicsLayer { alpha = tabVeil.value }
+                .background(MaterialTheme.colorScheme.surface))
             if (
                 active?.nativeNewTab != true &&
                 active?.navigation?.contentTermination == ContentTermination.NONE &&
@@ -617,6 +685,16 @@ private fun BrowserSurface(
             ) {
                 LinearProgressIndicator(modifier = Modifier.fillMaxWidth())
             }
+        }
+    }
+}
+
+@Composable
+private fun ActiveDevicesButton(onShowSiteInformation: () -> Unit) {
+    Surface {
+        TextButton(onClick = onShowSiteInformation,
+            modifier = Modifier.fillMaxWidth().heightIn(min = 48.dp)) {
+            Text(stringResource(R.string.site_device_active))
         }
     }
 }
@@ -664,6 +742,7 @@ private fun BrowserToolbar(
     onProductPage: (String) -> Unit,
     onShowSiteInformation: () -> Unit,
     onOpenDevTools: () -> Unit,
+    onPrint: () -> Unit,
     onBookmark: () -> Unit,
     onShowProfile: () -> Unit,
     avatarName: String,
@@ -692,7 +771,16 @@ private fun BrowserToolbar(
     var submissionSerial by remember(active?.id) { mutableLongStateOf(0L) }
     val siteLabel = stringResource(R.string.site_information)
     val sitePresentation = rememberToolbarSitePresentation(runtime, active)
-    val organization = sitePresentation.organization
+    val organization = sitePresentation.organization.takeIf { settings.showCertificateOrganization }
+    val identityTextStyle = MaterialTheme.typography.labelMedium
+    val identityTextMeasurer = rememberTextMeasurer()
+    val identityDensity = LocalDensity.current
+    val organizationWidthDp = organization?.let {
+        with(identityDensity) {
+            identityTextMeasurer.measure(it, style = identityTextStyle,
+                maxLines = 1, softWrap = false).size.width.toDp().value
+        }
+    }
     val identityKind = sitePresentation.information?.kind ?: fallbackSiteIdentityKind(active)
     val identityLabel = organization?.let { stringResource(R.string.site_organization_action, it) } ?: siteLabel
     val cancelAddressLabel = stringResource(R.string.browser_cancel_address)
@@ -801,7 +889,7 @@ private fun BrowserToolbar(
                 ) {
                     BoxWithConstraints {
                     val fontScale = LocalDensity.current.fontScale
-                    val layout = omniboxLayout(maxWidth.value, fontScale, organization != null,
+                    val layout = omniboxLayout(maxWidth.value, fontScale, organizationWidthDp,
                         allowInlineReload = isLandscape)
                     Row(Modifier.heightIn(min = 56.dp), verticalAlignment = Alignment.CenterVertically) {
                         // Keep this focus target alive across browse/edit presentation changes.
@@ -829,9 +917,7 @@ private fun BrowserToolbar(
                             } else if (organization != null) {
                                 Text(organization, modifier = Modifier.padding(horizontal = 8.dp, vertical = 4.dp),
                                     maxLines = 2, overflow = TextOverflow.Ellipsis, textAlign = TextAlign.Center,
-                                    style = MaterialTheme.typography.labelMedium)
-                            } else if (identityKind == "internal") {
-                                NavisBrandMark(Modifier.size(24.dp))
+                                    style = identityTextStyle)
                             } else {
                                 Icon(painterResource(siteIdentityIcon(identityKind)), null, Modifier.size(24.dp))
                             }
@@ -1032,14 +1118,22 @@ private fun BrowserToolbar(
                                 NavisMenuItem(
                                     text = { Text(stringResource(R.string.new_tab)) },
                                     leadingIcon = { Icon(Icons.Default.Add, null) },
-                                    itemIndex = 0, itemCount = 2,
+                                    itemIndex = 0, itemCount = 3,
                                     onClick = { menuOpen = false; onNewTab() },
                                 )
                                 NavisMenuItem(
                                     text = { Text(stringResource(R.string.new_private_tab)) },
                                     leadingIcon = { Icon(Icons.Default.Lock, null) },
-                                    itemIndex = 1, itemCount = 2,
+                                    itemIndex = 1, itemCount = 3,
                                     onClick = { menuOpen = false; onNewPrivateTab() },
+                                )
+                                NavisMenuItem(
+                                    text = { Text(stringResource(R.string.print_document)) },
+                                    leadingIcon = { Icon(painterResource(R.drawable.ic_menu_print), null, Modifier.size(24.dp)) },
+                                    itemIndex = 2, itemCount = 3,
+                                    enabled = active != null && !active.nativeNewTab && active.nativeRoute == null &&
+                                        active.navigation.contentTermination == ContentTermination.NONE,
+                                    onClick = { menuOpen = false; onPrint() },
                                 )
                             }
                             NavisMenuGroup(index = 2, count = groupCount) {
@@ -1090,7 +1184,8 @@ private fun BrowserToolbar(
                                     text = { Text(stringResource(R.string.developer_tools)) },
                                     leadingIcon = { Icon(Icons.Default.Build, null) },
                                     itemIndex = 2, itemCount = 3,
-                                    enabled = active?.nativeRoute == null && active != null,
+                                    enabled = active != null && !active.nativeNewTab && active.nativeRoute == null &&
+                                        active.navigation.contentTermination == ContentTermination.NONE,
                                     onClick = { menuOpen = false; onOpenDevTools() },
                                 )
                             }
@@ -1125,6 +1220,9 @@ private fun BrowserToolbar(
                     modifier = Modifier.padding(start = 20.dp, bottom = 6.dp),
                 )
             }
+            if (active?.devices?.active == true) {
+                ActiveDevicesButton(onShowSiteInformation)
+            }
         }
     }
 }
@@ -1149,7 +1247,7 @@ private fun TabsSheet(
     // hiding the selected end item despite a correct initial scroll position.
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val reorder = rememberTabReorderGesture(runtime, listState)
-    ModalBottomSheet(
+    NavisModalBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = sheetState,
         sheetGesturesEnabled = !reorder.active,

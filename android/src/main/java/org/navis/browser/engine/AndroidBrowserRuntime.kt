@@ -50,7 +50,6 @@ import org.navis.browser.extensions.ExtensionHost
 import org.navis.browser.persistence.BookmarkEntry
 import org.navis.browser.persistence.BookmarkDraft
 import org.navis.browser.persistence.BrowserProfileStore
-import org.navis.browser.persistence.AndroidSitePermissionStore
 import org.navis.browser.persistence.AndroidLoginStorageDelegate
 import org.navis.browser.persistence.HistoryEntry
 import org.navis.browser.persistence.PasswordEntry
@@ -1187,7 +1186,6 @@ internal class AndroidBrowserRuntime private constructor(
                 isSessionLive = ::isLive,
                 projections = engineRuntime.projections,
                 enginePort = engineRuntime.targetPort,
-                sitePermissionStore = AndroidSitePermissionStore(applicationContext),
                 windowIdForSession = ::windowIdForSession,
                 activeWindowId = ::currentWindowId,
                 requestNotificationPermission = { sessionId, done ->
@@ -1716,6 +1714,14 @@ internal class AndroidBrowserRuntime private constructor(
         targetDelegate.respondToSitePermission(id, decision)
     }
 
+    override fun respondToMediaPlatformPermission(id: TargetRequestId, granted: Boolean) {
+        targetDelegate.respondToMediaPlatformPermission(id, granted)
+    }
+
+    override fun respondToMediaPermission(id: TargetRequestId, decision: org.navis.browser.api.SitePermissionDecision, video: String?, audio: String?) {
+        targetDelegate.respondToMediaPermission(id, decision, video, audio)
+    }
+
     override fun respondToPlatformPermission(id: TargetRequestId, granted: Boolean) {
         targetDelegate.respondToPlatformPermission(id, granted)
     }
@@ -2167,6 +2173,35 @@ internal class AndroidBrowserRuntime private constructor(
         contextMenuObservers.toList().forEach { observer ->
             runCatching { observer(request) }
         }
+    }
+
+    override fun onPrintRequested(sessionId: SessionId) {
+        val windowId = windowIdForSession(sessionId) ?: return
+        val window = windowRegistry.find(windowId) ?: return
+        val lease = window.lease ?: return
+        if (!isLive(sessionId) || window.selectedSessionId != sessionId || !window.visible) return
+        val activity = runCatching { currentWindowActivity(lease) }.getOrNull() ?: return
+        val session = sessions[sessionId] ?: return
+        fun reportPrintFailure(error: Throwable) {
+            if (windowRegistry.isCurrent(lease) && !activity.isFinishing && !activity.isDestroyed) {
+                val detail = operationFailureDetail(error)
+                android.util.Log.e("NavisPrint", detail)
+                windowFacades[windowId]?.onPrintFailure?.invoke(detail)
+            }
+        }
+        runCatching { session.beginPrint() }.onSuccess { beginning ->
+            beginning.whenComplete { document, error -> onMain {
+                if (error != null || document == null) {
+                    reportPrintFailure(error ?: IllegalStateException("Print document is unavailable"))
+                } else if (!isLive(sessionId) || !windowRegistry.isCurrent(lease) ||
+                    activity.isFinishing || activity.isDestroyed ||
+                    windowRegistry.find(windowId)?.selectedSessionId != sessionId) {
+                    document.close()
+                } else {
+                    org.navis.browser.documents.NavisPrintDocumentAdapter.start(activity, document, ::reportPrintFailure)
+                }
+            } }
+        }.onFailure(::reportPrintFailure)
     }
 
     override fun onContextMenuUpdated(sessionId: SessionId, request: AndroidContextMenuRequest) {

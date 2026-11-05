@@ -27,7 +27,7 @@ internal class AndroidDevToolsHost(
     private var closed = false
     private var closing: CompletableFuture<Boolean>? = null
     private val views = linkedSetOf<AndroidBrowserView>()
-    private val main = Handler(Looper.getMainLooper())
+    private val main by lazy { Handler(Looper.getMainLooper()) }
     private val session = engine.createSession(sessionId, object : EngineSessionObserver {
         override fun onNativeWindowReady() = refreshViews()
         override fun onHostReady() = Unit
@@ -39,12 +39,12 @@ internal class AndroidDevToolsHost(
         override fun onHistoryChanged(canGoBack: Boolean, canGoForward: Boolean) = Unit
         override fun onSecurityChanged(state: EngineSecurityState) = Unit
         override fun onFullscreenChanged(enabled: Boolean) = Unit
-        override fun onContentProcessGone(crashed: Boolean) { ready.complete(false) }
+        override fun onContentProcessGone(crashed: Boolean) { ready.completeExceptionally(IllegalStateException("Developer tools content process closed")) }
         override fun onCompositorAttached() = refreshViews()
         override fun onCompositorDetached() = Unit
         override fun onNewSurfaceRequired() = refreshViews()
-        override fun onSessionError(message: String) { ready.complete(false) }
-        override fun onSessionClosed() { ready.complete(false) }
+        override fun onSessionError(message: String) { ready.completeExceptionally(IllegalStateException(message)) }
+        override fun onSessionClosed() { ready.completeExceptionally(IllegalStateException("Developer tools session closed")) }
     })
 
     init {

@@ -14,7 +14,6 @@ import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
@@ -122,7 +121,7 @@ internal fun AndroidContextMenuSheet(
         }
         return count
     }
-    ModalBottomSheet(
+    NavisModalBottomSheet(
         onDismissRequest = {
             runtime.respondToContextMenu(request, null)
             dismiss()

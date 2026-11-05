@@ -93,7 +93,7 @@ internal data class EngineExtensionCapabilities(
             optionsProjection
 
     /**
-     * Complete Navis 1.0 product projection. This is deliberately stronger than lifecycle/control:
+     * Complete Navis product projection. This is deliberately stronger than lifecycle/control:
      * every engine-to-Platform surface in the accepted Android extension profile must be present.
      */
     val isCompleteProductProjection: Boolean
@@ -108,7 +108,7 @@ internal data class EngineExtensionCapabilities(
             engineApiModuleProfile
 
     companion object {
-        /** Complete direct-runtime product projection for the bounded Navis 1.0 API profile. */
+        /** Complete direct-runtime product projection for the bounded Navis API profile. */
         val DIRECT_PRODUCT_V1_COMPLETE = EngineExtensionCapabilities(
             builtInLifecycle = true,
             signedLocalPackages = true,

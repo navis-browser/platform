@@ -119,10 +119,8 @@
 @RESPATH@/@PREF_DIR@/navis-devtools.js
 #endif
 
-#ifdef MOZ_WEBEXTENSIONS_RUNTIME
 @RESPATH@/extensions/*.xpi
 @RESPATH@/builtin-extensions/extensions.json
-#endif
 
 #ifdef MOZ_ANGLE_RENDERER
 @BINPATH@/libEGL.dll
@@ -137,10 +135,11 @@
 @RESPATH@/chrome/navis.manifest
 @RESPATH@/chrome/navis-branding@JAREXT@
 @RESPATH@/chrome/navis-branding.manifest
-#ifdef MOZ_WEBEXTENSIONS_RUNTIME
 @RESPATH@/chrome/navis-extensions@JAREXT@
 @RESPATH@/chrome/navis-extensions.manifest
-#endif
+@RESPATH@/chrome/pdfjs@JAREXT@
+@RESPATH@/chrome/pdfjs.manifest
+@RESPATH@/defaults/pref/PdfJsDefaultPrefs.js
 @RESPATH@/chrome/toolkit@JAREXT@
 @RESPATH@/chrome/toolkit.manifest
 

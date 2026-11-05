@@ -3,6 +3,7 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 export const EN_US_MESSAGES = Object.freeze({
+
   "processes.description": "CPU is measured over time (100% is one logical processor). Ending a content process closes all pages hosted by it; browser, GPU and network services are protected.",
   "processes.refresh": "Refresh",
   "processes.process": "Process",
@@ -16,6 +17,12 @@ export const EN_US_MESSAGES = Object.freeze({
   "processes.measuring": "Measuring…",
   "credits.notice": "Navis uses Mozilla Gecko and other open-source components. Their packaged copyright notices and licenses are listed below and are available offline.",
   "credits.packagedNotices": "Packaged copyright notices and licenses",
+  "diagnostics.certificateTransparency": "Certificate transparency",
+  "diagnostics.ctExpiration": "CT metadata expires (UTC)",
+  "diagnostics.revocationsDate": "Bundled certificate revocations (UTC)",
+  "diagnostics.ctExpired": "Expired — certificate transparency is no longer enforced; install a current Navis package.",
+  "diagnostics.ctExpiring": "Active — metadata expires soon; install a current Navis package.",
+  "diagnostics.ctCurrent": "Active for publicly trusted certificates",
   "diagnostics.moreDetails": "Additional diagnostics",
   "diagnostics.cpuDetails": "CPU details",
   "diagnostics.adapterDescription2": "Secondary graphics adapter",
@@ -70,6 +77,8 @@ export const EN_US_MESSAGES = Object.freeze({
   "settings.bookmarkBarNever": "Never",
   "settings.historyButton": "Show history button in toolbar",
   "settings.historyButtonDescription": "Show a shortcut beside pinned extensions. Click it to open or close the history sidebar.",
+  "settings.showCertificateOrganization": "Show certificate organization",
+  "settings.showCertificateOrganizationDescription": "Show the certificate organization in the address bar when available. Turn off to show only the site information icon.",
   "settings.downloadDirectory": "Default download location",
   "settings.change": "Change",
   "settings.askBeforeSaving": "Ask where to save each file",
@@ -241,6 +250,14 @@ export const EN_US_MESSAGES = Object.freeze({
   "certificate.field": "{label}: {value}",
   "certificate.chainEntry": "{name}. {issuer}",
 
+  "sitePermissions.title": "Site permissions",
+  "sitePermissions.embeddedOrigin": "Embedded content: {origin}",
+  "sitePermissions.ask": "Ask",
+  "sitePermissions.allow": "Allow",
+  "sitePermissions.block": "Block",
+  "sitePermissions.temporary": "This session",
+  "sitePermissions.stopMedia": "Stop camera and microphone",
+  "sitePermissions.failed": "Could not update this site permission.",
   "permission.title": "Permission request",
   "permission.block": "Block",
   "permission.alwaysAllow": "Always allow",
@@ -253,6 +270,7 @@ export const EN_US_MESSAGES = Object.freeze({
   "permission.notifications": "notifications",
   "permission.persistentStorage": "persistent storage",
   "permission.device": "a device",
+  "permission.frameOrigin": "Requested by embedded site: {origin}",
   "permission.cameraDetail": "Camera: {name}",
   "permission.microphoneDetail": "Microphone: {name}",
   "permission.extensionTitle": "Extension permission request",
@@ -373,6 +391,9 @@ export const EN_US_MESSAGES = Object.freeze({
   "menu.bookmarks": "Bookmarks",
   "menu.passwordManager": "Password manager",
   "menu.developerTools": "Developer tools",
+  "menu.openFile": "Open file…",
+  "menu.print": "Print…",
+  "documents.failed": "Could not open the document operation.",
   "menu.settings": "Settings",
   "menu.showBookmarksBar": "Show bookmarks bar",
   "menu.hideBookmarksBar": "Hide bookmarks bar",
@@ -581,6 +602,8 @@ export const EN_US_MESSAGES = Object.freeze({
   "diagnostics.privateWindow": "Current window mode",
   "diagnostics.builtInExtensions": "Application built-in extensions",
   "diagnostics.webAuthn": "WebAuthn",
+  "diagnostics.mediaCapture": "Camera and microphone capture",
+  "diagnostics.peerConnection": "WebRTC PeerConnection",
   "diagnostics.operatingSystem": "Operating system",
   "diagnostics.architecture": "Architecture",
   "diagnostics.widgetToolkit": "Widget toolkit",
@@ -768,7 +791,7 @@ export const EN_US_MESSAGES = Object.freeze({
   "extensions.packageSize": "Size: {bytes} bytes",
   "extensions.requiredAccess": "Required access",
   "extensions.optionalUnsupported": "Unavailable optional capabilities",
-  "extensions.compatible": "Compatible with the Navis 1.0 profile",
+  "extensions.compatible": "Compatible with the Navis profile",
   "extensions.incompatible": "This package requires unsupported capabilities.",
   "extensions.confirmInstall": "Install extension",
   "extensions.confirmUpdate": "Update extension",
@@ -780,9 +803,9 @@ export const EN_US_MESSAGES = Object.freeze({
   "extensions.error.incompatible-version":
     "The extension is not compatible with this Navis build.",
   "extensions.error.unsupported-package-type":
-    "Navis 1.0 accepts WebExtension packages only.",
+    "Navis accepts WebExtension packages only.",
   "extensions.error.unsupported-capability":
-    "The extension requires a capability outside the Navis 1.0 profile.",
+    "The extension requires a capability outside the Navis profile.",
   "extensions.error.immutable-built-in":
     "Built-in extensions cannot be replaced or removed.",
   "extensions.error.downgrade-rejected":

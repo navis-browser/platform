@@ -99,7 +99,10 @@ android {
             applicationIdSuffix '.debug'
         }
         release {
-            minifyEnabled false
+            debuggable false
+            jniDebuggable false
+            minifyEnabled true
+            shrinkResources true
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
     }
@@ -179,5 +182,7 @@ dependencies {
     implementation libs.androidx.compose.ui.tooling.preview
 
     testImplementation libs.junit4
+    // Local JVM tests need executable JSON methods instead of android.jar stubs.
+    testImplementation libs.json
     debugImplementation libs.androidx.compose.ui.tooling
 }

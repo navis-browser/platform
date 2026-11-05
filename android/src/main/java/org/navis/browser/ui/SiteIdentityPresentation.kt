@@ -9,6 +9,7 @@ import org.navis.browser.api.BrowserSessionState
 import org.navis.browser.api.SecurityState
 
 internal fun siteIdentityIcon(kind: String): Int = when (kind) {
+    "internal" -> R.drawable.ic_site_internal
     "extension" -> R.drawable.ic_site_extension
     "secure", "local" -> R.drawable.ic_site_controls
     "insecure", "broken", "error" -> R.drawable.ic_site_warning

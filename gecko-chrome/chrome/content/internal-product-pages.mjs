@@ -2,7 +2,7 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
-const SUPPORT_DETAILS = ["cpuDetails", "adapterDescription2", "adapterRAM", "graphicsFeatures", "graphicsFailureDetails", "graphicsCrashGuards", "sandboxFeatures", "win32kLockdown", "modifiedPreferences", "allExtensions"];
+const SUPPORT_DETAILS = ["certificateTransparency", "ctExpiration", "revocationsDate", "cpuDetails", "adapterDescription2", "adapterRAM", "graphicsFeatures", "graphicsFailureDetails", "graphicsCrashGuards", "sandboxFeatures", "win32kLockdown", "modifiedPreferences", "allExtensions"];
 
 export function renderAdditionalSupport(t, escape) {
   return `<section class="card diagnostics-card"><h2>${escape(t("diagnostics.moreDetails"))}</h2><dl>${SUPPORT_DETAILS.map(key => `<div class="diagnostic-row" data-diagnostic-label="diagnostics.${key}" data-diagnostic-dynamic><dt>${escape(t(`diagnostics.${key}`))}</dt><dd class="diagnostic-multiline">${escape(t("common.loading"))}</dd></div>`).join("")}</dl></section>`;

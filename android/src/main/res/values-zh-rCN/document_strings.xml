@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="print_document">打印</string>
+    <string name="print_failed">无法打印此文档</string>
+</resources>

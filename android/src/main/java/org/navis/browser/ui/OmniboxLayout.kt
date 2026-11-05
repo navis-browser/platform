@@ -9,16 +9,19 @@ internal data class OmniboxLayout(val identityWidth: Float, val inlineReload: Bo
 internal fun omniboxLayout(
     widthDp: Float,
     fontScale: Float,
-    hasOrganization: Boolean,
+    organizationWidthDp: Float?,
     allowInlineReload: Boolean = true,
 ): OmniboxLayout {
     val scale = fontScale.coerceAtLeast(1f)
     val addressSpace = 144f * scale
-    val preferredIdentity = if (hasOrganization) 112f * scale else 48f
-    val inlineReload = allowInlineReload && widthDp >= preferredIdentity + addressSpace + 48f
+    val preferredIdentity = organizationWidthDp?.let { (it + 16f).coerceAtLeast(48f) } ?: 48f
+    // Keep the reload action's existing compact admission budget; its label
+    // uses the actual text width rather than that action-layout threshold.
+    val reloadIdentitySpace = preferredIdentity.coerceAtMost(112f * scale)
+    val inlineReload = allowInlineReload && widthDp >= reloadIdentitySpace + addressSpace + 48f
     val remaining = widthDp - addressSpace - if (inlineReload) 48f else 0f
     return OmniboxLayout(
-        identityWidth = if (hasOrganization) remaining.coerceIn(48f, preferredIdentity) else 48f,
+        identityWidth = preferredIdentity.coerceAtMost(remaining.coerceAtLeast(48f)),
         inlineReload = inlineReload,
     )
 }

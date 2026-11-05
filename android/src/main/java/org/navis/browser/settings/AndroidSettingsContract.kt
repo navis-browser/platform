@@ -149,6 +149,7 @@ internal data class AndroidSettingsSnapshot(
     val openWhenComplete: Boolean = false,
     /** Toolbar shortcut visibility; opening its sheet is transient window UI state. */
     val historyButton: Boolean = false,
+    val showCertificateOrganization: Boolean = true,
     val remoteSuggestionsEnabled: Boolean = false,
     val searchServiceReady: Boolean = false,
 ) {
@@ -204,6 +205,8 @@ internal interface AndroidSettingsHost : AutoCloseable {
     fun setBookmarkBarVisible(visible: Boolean): AndroidSettingsUpdateResult
 
     fun setHistoryButtonVisible(visible: Boolean): AndroidSettingsUpdateResult = AndroidSettingsUpdateResult.INVALID_VALUE
+
+    fun setShowCertificateOrganization(visible: Boolean): AndroidSettingsUpdateResult = AndroidSettingsUpdateResult.INVALID_VALUE
 
     /** Compatibility check only; it cannot replace the application-owned frozen process locale. */
     fun confirmDisplayLanguageApplied(setting: String): AndroidSettingsUpdateResult

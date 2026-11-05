@@ -57,6 +57,38 @@ internal data class SiteCertificate(
     }
 }
 
+internal data class SitePermissionEntry(
+    val kind: String,
+    val state: String,
+    val temporary: Boolean,
+    val decisions: List<String>,
+    val origin: String,
+    val originToken: String,
+    val embedded: Boolean,
+) {
+    companion object {
+        fun fromJson(value: JSONObject): SitePermissionEntry? {
+            val kind = value.optString("kind")
+            if (kind !in setOf("geolocation", "desktop-notification", "persistent-storage", "camera", "microphone")) return null
+            val state = value.optString("state")
+            if (state !in setOf("ask", "allow", "block")) return null
+            val offered = value.optJSONArray("decisions") ?: return null
+            if (offered.length() !in 1..3) return null
+            val decisions = (0 until offered.length()).map { offered.optString(it) }
+            if (decisions.distinct().size != decisions.size || decisions.any { it !in setOf("ask", "allow", "block") }) return null
+            val origin = value.optString("origin")
+            val uri = runCatching { java.net.URI(origin) }.getOrNull() ?: return null
+            if (origin.length > 512 || uri.scheme !in setOf("http", "https") || uri.host.isNullOrEmpty() ||
+                uri.rawUserInfo != null || !uri.rawPath.isNullOrEmpty() || uri.rawQuery != null ||
+                uri.rawFragment != null || uri.port !in -1..65535) return null
+            val token = value.optString("originToken")
+            if (token.isBlank() || token.length > 128) return null
+            return SitePermissionEntry(kind, state, value.optBoolean("temporary"), decisions,
+                origin, token, value.optBoolean("embedded"))
+        }
+    }
+}
+
 internal data class SiteInformation(
     val kind: String,
     val origin: String,
@@ -71,10 +103,12 @@ internal data class SiteInformation(
     val signature: String = "",
     val error: String = "",
     val builtInExtension: Boolean = false,
+    val permissions: List<SitePermissionEntry> = emptyList(),
 ) {
     companion object {
         fun fromJson(value: JSONObject): SiteInformation {
             val chain = value.optJSONArray("certificateChain")
+            val permissions = value.optJSONArray("permissions")
             return SiteInformation(
                 value.optString("kind", "unknown"), value.optString("origin"),
                 value.optString("host"), value.optString("navigationToken"),
@@ -85,6 +119,9 @@ internal data class SiteInformation(
                 },
                 value.optString("keyExchange"), value.optString("signature"), value.optString("error"),
                 value.opt("builtInExtension") == true,
+                (0 until minOf(permissions?.length() ?: 0, 4096)).mapNotNull { index ->
+                    permissions?.optJSONObject(index)?.let(SitePermissionEntry::fromJson)
+                },
             )
         }
     }
@@ -220,6 +257,18 @@ internal class AndroidProductServices private constructor(
     fun siteIdentity(id: SessionId, callback: (Result<SiteInformation>) -> Unit) = deliver(
         query("site:get", JSONObject().put("issueClearToken", false), session(id))
             .thenApply(SiteInformation::fromJson), callback,
+    )
+
+    fun setSitePermission(id: SessionId, token: String, originToken: String, kind: String, decision: String,
+        callback: (Result<SiteInformation>) -> Unit) = deliver(
+        query("site:permission", JSONObject().put("navigationToken", token).put("kind", kind)
+            .put("decision", decision).put("originToken", originToken), session(id)).thenApply(SiteInformation::fromJson), callback,
+    )
+
+    fun stopSiteDevices(id: SessionId, token: String, kind: String,
+        callback: (Result<SiteInformation>) -> Unit) = deliver(
+        query("site:stop-devices", JSONObject().put("navigationToken", token).put("kind", kind),
+            session(id)).thenApply(SiteInformation::fromJson), callback,
     )
 
     fun clearSiteData(id: SessionId, token: String, callback: (Result<Unit>) -> Unit) {

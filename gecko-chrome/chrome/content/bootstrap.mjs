@@ -1,12 +1,6 @@
 // SPDX-License-Identifier: MPL-2.0
 
-import("./main.mjs").catch(error => {
-  console.error("Navis startup failed", error);
-  dump(`Navis startup failed: ${error}\n${error.stack || ""}\n`);
-  document.documentElement.dataset.l10nReady = "fallback";
-  document.title = "Navis startup failed";
-  const startupStatus = document.getElementById("loading-state");
-  if (startupStatus) {
-    startupStatus.textContent = `Startup failed: ${error.message}`;
-  }
-});
+// Native content-window creation waits for chrome load, then requires its
+// initial Session to exist. Keep main in this module's dependency graph so
+// initialization runs before load completes. main owns initialization errors.
+import "./main.mjs";

@@ -20,6 +20,7 @@ internal class NativePageHistory {
     private var engine: EnginePageHistory? = null
     private var restored = false
     private val suppressed = mutableSetOf<String>()
+    val position: Int get() = index
     val current: String? get() = entries.getOrNull(index)?.uri
     val currentEngineEntry: EnginePageEntry? get() = entries.getOrNull(index)?.engineId?.let { id ->
         engine?.entries?.firstOrNull { it.identity == id }

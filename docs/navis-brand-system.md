@@ -6,18 +6,19 @@
 
 The mark has a fixed blue-to-violet palette. A user's interface accent and light/dark preference may change the surface around it, but may not recolor the full-colour mark. Platform-owned monochrome contexts, such as Android themed icons and notification small icons, use the generated monochrome silhouette.
 
-## Shape variants
+## Circular mark
 
-- The primary mark uses the canonical `0 0 220 220` view box and the 176-unit contour with radius 40.
+- Every Navis mark uses a circular 176-unit contour with radius 88 in the canonical coordinate system. Full, compact, monochrome and platform icon outputs use the `0 0 220 220` view box and share this silhouette.
 - Large product-owned surfaces preserve the contour, channel, two seams, frost, rim and relief treatment.
 - Compact 16--24 px output preserves the same silhouette and path geometry but may omit sub-pixel shadows and frost. Optical simplification is not a licence to redraw the mark.
-- Android adaptive-icon masks own the final outer crop. The foreground keeps the recognisable geometry inside the platform safe zone rather than baking a second circular or squircle brand into the asset.
+- Desktop internal-page Tabs use the dedicated `tabIcon` optical parameters in the canonical model: a `16 16 188 188` view box and 11.75-unit white seam strokes. Within the existing 16px slot this gives an approximately 15px circle and 1px seams. The contour, curve centerlines and fixed palette stay canonical; this static, filter-free variant does not change other brand sizes, website favicons or functional tab-state icons.
+- Android adaptive icons use the same circular foreground inside the platform safe zone and a transparent background, so Navis does not paint a square around the mark. The launcher still owns its mask and themed-icon treatment.
 
 Normal website favicons, extension icons, profile avatars, TLS state, warnings, errors and download-state glyphs retain their own identity. A Navis mark never claims that remote Web content is trusted.
 
 ## Required surfaces
 
-The generated static family covers Linux window/task-switcher icons, Windows EXE/taskbar and VisualElements icons, Android legacy/adaptive/round/themed launcher forms, internal-page favicons and trusted internal-page identity.
+The generated static family covers Linux window/task-switcher icons, Windows EXE/taskbar and VisualElements icons, Android legacy/adaptive/round/themed launcher forms, internal-page favicons and in-page product marks. The toolbar and site-information summary use the common functional shield for authenticated internal pages.
 
 Language packs translate Gecko UI but do not own the embedding product's identity. Navis keeps the original signed locale archive byte-for-byte, ignores its legacy `branding` alias, and supplies only `branding/brand.ftl` and `toolkit/branding/brandings.ftl` from the application source in the same localization metasource. This keeps ordinary zh-CN translations intact while preventing a Firefox or Fennec name from replacing Navis in desktop, Android, DevTools or content-process surfaces.
 

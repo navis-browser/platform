@@ -4,11 +4,15 @@
 
 navis.jar:
 % content navis %content/
+% resource navis-pdf-style %content/
   content/bootstrap.mjs  (content/bootstrap.mjs)
   content/brand.mjs  (content/brand.mjs)
   content/brand-geometry.mjs  (content/brand-geometry.mjs)
   content/clean-links-policy.json  (content/clean-links-policy.json)
   content/design-system.css  (content/design-system.css)
+  content/documents.css  (content/documents.css)
+  content/document-tokens.css  (content/document-tokens.css)
+  content/pdf-reader.css  (content/pdf-reader.css)
   content/design-system.mjs  (content/design-system.mjs)
   content/internal-pages.mjs  (content/internal-pages.mjs)
   content/internal-product-pages.mjs  (content/internal-product-pages.mjs)

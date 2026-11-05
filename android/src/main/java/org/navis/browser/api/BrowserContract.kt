@@ -51,6 +51,13 @@ data class NavigationState(
     val engineErrorPage: Boolean = false,
 )
 
+data class DeviceUseState(
+    val camera: Boolean = false,
+    val microphone: Boolean = false,
+) {
+    val active: Boolean get() = camera || microphone
+}
+
 data class BrowserSessionState(
     val id: SessionId,
     val mode: SessionMode,
@@ -58,6 +65,9 @@ data class BrowserSessionState(
     val navigation: NavigationState,
     val nativeNewTab: Boolean = false,
     val nativeRoute: String? = null,
+    val devices: DeviceUseState = DeviceUseState(),
+    /** Position in Runtime's mixed page history; presentation only, never a second UI stack. */
+    val presentationIndex: Int = -1,
 )
 
 data class BrowserState(

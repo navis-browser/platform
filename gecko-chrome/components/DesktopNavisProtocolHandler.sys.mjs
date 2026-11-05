@@ -171,11 +171,17 @@ function diagnostics() {
       Object.freeze(["diagnostics.privateWindow", DYNAMIC_DIAGNOSTIC]),
       Object.freeze([
         "diagnostics.builtInExtensions",
-        AppConstants.MOZ_WEBEXTENSIONS_RUNTIME
-          ? DYNAMIC_DIAGNOSTIC
-          : notIncluded,
+        DYNAMIC_DIAGNOSTIC,
       ]),
       Object.freeze(["diagnostics.webAuthn", included]),
+      Object.freeze([
+        "diagnostics.mediaCapture",
+        AppConstants.MOZ_WEBRTC ? included : notIncluded,
+      ]),
+      Object.freeze([
+        "diagnostics.peerConnection",
+        AppConstants.MOZ_WEBRTC ? included : notIncluded,
+      ]),
     ]),
     system: Object.freeze([
       Object.freeze([

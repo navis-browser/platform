@@ -40,6 +40,8 @@ internal enum class EngineProjection {
     PLATFORM_WEB_AUTHN,
     DEVELOPER_SETTINGS,
     IN_APP_DEVTOOLS,
+    PDF_DOCUMENTS,
+    PRINTING,
 }
 
 internal enum class ProjectionAvailability {
@@ -91,6 +93,8 @@ internal class EngineProjectionMatrix private constructor(
             EngineProjection.PLATFORM_WEB_AUTHN,
             EngineProjection.DEVELOPER_SETTINGS,
             EngineProjection.IN_APP_DEVTOOLS,
+            EngineProjection.PDF_DOCUMENTS,
+            EngineProjection.PRINTING,
         )
 
         fun fromAvailable(vararg projections: EngineProjection): EngineProjectionMatrix {
@@ -128,6 +132,8 @@ internal interface EngineSessionObserver {
 
     fun onFaviconChanged(pageUri: String, png: String) {}
 
+    fun onDeviceUseChanged(camera: Boolean, microphone: Boolean) {}
+
     fun onLoadStarted(generation: Long, uri: String)
 
     /** One terminal top-level network result after Gecko resolves request status. */
@@ -142,6 +148,7 @@ internal interface EngineSessionObserver {
     fun onFullscreenChanged(enabled: Boolean)
 
     fun onContextMenuRequested(request: AndroidContextMenuRequest) {}
+    fun onPrintRequested() {}
 
     /** Same-token menu update from an onShown listener; does not complete the request. */
     fun onContextMenuUpdated(request: AndroidContextMenuRequest) {}
@@ -193,6 +200,10 @@ internal interface EngineSessionPort : AutoCloseable {
     fun flushSessionState()
 
     fun loadUri(uri: String)
+
+    fun beginPrint(): CompletionStage<EnginePrintDocument> = CompletableFuture<EnginePrintDocument>().apply {
+        completeExceptionally(UnsupportedOperationException("Document printing is unavailable"))
+    }
 
     /** Replays only an engine-approved bodyless HTTP(S) GET in its original context. */
     fun retryDownload(uri: String, referrer: String?): CompletionStage<Boolean> =

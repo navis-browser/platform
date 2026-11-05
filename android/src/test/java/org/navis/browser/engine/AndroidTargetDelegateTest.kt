@@ -12,6 +12,8 @@ import org.junit.Assert.assertSame
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.navis.browser.api.BrowserPrompt
+import org.navis.browser.api.ChoicePromptMode
+import org.navis.browser.api.ChoicePromptOption
 import org.navis.browser.api.FileCapture
 import org.navis.browser.api.FilePickerMode
 import org.navis.browser.api.FilePickerRequest
@@ -33,6 +35,30 @@ import org.navis.browser.persistence.SitePermissionPolicy
 import org.navis.browser.persistence.SitePermissionStorage
 
 class AndroidTargetDelegateTest {
+    @Test
+    fun updatedChoicesKeepTheOriginalRequestAndCallback() {
+        val port = FakeTargetPort()
+        val delegate = AndroidTargetDelegate(
+            isSessionLive = { true },
+            projections = EngineProjectionMatrix.fromAvailable(EngineProjection.TARGET_PROMPTS),
+            enginePort = port,
+        )
+        val original = BrowserPrompt.Choice(
+            TargetRequestId(601), SessionId(7), null, null, false,
+            ChoicePromptMode.SINGLE, emptyList(),
+        )
+        delegate.onPromptRequested(original)
+        val updated = original.copy(choices = listOf(ChoicePromptOption("42", "Option", false, false, false, false)))
+        delegate.onPromptRequested(updated)
+        assertSame(updated, delegate.state.prompt)
+        assertTrue(port.events.isEmpty())
+        delegate.respondToPrompt(original.id, PromptResponse.ChoiceValue(listOf("42")))
+        assertNull(delegate.state.prompt)
+        assertEquals(1, port.events.size)
+        delegate.respondToPrompt(original.id, PromptResponse.Dismiss)
+        assertEquals(1, port.events.size)
+    }
+
     @Test
     fun windowRequestsAndFullscreenDoNotReplaceEachOther() {
         val port = FakeTargetPort()
@@ -360,6 +386,37 @@ class AndroidTargetDelegateTest {
     }
 
     @Test
+    fun mediaRequiresSystemGrantAndAnExplicitOfferedDeviceSelection() {
+        val port = FakeTargetPort()
+        val delegate = AndroidTargetDelegate(
+            isSessionLive = { it == SessionId(7) },
+            projections = EngineProjectionMatrix.fromAvailable(EngineProjection.SITE_PERMISSIONS, EngineProjection.MEDIA_CAPTURE),
+            enginePort = port,
+        )
+        val request = SitePermissionRequest.Media(
+            TargetRequestId(741), SessionId(7), "https://example.com/", false,
+            listOf(MediaSourceDescriptor("0", "Front"), MediaSourceDescriptor("1", "Back")),
+            listOf(MediaSourceDescriptor("0", "Microphone")),
+        )
+        port.observer.onSitePermissionRequested(request)
+        delegate.respondToSitePermission(request.id, true)
+        delegate.respondToMediaPermission(request.id, SitePermissionDecision.ALLOW_SESSION, "1", "0")
+        assertTrue(port.events.isEmpty())
+        delegate.respondToMediaPlatformPermission(request.id, true)
+        assertSame(request, delegate.state.sitePermission)
+        assertTrue(delegate.state.mediaPlatformGranted)
+        assertTrue(port.events.isEmpty())
+        delegate.respondToMediaPermission(request.id, SitePermissionDecision.ALLOW_SESSION, "999", "0")
+        delegate.respondToMediaPermission(request.id, SitePermissionDecision.ALLOW_ALWAYS, "1", "0")
+        assertTrue(port.events.isEmpty())
+        delegate.respondToMediaPermission(request.id, SitePermissionDecision.ALLOW_SESSION, "1", "0")
+        delegate.respondToMediaPermission(request.id, SitePermissionDecision.ALLOW_SESSION, "0", "0")
+        assertEquals(listOf("media:741:1:0"), port.events)
+        assertNull(delegate.state.sitePermission)
+        assertFalse(delegate.state.mediaPlatformGranted)
+    }
+
+    @Test
     fun systemNotificationDenialDoesNotCreateAPersistentSiteDecision() {
         val port = FakeTargetPort()
         val policy = SitePermissionPolicy(MemoryPermissionStorage())
@@ -570,6 +627,10 @@ class AndroidTargetDelegateTest {
         override fun respondToSitePermission(id: TargetRequestId, decision: SitePermissionDecision) {
             decisions += decision
             respondToSitePermission(id, decision.allows)
+        }
+
+        override fun respondToMediaPermission(id: TargetRequestId, decision: SitePermissionDecision, video: String?, audio: String?) {
+            events += "media:${id.value}:$video:$audio"
         }
 
         override fun respondToPlatformPermission(id: TargetRequestId, granted: Boolean) {

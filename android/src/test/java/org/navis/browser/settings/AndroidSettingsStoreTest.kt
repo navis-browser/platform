@@ -28,6 +28,7 @@ class AndroidSettingsStoreTest {
         assertEquals(AndroidProcessIsolationMode.FULL, store.snapshot.activeProcessIsolation)
         assertFalse(store.snapshot.cleanLinksEnabled)
         assertTrue(store.snapshot.bookmarkBarVisible)
+        assertTrue(store.snapshot.showCertificateOrganization)
         assertFalse(store.snapshot.restartRequired)
     }
 
@@ -352,6 +353,50 @@ class AndroidSettingsStoreTest {
         assertEquals(AndroidSettingsUpdateResult.INVALID_VALUE, store.setDownloadDirectory("file:///etc"))
         assertEquals(AndroidSettingsUpdateResult.INVALID_VALUE, store.setDownloadOption("unknown", true))
         assertEquals(before, store.snapshot)
+    }
+
+    @Test
+    fun organizationVisibilityPersistsAndPublishesImmediatelyAcrossHosts() {
+        val storage = FakeStorage()
+        val first = AndroidSettingsStore(storage)
+        val second = AndroidSettingsStore(storage)
+        val observed = mutableListOf<Boolean>()
+        second.addObserver(AndroidSettingsObserver { observed += it.showCertificateOrganization })
+        assertEquals(AndroidSettingsUpdateResult.UPDATED, first.setShowCertificateOrganization(false))
+        assertFalse(first.snapshot.showCertificateOrganization)
+        assertFalse(second.snapshot.showCertificateOrganization)
+        assertFalse(first.snapshot.restartRequired)
+        assertEquals(AndroidSettingsUpdateResult.UNCHANGED, first.setShowCertificateOrganization(false))
+        assertEquals(listOf(true, false), observed)
+        first.close()
+        val restarted = AndroidSettingsStore(storage)
+        assertFalse(restarted.snapshot.showCertificateOrganization)
+        assertEquals(AndroidSettingsUpdateResult.UPDATED, restarted.setShowCertificateOrganization(true))
+        assertTrue(second.snapshot.showCertificateOrganization)
+        storage.writeBoolean(AndroidSettingsKeys.SHOW_CERTIFICATE_ORGANIZATION, false)
+        assertFalse(restarted.snapshot.showCertificateOrganization)
+        assertEquals(listOf(true, false, true, false), observed)
+        restarted.close()
+        second.close()
+    }
+
+    @Test
+    fun failedAndClosedOrganizationWritesKeepThePreviousChoice() {
+        val storage = FakeStorage()
+        val store = AndroidSettingsStore(storage)
+        val observed = mutableListOf<Boolean>()
+        store.addObserver(AndroidSettingsObserver { observed += it.showCertificateOrganization })
+        storage.failWrites = true
+        assertEquals(AndroidSettingsUpdateResult.PERSISTENCE_FAILED, store.setShowCertificateOrganization(false))
+        assertTrue(store.snapshot.showCertificateOrganization)
+        assertEquals(null, storage.readBoolean(AndroidSettingsKeys.SHOW_CERTIFICATE_ORGANIZATION))
+        assertEquals(listOf(true), observed)
+        store.close()
+        assertEquals(AndroidSettingsUpdateResult.CLOSED, store.setShowCertificateOrganization(false))
+        storage.failWrites = false
+        storage.writeBoolean(AndroidSettingsKeys.SHOW_CERTIFICATE_ORGANIZATION, false)
+        assertEquals(listOf(true), observed)
+        assertTrue(store.snapshot.showCertificateOrganization)
     }
 
     private class FakeStorage(

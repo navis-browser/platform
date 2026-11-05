@@ -9,6 +9,11 @@
 export class OmniboxEditState {
   #editing = false;
   #rejected = false;
+  #modified = false;
+
+  get modified() {
+    return this.#modified;
+  }
 
   get editing() {
     return this.#editing;
@@ -29,11 +34,13 @@ export class OmniboxEditState {
   updateInput() {
     this.#editing = true;
     this.#rejected = false;
+    this.#modified = true;
   }
 
   accept() {
     this.#editing = false;
     this.#rejected = false;
+    this.#modified = false;
   }
 
   reject() {
@@ -44,11 +51,13 @@ export class OmniboxEditState {
   reset() {
     this.#editing = false;
     this.#rejected = false;
+    this.#modified = false;
   }
 
   blur() {
     const shouldRestoreSessionURL = this.#editing && !this.#rejected;
     this.#editing = false;
+    if (shouldRestoreSessionURL) this.#modified = false;
     return shouldRestoreSessionURL;
   }
 }

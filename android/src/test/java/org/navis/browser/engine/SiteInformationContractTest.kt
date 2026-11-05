@@ -8,6 +8,57 @@ import org.junit.Assert.*
 import org.junit.Test
 
 class SiteInformationContractTest {
+    @Test fun mediaActivityTracksCameraAndMicrophoneIndependently() {
+        val active = org.navis.browser.api.DeviceUseState(camera = true)
+        assertTrue(active.active)
+        assertFalse(active.microphone)
+        assertFalse(active.copy(camera = false).active)
+        assertTrue(active.copy(camera = false, microphone = true).active)
+    }
+
+    @Test fun unsupportedPermissionKindsAreRejected() {
+        for (kind in listOf("midi", "midi-sysex", "serial", "hid", "usb", "bluetooth", "xr")) {
+            val source = JSONObject().put("kind", kind).put("state", "ask")
+                .put("origin", "https://site.test").put("originToken", "current-origin")
+                .put("decisions", JSONArray(listOf("ask", "block")))
+            assertNull(SitePermissionEntry.fromJson(source))
+        }
+    }
+
+    @Test fun sitePermissionsPreserveOnlyOfferedDecisions() {
+        val source = JSONObject().put("kind", "camera").put("state", "block").put("temporary", true)
+            .put("origin", "https://embedded.test").put("originToken", "opaque-choice").put("embedded", true)
+            .put("decisions", JSONArray(listOf("ask", "allow", "block")))
+        val permission = checkNotNull(SitePermissionEntry.fromJson(source))
+        assertEquals("camera", permission.kind)
+        assertEquals("block", permission.state)
+        assertTrue(permission.temporary)
+        assertEquals("https://embedded.test", permission.origin)
+        assertEquals("opaque-choice", permission.originToken)
+        assertTrue(permission.embedded)
+        assertEquals(listOf("ask", "allow", "block"), permission.decisions)
+        source.put("decisions", JSONArray(listOf("ask", "ask")))
+        assertNull(SitePermissionEntry.fromJson(source))
+        source.put("decisions", JSONArray(listOf("execute")))
+        assertNull(SitePermissionEntry.fromJson(source))
+        source.put("kind", "unavailable").put("decisions", JSONArray(listOf("ask")))
+        assertNull(SitePermissionEntry.fromJson(source))
+    }
+
+    @Test fun sitePermissionRejectsMissingScopeAndSpoofedOrigins() {
+        val source = JSONObject().put("kind", "camera").put("state", "ask")
+            .put("decisions", JSONArray(listOf("ask", "block")))
+        assertNull(SitePermissionEntry.fromJson(source))
+        source.put("originToken", "current-origin")
+        for (origin in listOf("https://trusted.test@evil.test", "https://site.test/path",
+                "file:///tmp/site", "https://site.test?query", "https://site.test#fragment")) {
+            source.put("origin", origin)
+            assertNull(SitePermissionEntry.fromJson(source))
+        }
+        source.put("origin", "http://localhost:8000")
+        assertNotNull(SitePermissionEntry.fromJson(source))
+    }
+
     private fun certificate(): JSONObject = JSONObject()
         .put("commonName", "www.example.test")
         .put("subjectName", "CN=www.example.test,O=Example Company")

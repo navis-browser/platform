@@ -15,13 +15,13 @@ pref("fission.autostart", true, locked);
 pref("navis.processIsolation.mode", "full");
 
 // ESR's Linux GTK build defaults the GPU process off as a rollout policy,
-// including when the packaged binary runs natively on Wayland. Navis 1.0
+// including when the packaged binary runs natively on Wayland. Navis
 // requires process-isolated WebRender/WebGPU, so enable the ordinary feature
 // default. Do not use layers.gpu-process.force-enabled: Gecko's blocklist,
 // launch-failure handling and software fallback must remain authoritative.
 pref("layers.gpu-process.enabled", true);
 
-// Permissions Policy is part of the Navis 1.0 cross-origin security baseline.
+// Permissions Policy is part of the Navis cross-origin security baseline.
 // ESR 153 carries the implementation behind disabled-by-default exposure
 // preferences, so the product profile deliberately enables both enforcement
 // and the standards-facing inspection surface.
@@ -41,21 +41,6 @@ pref("security.webauth.webauthn_enable_usbtoken", true, locked);
 pref("security.webauthn.always_allow_direct_attestation", false, locked);
 pref("security.webauthn.related_origin_requests_mode", 2, locked);
 pref("security.webauthn.allow_with_certificate_override", false, locked);
-
-// Retain the pinned ESR implementation source for later product decisions,
-// but do not expose browser-mediated device, headset, payment, federated-
-// identity or digital-credential APIs without matching Navis permission,
-// chooser and lifecycle surfaces. Ordinary forms, OAuth and WebAuthn remain
-// independent capabilities.
-pref("dom.webmidi.enabled", false, locked);
-pref("dom.webmidi.gated", true, locked);
-pref("dom.webserial.enabled", false, locked);
-pref("dom.webserial.gated", true, locked);
-pref("dom.vr.enabled", false, locked);
-pref("dom.vr.webxr.enabled", false, locked);
-pref("dom.payments.request.enabled", false, locked);
-pref("dom.security.credentialmanagement.digital.enabled", false, locked);
-pref("dom.security.credentialmanagement.identity.enabled", false, locked);
 
 // Navis delegates location acquisition to the operating system. Never send
 // Wi-Fi or IP observations to Gecko's network geolocation provider, including
@@ -92,7 +77,7 @@ pref("general.useragent.compatMode.firefox", true);
 // query-stripping preferences. It is intentionally opt-in because cleaning a
 // URL can change site behavior; DesktopEngine synchronizes the engine prefs.
 pref("navis.cleanLinks.enabled", false);
-// Navis 1.0 resolves one bundled policy for navigation, redirects and copied
+// Navis resolves one bundled policy for navigation, redirects and copied
 // links. The provider-neutral envelope can later be populated by a signed
 // Mozilla, Navis or equivalent adapter without changing policy consumers.
 pref("privacy.query_stripping.product_policy_uri", "chrome://navis/content/clean-links-policy.json", locked);
@@ -111,7 +96,7 @@ pref("browser.translations.enable", false, locked);
 // data out of production. Test builds bypass the policy so Gecko's arbitrary-
 // collection tests can continue to exercise the signature implementation.
 #ifndef ENABLE_TESTS
-pref("services.settings.server", "https://firefox.settings.services.mozilla.com/v1", locked);
+pref("services.settings.server", "data:,#navis-local-settings/v1", locked);
 pref("services.settings.preview_enabled", false, locked);
 #endif
 
@@ -139,17 +124,19 @@ pref("extensions.webextensions.remote", true, locked);
 // Action popups are always extension-owned documents, including for MV2.
 pref("extensions.manifestV2.actionsPopupURLRestricted", true, locked);
 // Optional capabilities require a Navis-owned, user-visible decision. Navis
-// 1.0 does not accept the newer data-collection permission vocabulary.
+// does not accept the newer data-collection permission vocabulary.
 pref("extensions.webextOptionalPermissionPrompts", true, locked);
 pref("extensions.dataCollectionPermissions.enabled", false, locked);
 
-// --disable-webrtc leaves Gecko's fake/shared capture substrate compiled, but
-// no real desktop camera backend exists. Do not expose a nonfunctional web
-// promise in that explicit minimal build profile.
-#ifndef MOZ_WEBRTC
-pref("media.navigator.enabled", false, locked);
-pref("media.peerconnection.enabled", false, locked);
-#endif
+// Picture-in-picture remains deferred on every product platform.
+pref("dom.documentpip.enabled", false, locked);
+
+// Camera and microphone capture are part of the desktop browsing contract,
+// but Navis has no screen-sharing chooser, consent flow or lifecycle surface.
+// Keep Gecko's screen-capture implementation available for future review
+// while hiding both page entry points from ordinary content.
+pref("media.getdisplaymedia.enabled", false, locked);
+pref("media.getusermedia.screensharing.enabled", false, locked);
 
 pref("security.sandbox.content.level", 6);
 pref("security.sandbox.content.write_path_whitelist", "");
@@ -191,3 +178,13 @@ pref("toolkit.telemetry.server", "", locked);
 pref("toolkit.coverage.enabled", false, locked);
 pref("toolkit.coverage.opt-out", true, locked);
 pref("toolkit.coverage.endpoint.base", "", locked);
+
+// Security data is supplied by reviewed application packages only. Old profile
+// values cannot turn CT off or revive download-only revocation consumers.
+pref("security.certerrors.mitm.priming.enabled", false, locked);
+pref("security.pki.certificate_transparency.mode", 2, locked);
+pref("security.pki.certificate_transparency.disable_for_hosts", "", locked);
+pref("security.pki.certificate_transparency.disable_for_spki_hashes", "", locked);
+pref("security.remote_settings.intermediates.enabled", false, locked);
+pref("security.remote_settings.crlite_filters.enabled", false, locked);
+pref("security.pki.crlite_mode", 0, locked);

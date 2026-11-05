@@ -4,6 +4,8 @@
 
 package org.navis.browser.ui
 
+import androidx.compose.runtime.saveable.rememberSaveable
+
 import android.content.ClipData
 import android.content.ClipboardManager
 import android.content.Context
@@ -111,7 +113,7 @@ internal fun HistorySurface(
     actions: HistoryActions? = null,
     onOpenFullPage: (() -> Unit)? = null,
 ) {
-    var query by remember { mutableStateOf("") }
+    var query by rememberSaveable { mutableStateOf("") }
     var confirmClear by remember { mutableStateOf(false) }
     var busy by remember { mutableStateOf(false) }
     var failed by remember { mutableStateOf(false) }
@@ -172,7 +174,7 @@ internal fun BookmarksSurface(
     onRemove: (String) -> Unit,
     actions: BookmarkActions? = null,
 ) {
-    var query by remember { mutableStateOf("") }
+    var query by rememberSaveable { mutableStateOf("") }
     var folderId by remember { mutableStateOf<String?>(null) }
     var draft by remember { mutableStateOf<BookmarkDraft?>(null) }
     var removal by remember { mutableStateOf<BookmarkEntry?>(null) }
@@ -360,7 +362,7 @@ internal fun PasswordsSurface(
     onRemove: (String) -> Unit,
     actions: PasswordActions? = null,
 ) {
-    var query by remember { mutableStateOf("") }
+    var query by rememberSaveable { mutableStateOf("") }
     var removal by remember { mutableStateOf<PasswordEntry?>(null) }
     var selected by remember { mutableStateOf<PasswordEntry?>(null) }
     var clear by remember { mutableStateOf(false) }

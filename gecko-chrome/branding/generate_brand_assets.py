@@ -107,7 +107,7 @@ def geometry_module(mark):
             "}\n\n"
             f"export const NAVIS_MARK = deepFreeze({serialized});\n"
             "export const geometry = deepFreeze(Object.fromEntries(\n"
-            "  [\"viewBox\", \"contour\", \"contourVariants\", \"transform\", \"channel\", \"seams\"]\n"
+            "  [\"viewBox\", \"contour\", \"contourVariants\", \"tabIcon\", \"transform\", \"channel\", \"seams\"]\n"
             "    .map(key => [key, NAVIS_MARK[key]])\n"
             "));\n"
             "export const colors = deepFreeze({ gradients: NAVIS_MARK.gradients, effects: NAVIS_MARK.effects });\n"
@@ -134,12 +134,12 @@ def ico(images):
 
 
 def generate(mark, renderer="rsvg-convert"):
-    rounded = svg(mark)
-    outputs = {f"{GENERATED}/navis-mark.svg": rounded,
+    primary = svg(mark)
+    outputs = {f"{GENERATED}/navis-mark.svg": primary,
                f"{GENERATED}/navis-mark-circle.svg": svg(mark, circle=True),
                f"{GENERATED}/navis-mark-mono.svg": svg(mark, monochrome=True),
                GEOMETRY: geometry_module(mark)}
-    pngs = {size: rasterize(rounded, size, renderer) for size in mark["outputs"]["pngSizes"]}
+    pngs = {size: rasterize(primary, size, renderer) for size in mark["outputs"]["pngSizes"]}
     outputs.update({f"{GENERATED}/navis-{size}.png": data for size, data in pngs.items()})
     for size in mark["outputs"]["linuxSizes"]:
         outputs[f"{GENERATED}/default{size}.png"] = pngs[size]

@@ -124,14 +124,16 @@ class NavisApplication : Application(), BrowserDelegate {
     override fun getResources(): Resources = localizedResources ?: super.getResources()
 
     /** One frozen language for this entire process; selecting a new preference does not half-switch. */
-    internal fun localizedContext(base: Context): Context {
+    internal fun localizedConfiguration(): Configuration {
         val locale = Locale.forLanguageTag(resolvedDisplayLanguageTag)
-        val override = Configuration().apply {
+        return Configuration().apply {
             setLocales(LocaleList(locale))
             setLayoutDirection(locale)
         }
-        return base.createConfigurationContext(override)
     }
+
+    private fun localizedContext(base: Context): Context =
+        base.createConfigurationContext(localizedConfiguration())
 
     internal fun runtime(callback: (Result<AndroidBrowserRuntime>) -> Unit, safeMode: Boolean = false): RuntimeRequest {
         check(ProfileWindows.browserSlot(this) != null) { "Only a profile browser process may own the Runtime" }

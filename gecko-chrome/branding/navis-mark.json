@@ -3,8 +3,9 @@
   "name": "Navis",
   "reference": "docs/navis-logo-shapes.html",
   "viewBox": [0, 0, 220, 220],
-  "contour": {"x": 22, "y": 22, "width": 176, "height": 176, "rx": 40},
-  "contourVariants": {"rounded": 40, "circle": 88},
+  "contour": {"x": 22, "y": 22, "width": 176, "height": 176, "rx": 88},
+  "contourVariants": {"circle": 88},
+  "tabIcon": {"viewBox": [16, 16, 188, 188], "seamStrokeWidth": 11.75},
   "transform": {"rotate": 42, "cx": 110, "cy": 110},
   "channel": {
     "path": "M127.4 239.9 L108 217 C91 197 62 154 64 133 C66 112 83 105 103 108 C123 111 159 91 165 61 C168 46 164 32 160 25 L145.1 -1",

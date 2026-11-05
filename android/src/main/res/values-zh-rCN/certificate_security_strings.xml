@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- SPDX-License-Identifier: MPL-2.0 -->
+<resources>
+    <string name="support_certificate_transparency">证书透明度</string>
+    <string name="support_ct_expiration">CT 元数据到期时间（UTC）</string>
+    <string name="support_revocations_date">随包证书吊销数据时间（UTC）</string>
+    <string name="support_ct_expired">已过期：证书透明度已不再强制执行，请安装新版 Navis。</string>
+    <string name="support_ct_expiring">已启用：元数据即将到期，请安装新版 Navis。</string>
+    <string name="support_ct_current">已对公开信任的证书启用</string>
+</resources>

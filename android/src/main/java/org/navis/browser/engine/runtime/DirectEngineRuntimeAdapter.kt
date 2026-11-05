@@ -125,6 +125,10 @@ internal class DirectEngineRuntimeAdapter private constructor(
         targetRequests.remove(id.value)?.respondPermission(id.value, decision)
     }
 
+    override fun respondToMediaPermission(id: TargetRequestId, decision: SitePermissionDecision, video: String?, audio: String?) {
+        targetRequests.remove(id.value)?.respondMediaPermission(id.value, decision, video, audio)
+    }
+
     override fun respondToPlatformPermission(id: TargetRequestId, granted: Boolean) {
         targetRequests.remove(id.value)?.respondBoolean(id.value, granted)
     }
@@ -254,6 +258,26 @@ internal class DirectEngineRuntimeAdapter private constructor(
 
         override fun loadUri(uri: String) {
             peer.loadUri(uri)
+        }
+
+        override fun beginPrint(): CompletionStage<EnginePrintDocument> = peer.beginPrint().thenApply { document ->
+            object : EnginePrintDocument {
+                override val title = document.title
+                override fun render(settings: EnginePrintSettings) = document.render(
+                    settings.widthMils, settings.heightMils, settings.leftMils, settings.topMils,
+                    settings.rightMils, settings.bottomMils, settings.color,
+                    settings.ranges.flatMap { listOf(it.first + 1, it.last + 1) }.toIntArray(),
+                )
+                override fun close() = document.close()
+            }
+        }
+
+        override fun onPrintRequested(sessionId: Long) {
+            if (accepts(sessionId)) observer.onPrintRequested()
+        }
+
+        override fun onDocumentResponse(sessionId: Long, privateMode: Boolean, response: org.mozilla.geckoview.WebResponse) {
+            this@DirectEngineRuntimeAdapter.onExternalResponse(sessionId, privateMode, response)
         }
 
         override fun retryDownload(uri: String, referrer: String?): CompletionStage<Boolean> =
@@ -439,6 +463,10 @@ internal class DirectEngineRuntimeAdapter private constructor(
             if (accepts(sessionId)) observer.onFaviconChanged(pageUri, png)
         }
 
+        override fun onDeviceUseChanged(sessionId: Long, camera: Boolean, microphone: Boolean) {
+            if (accepts(sessionId)) observer.onDeviceUseChanged(camera, microphone)
+        }
+
         override fun onLoadStarted(sessionId: Long, generation: Long, uri: String) {
             if (accepts(sessionId)) observer.onLoadStarted(generation, uri)
         }
@@ -580,7 +608,8 @@ internal class DirectEngineRuntimeAdapter private constructor(
                     saveFailed = previousAttemptFailed)
                 "select-login" -> BrowserPrompt.SelectLogin(id, session, privateMode = privateMode, logins = parseLogins(loginOptions))
                 "choice" -> parseChoicePrompt(loginOptions)?.let { parsed ->
-                    BrowserPrompt.Choice(id, session, promptTitle, promptMessage, privateMode, parsed.first, parsed.second)
+                    BrowserPrompt.Choice(id, session, promptTitle, promptMessage, privateMode,
+                        parsed.first, parsed.second)
                 }
                 "datetime" -> parseDateTimePrompt(loginOptions)?.let { parsed ->
                     BrowserPrompt.DateTime(
@@ -692,7 +721,7 @@ internal class DirectEngineRuntimeAdapter private constructor(
 
         fun respondPrompt(requestId: Long, response: PromptResponse) {
             val result = org.mozilla.gecko.util.GeckoBundle(5).apply {
-                putString("type", response.javaClass.simpleName)
+                putString("type", response.engineWireType())
                 putBoolean(
                     "accepted",
                     response !is PromptResponse.Dismiss && response !is PromptResponse.Reject,
@@ -705,6 +734,7 @@ internal class DirectEngineRuntimeAdapter private constructor(
                     }
                     is PromptResponse.SelectOption -> putInt("index", response.index)
                     is PromptResponse.ChoiceValue -> putStringArray("ids", response.ids.toTypedArray())
+                    is PromptResponse.Reject -> putString("decision", "block")
                     is PromptResponse.DateTimeValue -> putString("value", response.value)
                     is PromptResponse.ColorValue -> putString("value", response.value)
                     else -> Unit
@@ -721,6 +751,15 @@ internal class DirectEngineRuntimeAdapter private constructor(
             peer.respondToTarget(requestId, org.mozilla.gecko.util.GeckoBundle().apply {
                 putBoolean("allow", decision.allows)
                 putString("decision", decision.wireValue)
+            })
+        }
+
+        fun respondMediaPermission(requestId: Long, decision: SitePermissionDecision, video: String?, audio: String?) {
+            peer.respondToTarget(requestId, org.mozilla.gecko.util.GeckoBundle().apply {
+                putBoolean("allow", decision == SitePermissionDecision.ALLOW_SESSION)
+                putString("decision", decision.wireValue)
+                putString("video", video)
+                putString("audio", audio)
             })
         }
 

@@ -8,6 +8,7 @@ const state = new OmniboxEditState();
 assert.equal(state.editing, false);
 assert.equal(state.rejected, false);
 assert.equal(state.preservesInput, false);
+assert.equal(state.modified, false);
 
 state.beginEditing();
 assert.equal(state.preservesInput, true);
@@ -29,7 +30,15 @@ assert.equal(state.preservesInput, true);
 
 state.updateInput();
 assert.equal(state.rejected, false);
+assert.equal(state.modified, true);
+state.beginEditing();
+assert.equal(state.modified, true);
+state.reject();
+assert.equal(state.blur(), false);
+assert.equal(state.modified, true);
+state.updateInput();
 assert.equal(state.blur(), true);
+assert.equal(state.modified, false);
 
 state.beginEditing();
 state.accept();

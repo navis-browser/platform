@@ -18,11 +18,14 @@ import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledTonalButton
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.foundation.layout.Box
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberModalBottomSheetState
@@ -95,12 +98,16 @@ internal fun SiteInformationSheet(
     var clearing by remember { mutableStateOf(false) }
     var cleared by remember { mutableStateOf(false) }
     var actionFailed by remember { mutableStateOf(false) }
+    var permissionBusy by remember { mutableStateOf(false) }
+    var permissionFailed by remember { mutableStateOf(false) }
+    var devices by remember { mutableStateOf(session.devices) }
     val configuration = LocalConfiguration.current
     val locale = configuration.locales[0]
 
     DisposableEffect(runtime, opened) {
         val observer = BrowserStateObserver { state ->
             if (!siteInformationStillCurrent(opened, state)) dismiss()
+            else state.activeSession?.let { devices = it.devices }
         }
         runtime.addObserver(observer)
         onDispose { runtime.removeObserver(observer) }
@@ -120,6 +127,20 @@ internal fun SiteInformationSheet(
     }
 
     val info = information
+    fun changePermission(kind: String, decision: String = "ask", originToken: String? = null) {
+        if (info != null && !permissionBusy && siteInformationStillCurrent(opened, runtime.state)) {
+            permissionBusy = true
+            permissionFailed = false
+            val complete: (Result<SiteInformation>) -> Unit = { result ->
+                permissionBusy = false
+                if (siteInformationStillCurrent(opened, runtime.state)) {
+                    result.onSuccess { information = it }.onFailure { permissionFailed = true; retry++ }
+                }
+            }
+            if (originToken == null) runtime.product.stopSiteDevices(opened.id, info.navigationToken, kind, complete)
+            else runtime.product.setSitePermission(opened.id, info.navigationToken, originToken, kind, decision, complete)
+        }
+    }
     val kind = if (nativePage) "internal" else info?.kind ?: "unknown"
     val builtInExtension = kind == "extension" && info?.builtInExtension == true
     val title = stringResource(when (kind) {
@@ -164,7 +185,7 @@ internal fun SiteInformationSheet(
     val summaryScroll = rememberScrollState()
     val certificateScroll = rememberScrollState()
 
-    ModalBottomSheet(
+    NavisModalBottomSheet(
         onDismissRequest = onDismiss,
         sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true),
     ) {
@@ -181,8 +202,6 @@ internal fun SiteInformationSheet(
                         Icon(painterResource(R.drawable.ic_site_back),
                             stringResource(R.string.site_desktop_siteinfo_back))
                     }
-                } else if (kind == "internal") {
-                    NavisBrandMark(Modifier.size(24.dp))
                 } else {
                     Icon(painterResource(siteIdentityIcon(kind)), contentDescription = null, modifier = Modifier.size(24.dp),
                         tint = if (warning) MaterialTheme.colorScheme.error else MaterialTheme.colorScheme.onSurfaceVariant)
@@ -269,6 +288,43 @@ internal fun SiteInformationSheet(
                         }
                     }
                     if (kind !in setOf("internal", "error") && info != null) {
+                        if (info.permissions.isNotEmpty()) {
+                            HorizontalDivider()
+                            Text(stringResource(R.string.site_permissions_heading),
+                                style = MaterialTheme.typography.titleMedium,
+                                modifier = Modifier.semantics { heading() })
+                            for ((index, permission) in info.permissions.withIndex()) {
+                                if (index == 0 || info.permissions[index - 1].originToken != permission.originToken) {
+                                    Text(if (permission.embedded) stringResource(R.string.site_permission_embedded_origin, permission.origin)
+                                        else permission.origin, style = MaterialTheme.typography.titleSmall,
+                                        modifier = Modifier.semantics { heading() })
+                                }
+                                var expanded by remember(permission.kind, permission.originToken, info.navigationToken) { mutableStateOf(false) }
+                                Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically,
+                                    horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                                    Text(stringResource(sitePermissionLabel(permission.kind)), modifier = Modifier.weight(1f))
+                                    Box {
+                                        OutlinedButton(enabled = !permissionBusy, onClick = { expanded = true }) {
+                                            Text(stringResource(sitePermissionDecision(permission.state)))
+                                        }
+                                        DropdownMenu(expanded = expanded, onDismissRequest = { expanded = false }) {
+                                            for (decision in permission.decisions) DropdownMenuItem(
+                                                text = { Text(stringResource(sitePermissionDecision(decision))) },
+                                                onClick = { expanded = false; changePermission(permission.kind, decision, permission.originToken) },
+                                            )
+                                        }
+                                    }
+                                }
+                                if (permission.temporary) Text(stringResource(R.string.site_permission_temporary),
+                                    style = MaterialTheme.typography.bodySmall)
+                            }
+                            if (devices.camera || devices.microphone) FilledTonalButton(
+                                enabled = !permissionBusy,
+                                onClick = { changePermission("camera", "ask") }, modifier = Modifier.fillMaxWidth(),
+                            ) { Text(stringResource(R.string.site_permission_stop_media)) }
+                            if (permissionFailed) Text(stringResource(R.string.site_permission_update_failed),
+                                color = MaterialTheme.colorScheme.error, modifier = Modifier.semantics { liveRegion = LiveRegionMode.Polite })
+                        }
                         val canClear = canClearSiteInformation(info)
                         HorizontalDivider()
                         Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -320,6 +376,21 @@ internal fun SiteInformationSheet(
             dismissButton = { TextButton(enabled = !clearing, onClick = { confirmClear = false }) { Text(stringResource(R.string.cancel)) } },
         )
     }
+}
+
+private fun sitePermissionLabel(kind: String): Int = when (kind) {
+    "camera" -> R.string.site_permission_camera
+    "microphone" -> R.string.site_permission_microphone
+    "geolocation" -> R.string.site_permission_location
+    "desktop-notification" -> R.string.site_permission_notifications
+    "persistent-storage" -> R.string.site_permission_storage
+    else -> R.string.site_permissions_heading
+}
+
+private fun sitePermissionDecision(value: String): Int = when (value) {
+    "allow" -> R.string.site_permission_allow
+    "block" -> R.string.site_permission_block
+    else -> R.string.site_permission_ask
 }
 
 @Composable

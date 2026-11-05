@@ -51,6 +51,9 @@ internal interface EngineTargetPort {
     fun respondToSitePermission(id: TargetRequestId, decision: SitePermissionDecision) =
         respondToSitePermission(id, decision.allows)
 
+    fun respondToMediaPermission(id: TargetRequestId, decision: SitePermissionDecision, video: String?, audio: String?) =
+        respondToSitePermission(id, false)
+
     fun respondToPlatformPermission(id: TargetRequestId, granted: Boolean)
 
     fun respondToFilePicker(id: TargetRequestId, uris: List<String>)

@@ -15,13 +15,13 @@ import org.navis.browser.persistence.UserProfileStore
 class UserProfileStoreTest {
     private class Memory {
         var body: String? = null
-        val deleted = mutableListOf<String>()
+        val deleted = mutableListOf<Pair<String, Boolean>>()
         var now = 1_700_000_000_000L
         fun store() = UserProfileStore(
             now = { now },
             loadDocument = { body },
             saveDocument = { body = it },
-            deleteProfileData = { deleted.add(it) },
+            deleteProfileData = { id, legacy -> deleted.add(id to legacy) },
         )
     }
 
@@ -60,11 +60,11 @@ class UserProfileStoreTest {
         val store = memory.store()
         val profile = store.create("Ada", "#0b57d0")
         try { store.switchTo("not-a-uuid"); fail() } catch (_: IllegalArgumentException) {}
-        try { store.setDefault(profile.id.replaceFirst('4', '5')); fail() } catch (_: IllegalArgumentException) {}
+        try { store.setDefault(profile.id.replaceRange(14, 15, "5")); fail() } catch (_: IllegalArgumentException) {}
     }
 
     @Test
-    fun removalProtectsCurrentDefaultAndLastProfile() {
+    fun removalProtectsCurrentAndLastProfile() {
         val memory = Memory()
         val store = memory.store()
         val first = store.create("Ada", "#0b57d0")
@@ -73,12 +73,31 @@ class UserProfileStoreTest {
         store.switchTo(first.id)
         store.setDefault(second.id)
         try { store.remove(first.id, false); fail() } catch (_: IllegalStateException) {}
-        try { store.remove(second.id, false); fail() } catch (_: IllegalStateException) {}
         store.switchTo(first.id)
         store.setDefault(first.id)
         store.remove(second.id, true)
         assertEquals(listOf(first.id), store.snapshot().profiles.map { it.id })
-        assertEquals(listOf(second.id), memory.deleted)
+        assertEquals(listOf(second.id to false), memory.deleted)
+    }
+
+    @Test
+    fun removingDefaultLegacyProfileSelectsCurrentAndKeepsItsDataSeparate() {
+        val memory = Memory()
+        val store = memory.store()
+        val legacy = store.create("Ada", "#0b57d0")
+        val current = store.create("Grace", "#00ff00")
+        store.switchTo(current.id)
+        store.setDefault(legacy.id)
+
+        store.remove(legacy.id, true)
+
+        val snapshot = store.snapshot()
+        assertEquals(listOf(current.id), snapshot.profiles.map { it.id })
+        assertEquals(current.id, snapshot.currentId)
+        assertEquals(current.id, snapshot.defaultId)
+        assertEquals("profiles/${current.id}", store.dataDirectory(current.id))
+        assertEquals(listOf(legacy.id to true), memory.deleted)
+        assertEquals(current.id, memory.store().snapshot().defaultId)
     }
 
     @Test

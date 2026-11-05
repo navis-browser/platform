@@ -4,4 +4,18 @@
     <string name="permission_allow_always">始终允许</string>
     <string name="permission_session_explanation">临时授权在关闭 Navis 后失效。始终允许会为此网站记住选择。</string>
     <string name="permission_save_failed">无法保存权限，未授予新的访问权限。请重试。</string>
+    <string name="site_permissions_heading">网站权限</string>
+    <string name="site_permission_embedded_origin">嵌入内容：%1$s</string>
+    <string name="site_permission_ask">询问</string>
+    <string name="site_permission_allow">允许</string>
+    <string name="site_permission_block">阻止</string>
+    <string name="site_permission_temporary">本次会话</string>
+    <string name="site_permission_camera">摄像头</string>
+    <string name="site_permission_microphone">麦克风</string>
+    <string name="site_permission_location">位置信息</string>
+    <string name="site_permission_notifications">通知</string>
+    <string name="site_permission_storage">持久存储</string>
+    <string name="site_permission_stop_media">停止摄像头和麦克风</string>
+    <string name="site_permission_update_failed">无法更新此网站权限。</string>
+    <string name="site_device_active">正在使用设备 · 网站权限</string>
 </resources>

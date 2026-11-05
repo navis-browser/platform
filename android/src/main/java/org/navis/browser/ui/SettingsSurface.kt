@@ -4,6 +4,8 @@
 
 package org.navis.browser.ui
 
+import androidx.compose.runtime.saveable.rememberSaveable
+
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.*
@@ -66,7 +68,7 @@ internal fun SettingsSurface(
 ) {
     val host = runtime.product.settings
     val state = rememberBrowserSettings(host)
-    var query by remember(section) { mutableStateOf("") }
+    var query by rememberSaveable(section) { mutableStateOf("") }
     var dialog by remember(section) { mutableStateOf<String?>(null) }
     var working by remember { mutableStateOf(false) }
     val snackbar = remember { SnackbarHostState() }
@@ -101,11 +103,13 @@ internal fun SettingsSurface(
         val languageLabel = stringResource(R.string.settings_language)
         val barLabel = stringResource(R.string.settings_bookmark_bar)
         val historyLabel = stringResource(R.string.settings_history_button)
+        val organizationLabel = stringResource(R.string.settings_show_certificate_organization)
         val showSearch = inSection("search") && matchesSettings(query, searchLabel, "google baidu bing duckduckgo")
         val showLanguage = inSection("appearance") && matchesSettings(query, languageLabel, "language locale english chinese 中文 语言")
         val showBar = inSection("appearance") && matchesSettings(query, barLabel, "bookmarks 书签")
         val showHistory = inSection("appearance") && matchesSettings(query, historyLabel, "history toolbar shortcut 历史记录 工具栏 快捷入口")
-        if (showSearch || showLanguage || showBar || showHistory) {
+        val showOrganization = inSection("appearance") && matchesSettings(query, organizationLabel, "certificate organization address bar 证书 组织 地址栏")
+        if (showSearch || showLanguage || showBar || showHistory || showOrganization) {
             SettingsSection(stringResource(R.string.settings_section_general)) {
                 if (showSearch) {
                     SearchSettingsContent(runtime.product, state, ::changed)
@@ -125,6 +129,11 @@ internal fun SettingsSurface(
                 if (showHistory) {
                     SettingsToggle(historyLabel, stringResource(R.string.settings_history_button_summary), state.historyButton) {
                         changed(host.setHistoryButtonVisible(it))
+                    }
+                }
+                if (showOrganization) {
+                    SettingsToggle(organizationLabel, stringResource(R.string.settings_show_certificate_organization_summary), state.showCertificateOrganization) {
+                        changed(host.setShowCertificateOrganization(it))
                     }
                 }
             }
@@ -183,7 +192,7 @@ internal fun SettingsSurface(
         if (showHelp) {
             SettingsAction(helpLabel) { onNavigate("navis://settings/help") }
         }
-        if (!(showRootNavigation || showSearch || showLanguage || showBar || showHistory || showIsolation || showClean || showData || showAppearance || showDownloads || showHelp)) {
+        if (!(showRootNavigation || showSearch || showLanguage || showBar || showHistory || showOrganization || showIsolation || showClean || showData || showAppearance || showDownloads || showHelp)) {
             ProductPageEmptyState(stringResource(R.string.profile_no_matches))
         }
     }

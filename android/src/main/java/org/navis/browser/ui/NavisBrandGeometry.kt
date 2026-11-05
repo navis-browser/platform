@@ -3,7 +3,7 @@ package org.navis.browser.ui
 
 internal object NavisBrandGeometry {
     const val VIEWPORT = 220f
-    const val CORNER_RADIUS = 40f
+    const val CORNER_RADIUS = 88f
     const val ROTATION = 42f
     const val CONTOUR_X = 22f
     const val CONTOUR_Y = 22f

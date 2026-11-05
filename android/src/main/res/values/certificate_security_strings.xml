@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- SPDX-License-Identifier: MPL-2.0 -->
+<resources>
+    <string name="support_certificate_transparency">Certificate transparency</string>
+    <string name="support_ct_expiration">CT metadata expires (UTC)</string>
+    <string name="support_revocations_date">Bundled certificate revocations (UTC)</string>
+    <string name="support_ct_expired">Expired — certificate transparency is no longer enforced. Install a current Navis package.</string>
+    <string name="support_ct_expiring">Active — metadata expires soon. Install a current Navis package.</string>
+    <string name="support_ct_current">Active for publicly trusted certificates</string>
+</resources>

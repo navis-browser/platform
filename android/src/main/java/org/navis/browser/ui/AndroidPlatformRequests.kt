@@ -9,6 +9,7 @@ import android.app.Activity
 import android.content.pm.PackageManager
 import android.content.Intent
 import android.net.Uri
+import android.os.Build
 import android.widget.Toast
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
@@ -38,8 +39,18 @@ internal class AndroidPlatformRequests(
     private var isLeaseCurrent: () -> Boolean = { false }
     private val currentRuntime: BrowserTargetRuntime?
         get() = runtime?.takeIf { lease != null && isLeaseCurrent() }
-    private var permissionRequestId: TargetRequestId? = null
-    private var mediaPermissionRequestId: TargetRequestId? = null
+    private class PermissionLaunch(
+        val id: TargetRequestId,
+        val runtime: BrowserTargetRuntime,
+        val lease: AndroidWindowLease,
+        val permissions: Set<String>,
+        val media: Boolean,
+    ) {
+        var revoked = false
+    }
+    // Keep a canceled launch until Android returns its result. A new request
+    // must not consume the old system dialog's callback after a host rebind.
+    private var permissionLaunch: PermissionLaunch? = null
     private var fileRequestId: TargetRequestId? = null
     private var capturePermissionRequest: FilePickerRequest? = null
     private var pendingCameraCapture: AndroidCameraCapture.PendingCameraCapture? = null
@@ -51,7 +62,7 @@ internal class AndroidPlatformRequests(
     private val notificationPermissions = AndroidNotificationPermissionCoordinator(
         activity,
         canLaunch = {
-            permissionRequestId == null && mediaPermissionRequestId == null &&
+            permissionLaunch == null &&
                 capturePermissionRequest == null && fileRequestId == null &&
                 targetState.platformPermission == null &&
                 targetState.sitePermission !is org.navis.browser.api.SitePermissionRequest.Media
@@ -62,16 +73,20 @@ internal class AndroidPlatformRequests(
     private val permissionLauncher = activity.registerForActivityResult(
         ActivityResultContracts.RequestMultiplePermissions(),
     ) { grants ->
-        val mediaId = mediaPermissionRequestId
-        if (mediaId != null) {
-            mediaPermissionRequestId = null
-            currentRuntime?.respondToSitePermission(mediaId, grantsAreGranted(grants))
-            launchPendingRequests()
-            return@registerForActivityResult
+        permissionLaunch?.let { completePermission(it, grants) }
+    }
+
+    private fun completePermission(launch: PermissionLaunch, grants: Map<String, Boolean>) {
+        if (permissionLaunch !== launch) return
+        permissionLaunch = null
+        if (!launch.revoked && currentRuntime === launch.runtime && lease == launch.lease) {
+            val allowed = grantsAreGranted(grants, launch.permissions)
+            if (launch.media && targetState.sitePermission?.id == launch.id) {
+                launch.runtime.respondToMediaPlatformPermission(launch.id, allowed)
+            } else if (!launch.media && targetState.platformPermission?.id == launch.id) {
+                launch.runtime.respondToPlatformPermission(launch.id, allowed)
+            }
         }
-        val id = permissionRequestId ?: return@registerForActivityResult
-        permissionRequestId = null
-        currentRuntime?.respondToPlatformPermission(id, grantsAreGranted(grants))
         launchPendingRequests()
     }
 
@@ -158,11 +173,15 @@ internal class AndroidPlatformRequests(
     fun unbind() {
         val previousRuntime = runtime
         val responseRuntime = currentRuntime
+        val pendingPermissionId = permissionLaunch?.takeIf {
+            !it.media && it.runtime === responseRuntime && it.lease == lease
+        }?.id
+        permissionLaunch?.revoked = true
         runCatching { previousRuntime?.removeTargetObserver(observer) }
         runtime = null
         lease = null
         isLeaseCurrent = { false }
-        listOfNotNull(permissionRequestId, targetState.platformPermission?.id)
+        listOfNotNull(pendingPermissionId, targetState.platformPermission?.id)
             .distinct()
             .forEach { id ->
                 runCatching { responseRuntime?.respondToPlatformPermission(id, false) }
@@ -175,8 +194,6 @@ internal class AndroidPlatformRequests(
             .forEach { id ->
                 runCatching { responseRuntime?.respondToFilePicker(id, emptyList()) }
             }
-        permissionRequestId = null
-        mediaPermissionRequestId = null
         clearLocalFileRequest()
         targetState = TargetRequestState()
         notificationPermissions.unbind()
@@ -195,50 +212,44 @@ internal class AndroidPlatformRequests(
     private fun launchPendingRequests() {
         if (currentRuntime == null || !activity.lifecycle.currentState.isAtLeast(Lifecycle.State.RESUMED)) return
         if (notificationPermissions.inFlight) return
-        if (permissionRequestId == null && mediaPermissionRequestId == null && capturePermissionRequest == null) {
+        if (permissionLaunch == null && capturePermissionRequest == null) {
             targetState.platformPermission?.let(::launchPermissionRequest)
         }
-        if (mediaPermissionRequestId == null && permissionRequestId == null && capturePermissionRequest == null) {
+        if (!targetState.mediaPlatformGranted && permissionLaunch == null && capturePermissionRequest == null) {
             (targetState.sitePermission as? org.navis.browser.api.SitePermissionRequest.Media)
                 ?.let(::launchMediaPermissionRequest)
         }
-        if (fileRequestId == null && permissionRequestId == null && mediaPermissionRequestId == null) {
+        if (fileRequestId == null && permissionLaunch == null) {
             targetState.filePicker?.let(::launchFilePicker)
         }
         notificationPermissions.launchIfReady()
     }
 
     private fun launchPermissionRequest(request: PlatformPermissionRequest) {
-        if (permissionRequestId != null) {
-            return
-        }
-        val permissions = request.permissions.map { it.androidName() }.toTypedArray()
-        permissionRequestId = request.id
-        runCatching { permissionLauncher.launch(permissions) }
-            .onFailure {
-                permissionRequestId = null
-                currentRuntime?.respondToPlatformPermission(request.id, granted = false)
-                launchPendingRequests()
-            }
+        val permissions = request.permissions.flatMap { it.androidNames() }.distinct()
+        launchPermissions(request.id, permissions, media = false)
     }
 
     private fun launchMediaPermissionRequest(request: org.navis.browser.api.SitePermissionRequest.Media) {
-        if (mediaPermissionRequestId != null) return
         val permissions = buildList {
             if (request.videoSources.isNotEmpty()) add(Manifest.permission.CAMERA)
             if (request.audioSources.isNotEmpty()) add(Manifest.permission.RECORD_AUDIO)
-        }.distinct().toTypedArray()
+        }.distinct()
+        launchPermissions(request.id, permissions, media = true)
+    }
+
+    private fun launchPermissions(id: TargetRequestId, permissions: List<String>, media: Boolean) {
+        if (permissionLaunch != null) return
+        val owner = currentRuntime ?: return
+        val boundLease = lease ?: return
+        val launch = PermissionLaunch(id, owner, boundLease, permissions.toSet(), media)
+        permissionLaunch = launch
         if (permissions.isEmpty()) {
-            currentRuntime?.respondToSitePermission(request.id, false)
+            completePermission(launch, emptyMap())
             return
         }
-        mediaPermissionRequestId = request.id
-        runCatching { permissionLauncher.launch(permissions) }
-            .onFailure {
-                mediaPermissionRequestId = null
-                currentRuntime?.respondToSitePermission(request.id, false)
-                launchPendingRequests()
-            }
+        runCatching { permissionLauncher.launch(permissions.toTypedArray()) }
+            .onFailure { completePermission(launch, emptyMap()) }
     }
 
     private fun launchFilePicker(request: FilePickerRequest) {
@@ -348,15 +359,6 @@ internal class AndroidPlatformRequests(
     }
 
     private companion object {
-        fun PlatformPermission.androidName(): String = when (this) {
-            PlatformPermission.CAMERA -> Manifest.permission.CAMERA
-            PlatformPermission.MICROPHONE -> Manifest.permission.RECORD_AUDIO
-            PlatformPermission.COARSE_LOCATION -> Manifest.permission.ACCESS_COARSE_LOCATION
-            PlatformPermission.FINE_LOCATION -> Manifest.permission.ACCESS_FINE_LOCATION
-            PlatformPermission.BLUETOOTH_CONNECT -> Manifest.permission.BLUETOOTH_CONNECT
-            PlatformPermission.BLUETOOTH_SCAN -> Manifest.permission.BLUETOOTH_SCAN
-        }
-
         fun FilePickerRequest.intent(): Intent {
             if (mode == FilePickerMode.FOLDER) {
                 return Intent(Intent.ACTION_OPEN_DOCUMENT_TREE)
@@ -387,10 +389,3 @@ internal class AndroidPlatformRequests(
         }
     }
 }
-
-/**
- * Activity-result cancellation is represented by an empty grant map on some Android versions.
- * Treat that as denial: an empty set cannot prove that any requested permission was granted.
- */
-internal fun grantsAreGranted(grants: Map<String, Boolean>): Boolean =
-    grants.isNotEmpty() && grants.values.all { it }

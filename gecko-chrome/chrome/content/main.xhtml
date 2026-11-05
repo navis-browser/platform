@@ -26,11 +26,14 @@
     <link rel="stylesheet" href="chrome://global/skin/global.css" />
     <link rel="stylesheet" href="chrome://navis/content/design-system.css" />
     <link rel="stylesheet" href="chrome://navis/content/main.css" />
+    <link rel="stylesheet" href="chrome://navis/content/documents.css" />
     <link rel="stylesheet" href="chrome://navis/content/profile-ui.css" />
     <script type="module" src="chrome://navis/content/bootstrap.mjs"></script>
   </head>
   <body>
     <xul:keyset id="navis-keyset">
+      <xul:key id="navis-print-key" key="P" modifiers="accel" />
+      <xul:key id="navis-open-file-key" key="O" modifiers="accel" />
       <xul:key id="navis-toggle-devtools-key" keycode="VK_F12" />
       <!-- Keep the Linux/Windows page-tool bindings aligned with
            devtools/startup/locales/en-US/key-shortcuts.ftl. Privileged
@@ -433,6 +436,12 @@
             aria-live="polite"
           ></strong>
           <p id="site-info-description"></p>
+          <section id="site-permissions-section" aria-labelledby="site-permissions-title">
+            <strong id="site-permissions-title" data-l10n-id="sitePermissions.title">Site permissions</strong>
+            <div id="site-permissions-list"></div>
+            <button id="stop-site-media" class="ui-button" type="button" hidden="hidden"
+              data-l10n-id="sitePermissions.stopMedia">Stop camera and microphone</button>
+          </section>
           <section id="site-data-section" aria-labelledby="site-data-title">
             <div>
               <strong id="site-data-title" data-l10n-id="siteInfo.cookiesTitle"
@@ -514,6 +523,7 @@
           </h1>
           <p id="permission-message"></p>
           <p id="permission-detail" hidden="hidden"></p>
+          <div id="permission-choices"></div>
           <div class="permission-actions">
             <button
               id="block-permission"
@@ -652,6 +662,7 @@
         </footer>
       </section>
 
+
       <section
         id="downloads-panel"
         class="ui-card"
@@ -737,6 +748,14 @@
           data-l10n-aria-label="downloads.title"
         >
           <span class="menu-item-label" data-l10n-id="downloads.title">Downloads</span>
+        </button>
+        <button id="menu-open-file" class="menu-item" role="menuitem" data-l10n-aria-label="menu.openFile">
+          <span class="menu-item-label" data-l10n-id="menu.openFile">Open file</span>
+          <kbd>Ctrl+O</kbd>
+        </button>
+        <button id="menu-print" class="menu-item" role="menuitem" data-l10n-aria-label="menu.print">
+          <span class="menu-item-label" data-l10n-id="menu.print">Print</span>
+          <kbd>Ctrl+P</kbd>
         </button>
         <button id="menu-processes" class="menu-item" role="menuitem"
           data-l10n-aria-label="menu.processes">

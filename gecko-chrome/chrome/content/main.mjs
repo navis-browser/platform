@@ -9,6 +9,7 @@ import {
   createMenuController,
   installMaterialRipple,
   setIcon,
+  updateSelectOptions,
 } from "chrome://navis/content/design-system.mjs";
 import {
   localizeDocument,
@@ -157,6 +158,10 @@ async function initialize() {
   const permissionOrigin = document.getElementById("permission-origin");
   const permissionMessage = document.getElementById("permission-message");
   const permissionDetail = document.getElementById("permission-detail");
+  const permissionChoices = document.getElementById("permission-choices");
+  const sitePermissionsSection = document.getElementById("site-permissions-section");
+  const sitePermissionsList = document.getElementById("site-permissions-list");
+  const stopSiteMedia = document.getElementById("stop-site-media");
   const blockPermission = document.getElementById("block-permission");
   const allowAlways = document.getElementById("allow-always");
   const allowSession = document.getElementById("allow-session");
@@ -256,6 +261,8 @@ async function initialize() {
   const menuBookmarks = document.getElementById("menu-bookmarks");
   const menuPasswords = document.getElementById("menu-passwords");
   const menuDownloads = document.getElementById("menu-downloads");
+  const menuPrint = document.getElementById("menu-print");
+  const menuOpenFile = document.getElementById("menu-open-file");
   const menuProcesses = document.getElementById("menu-processes");
   const menuProfiles = document.getElementById("menu-profiles");
   const menuSupport = document.getElementById("menu-support");
@@ -347,6 +354,9 @@ async function initialize() {
     return view;
   };
   const runtime = new EngineRuntime();
+  runtime.configurePrinting({ ownerWindow: window, styleSheets: [
+    "chrome://navis/content/design-system.css", "chrome://navis/content/documents.css",
+  ] });
   runtime.setCredentialReauthenticationPresentation({
     reason: t("passwords.reauthenticationReason"),
     caption: t("app.name"),
@@ -364,6 +374,7 @@ async function initialize() {
   const addressEditState = new OmniboxEditState();
   let transientStatusTimer = null;
   let restoringSessions = true;
+  let initialContentWindow = false;
   let sessionPersistenceTimer = null;
   let historyRenderIdentity = 0;
   let bookmarkRenderIdentity = 0;
@@ -437,6 +448,8 @@ async function initialize() {
     [menuBookmarks, "star"],
     [menuPasswords, "password"],
     [menuDownloads, "downloads"],
+    [menuPrint, "print"],
+    [menuOpenFile, "openFile"],
     [menuProcesses, "processes"],
     [menuProfiles, "profile"],
     [menuSupport, "info"],
@@ -599,7 +612,7 @@ async function initialize() {
     const sessions = orderedSessionRecords()
       .map((record) => record.session)
       .filter((session) => !session.state.closed);
-    if (privateMode || !sessions.length) {
+    if (privateMode || initialContentWindow || !sessions.length) {
       return Promise.resolve(false);
     }
     const selectedSession = sessions.includes(activeRecord?.session)
@@ -609,7 +622,7 @@ async function initialize() {
   };
 
   const persistSessionState = ({ immediate = false } = {}) => {
-    if (privateMode || restoringSessions || !records.size || !activeRecord) {
+    if (privateMode || initialContentWindow || restoringSessions || !records.size || !activeRecord) {
       return;
     }
     clearTimeout(sessionPersistenceTimer);
@@ -628,9 +641,8 @@ async function initialize() {
 
   const updateSessionPresentation = (session) => {
     const record = records.get(session.id);
-    if (!record || session.state.closed) {
-      return;
-    }
+    if (!record) return;
+    if (session.state.closed) { forgetClosedSession(record); return; }
     const navigationChanged =
       record.navigationId !== session.state.navigationId;
     record.navigationId = session.state.navigationId;
@@ -777,7 +789,27 @@ async function initialize() {
     },
   }));
 
-  await runtime.ready;
+  // Native content-window creation checks its primary browser when chrome
+  // load completes. Adopt and activate before asynchronous profile startup;
+  // presentation and ordinary startup still wait for Runtime readiness.
+  const initialView = createView();
+  const initialSession = runtime.adoptInitialSession({ view: initialView });
+  initialContentWindow = initialSession !== null;
+  if (initialSession) {
+    viewPanels.get(initialView).hidden = false;
+    runtime.activateSession(initialSession);
+  }
+  const closePendingStartup = () => runtime.close();
+  window.addEventListener("unload", closePendingStartup, { once: true });
+  try {
+    await runtime.ready;
+  } catch (error) {
+    runtime.close();
+    throw error;
+  } finally {
+    window.removeEventListener("unload", closePendingStartup);
+  }
+  if (window.closed || runtime.closed) return;
 
   const showTransientStatus = (message) => {
     loadingState.textContent = message;
@@ -1905,7 +1937,7 @@ async function initialize() {
       icon = "loading";
       indicatorTitle = t("common.loading");
     } else if (state.identity === "internal-page") {
-      icon = "navis";
+      icon = "navisTab";
       indicatorTitle = t("tabs.internal");
     } else if (state.identity === "built-in-extension") {
       icon = "extension";
@@ -1959,16 +1991,21 @@ async function initialize() {
       permissionPanel.hidden && permissionRequest && !state.crashed;
     permissionPanel.hidden = !permissionRequest || state.crashed;
     if (!permissionRequest || state.crashed) {
+      permissionChoices.replaceChildren();
+      delete permissionChoices.dataset.requestId;
       return;
     }
     if (opening) {
       closeCompetingTransientSurfaces("permission", "permission-opened");
     }
+    allowSession.disabled = false;
 
     const extensionRequest =
       permissionRequest.category === "extension-permission";
     permissionPanel.toggleAttribute("data-extension", extensionRequest);
     if (extensionRequest) {
+      permissionChoices.replaceChildren();
+      delete permissionChoices.dataset.requestId;
       permissionOrigin.textContent = t("permission.extensionSource", {
         id: permissionRequest.extensionId,
       });
@@ -2000,6 +2037,7 @@ async function initialize() {
       permissionDetail.hidden = !details.length;
       permissionDetail.textContent = details.join("\n");
       blockPermission.textContent = t("permission.extensionDeny");
+      blockPermission.hidden = false;
       allowAlways.textContent = t("permission.extensionAllow");
       allowAlways.hidden = false;
       allowSession.hidden = true;
@@ -2010,10 +2048,32 @@ async function initialize() {
       permissionRequest.origin || t("prompt.unknownOrigin");
     permissionTitle.textContent = t("permission.title");
     blockPermission.textContent = t("permission.block");
+    blockPermission.hidden = !(permissionRequest.decisions ?? ["block"]).includes("block");
     allowAlways.textContent = t("permission.alwaysAllow");
-    allowAlways.hidden = false;
+    allowAlways.hidden = !(permissionRequest.decisions ?? ["allow-always"]).includes("allow-always");
     allowSession.textContent = t("permission.allowSession");
-    allowSession.hidden = false;
+    allowSession.hidden = !(permissionRequest.decisions ?? ["allow-session"]).includes("allow-session");
+
+    if (permissionChoices.dataset.requestId !== permissionRequest.id) {
+      permissionChoices.replaceChildren();
+      permissionChoices.dataset.requestId = permissionRequest.id;
+      for (const kind of Object.keys(permissionRequest.choices ?? {})) {
+        const label = document.createElementNS("http://www.w3.org/1999/xhtml", "label");
+        label.className = "permission-device-choice";
+        const name = document.createElementNS("http://www.w3.org/1999/xhtml", "span");
+        name.textContent = t(`permission.${kind}`);
+        const select = document.createElementNS("http://www.w3.org/1999/xhtml", "select");
+        select.className = "ui-select";
+        select.dataset.kind = kind;
+        label.append(name, select);
+        permissionChoices.append(label);
+      }
+    }
+    for (const select of permissionChoices.querySelectorAll("select")) {
+      updateSelectOptions(select, permissionRequest.choices?.[select.dataset.kind] ?? [], {
+        fallbackLabel: t("permission.device"),
+      });
+    }
     const permissionNames = permissionRequest.permissions.map((permission) =>
       t(
         {
@@ -2035,23 +2095,12 @@ async function initialize() {
       devices: requested,
     });
 
-    const deviceNames = [];
-    if (permissionRequest.devices?.camera?.length) {
-      deviceNames.push(
-        t("permission.cameraDetail", {
-          name: permissionRequest.devices.camera[0],
-        }),
-      );
+    const details = [];
+    if (permissionRequest.frameOrigin && permissionRequest.frameOrigin !== permissionRequest.origin) {
+      details.push(t("permission.frameOrigin", { origin: permissionRequest.frameOrigin }));
     }
-    if (permissionRequest.devices?.microphone?.length) {
-      deviceNames.push(
-        t("permission.microphoneDetail", {
-          name: permissionRequest.devices.microphone[0],
-        }),
-      );
-    }
-    permissionDetail.hidden = !deviceNames.length;
-    permissionDetail.textContent = deviceNames.join(" · ");
+    permissionDetail.hidden = !details.length;
+    permissionDetail.textContent = details.join("\n");
   };
 
   const defaultPromptButtonLabel = (request, button) => {
@@ -2416,7 +2465,7 @@ async function initialize() {
   const identityPresentation = (state) => {
     if (state.identity === "internal-page") {
       return {
-        icon: "navis",
+        icon: "shield",
         toolbarLabel: t("app.name"),
         toolbarTitle: t("siteInfo.internal.toolbarTitle"),
         panelTitle: t("siteInfo.internal.toolbarTitle"),
@@ -2645,6 +2694,62 @@ async function initialize() {
     siteInfoStatus.setAttribute("aria-label", presentation.status);
     siteInfoDescription.textContent = presentation.description;
 
+    const session = activeRecord.session;
+    const sitePermissions = runtime.getSitePermissionState(session);
+    sitePermissionsSection.hidden = !sitePermissions.available;
+    stopSiteMedia.hidden = !(state.media?.camera || state.media?.microphone);
+    const permissionStateKey = JSON.stringify([session.id, sitePermissions]);
+    if (sitePermissionsList.dataset.state !== permissionStateKey) {
+      sitePermissionsList.dataset.state = permissionStateKey;
+      sitePermissionsList.replaceChildren();
+      let originToken = null;
+      for (const permission of sitePermissions.permissions) {
+        if (originToken !== permission.originToken) {
+          originToken = permission.originToken;
+          const heading = document.createElementNS("http://www.w3.org/1999/xhtml", "p");
+          heading.className = "site-permission-origin";
+          heading.setAttribute("role", "heading");
+          heading.setAttribute("aria-level", "3");
+          heading.textContent = permission.embedded
+            ? t("sitePermissions.embeddedOrigin", { origin: permission.origin }) : permission.origin;
+          sitePermissionsList.append(heading);
+        }
+        const label = document.createElementNS("http://www.w3.org/1999/xhtml", "label");
+        label.className = "permission-device-choice";
+        const name = document.createElementNS("http://www.w3.org/1999/xhtml", "span");
+        name.textContent = t(permission.label === "persistent storage"
+          ? "permission.persistentStorage" : `permission.${permission.label}`);
+        const select = document.createElementNS("http://www.w3.org/1999/xhtml", "select");
+        select.className = "ui-select";
+        for (const decision of permission.decisions) {
+          const option = document.createElementNS("http://www.w3.org/1999/xhtml", "option");
+          option.value = decision;
+          option.textContent = t(`sitePermissions.${decision}`);
+          if (decision === permission.state && permission.temporary) {
+            option.textContent += ` (${t("sitePermissions.temporary")})`;
+          }
+          select.append(option);
+        }
+        select.value = permission.state;
+        select.addEventListener("change", async () => {
+          try {
+            select.disabled = true;
+            await runtime.setSitePermission(session, {
+              navigationId: sitePermissions.navigationId, originToken: permission.originToken,
+              kind: permission.kind, decision: select.value,
+            });
+          } catch (error) {
+            console.error("Could not update site permission", error);
+            showTransientStatus(t("sitePermissions.failed"));
+          }
+          delete sitePermissionsList.dataset.state;
+          renderSiteInfo();
+        });
+        label.append(name, select);
+        sitePermissionsList.append(label);
+      }
+    }
+
     const showSiteData = !["internal-page", "internal-error"].includes(
       state.identity,
     );
@@ -2725,7 +2830,7 @@ async function initialize() {
       hideFullscreenHint();
     }
     if (!addressEditState.preservesInput) {
-      address.value = state.url;
+      address.value = runtime.formatAddressForDisplay(state.url);
       setOmniboxValidity(address);
     }
     back.disabled = state.crashed || !state.canGoBack;
@@ -2757,6 +2862,7 @@ async function initialize() {
         ? currentSecurityDetails()
         : null;
     const certificateOrganization =
+      runtime.appearanceSettings.showCertificateOrganization &&
       securityDetails?.available && securityDetails.certificate?.organization
         ? securityDetails.certificate.organization.trim()
         : "";
@@ -2824,24 +2930,16 @@ async function initialize() {
     }
   };
 
-  const closeSession = (record) => {
-    if (!record) {
-      return;
-    }
+  // Runtime can close a Session through window or content lifecycle.
+  // Project that terminal fact; never issue another user command to a dead tab.
+  const forgetClosedSession = (record) => {
+    if (records.get(record?.session.id) !== record) return;
     if (tabHoverRecord === record) {
       hideTabHoverCard();
-    }
-    if (records.size === 1 && records.get(record.session.id) === record) {
-      window.close();
-      return;
     }
     const orderedRecords = orderedSessionRecords();
     const closedIndex = orderedRecords.indexOf(record);
     const wasActive = record === activeRecord;
-    runtime.closeDeveloperTools(record.session).catch((error) => {
-      console.error("Navis could not close the Session developer tools", error);
-    });
-    record.session.close();
     record.tab.remove();
     record.panel.remove();
     records.delete(record.session.id);
@@ -2852,6 +2950,20 @@ async function initialize() {
     }
     renderSessionCount();
     persistSessionState({ immediate: true });
+    if (!records.size) window.close();
+  };
+
+  const closeSession = (record) => {
+    if (!record || records.get(record.session.id) !== record) return;
+    if (record.session.state?.closed === true) { forgetClosedSession(record); return; }
+    if (records.size === 1) { window.close(); return; }
+    runtime.closeDeveloperTools(record.session).catch((error) => {
+      console.error("Navis could not close the Session developer tools", error);
+    });
+    record.session.close();
+    // The terminal content Delegate normally removes it synchronously. Keep
+    // this idempotent projection for already-closed/no-op close notifications.
+    forgetClosedSession(record);
   };
 
   const showTabContextMenu = (record, event) => {
@@ -3262,8 +3374,8 @@ async function initialize() {
     return record;
   }
 
-  function createSession(uri = DEFAULT_URI, { activate = true } = {}) {
-    const session = runtime.createSession({ view: createView() });
+  function createSession(uri = DEFAULT_URI, { activate = true, view = createView() } = {}) {
+    const session = runtime.createSession({ view });
     const record = adoptSession(session, { activate: false });
     session.open(uri);
     if (activate) {
@@ -3340,6 +3452,14 @@ async function initialize() {
     const pendingPrompt = activeRecord?.session.state.prompt;
     const pending = permissionResolvers.get(pendingPrompt?.id);
     if (pending?.sessionId === activeRecord?.session.id) {
+      if (decision.startsWith("allow-") && pendingPrompt.choices) {
+        if (permissionChoices.dataset.requestId !== pendingPrompt.id) {
+          return;
+        }
+        const choices = Object.fromEntries([...permissionChoices.querySelectorAll("select")]
+          .map(select => [select.dataset.kind, select.value]));
+        decision = { decision, choices };
+      }
       permissionResolvers.delete(pendingPrompt.id);
       pending.resolve(decision);
     }
@@ -3826,11 +3946,16 @@ async function initialize() {
       matches("#omnibox-shell", "omnibox") ||
       matches("#site-info-panel, #security", "site-info") ||
       matches("#downloads-panel, #downloads-toggle", "downloads") ||
+      // Some toolbar controls (notably extensions-menu-toggle and
+      // bookmark-current) are reparented into the application menu at
+      // startup.  Resolve the owning surface from the actual ancestor
+      // before checking the control's original toolbar selector; otherwise
+      // pointerdown closes #app-menu before the control's click handler runs.
+      matches("#app-menu, #app-menu-toggle", "app-menu") ||
       matches(
         "#extensions-menu, #extensions-menu-toggle, #extension-action-buttons",
         "extensions",
       ) ||
-      matches("#app-menu, #app-menu-toggle", "app-menu") ||
       matches("#profile-menu, #profile-toggle, .profile-dialog", "profile") ||
       matches(
         "#bookmark-bar-popup, #bookmark-bar-overflow, .bookmark-bar-item[aria-expanded='true']",
@@ -3964,7 +4089,7 @@ async function initialize() {
       cancelExtensionOmnibox();
       addressEditState.reset();
       if (activeRecord) {
-        address.value = activeRecord.session.state.url;
+        address.value = runtime.formatAddressForDisplay(activeRecord.session.state.url);
         setOmniboxValidity(address);
       }
       address.blur();
@@ -3986,18 +4111,28 @@ async function initialize() {
   address.addEventListener("focus", () => {
     addressEditState.beginEditing();
   });
-  address.addEventListener("copy", (event) => {
+  const copyAddressSelection = (event) => {
     const selectsWholeAddress =
       address.selectionStart === 0 &&
       address.selectionEnd === address.value.length;
-    if (
-      selectsWholeAddress &&
-      runtime.cleanLinksEnabled &&
-      runtime.copyAddressLink(address.value)
-    ) {
-      event.preventDefault();
+    const originalURL = activeRecord?.session.state.url;
+    const unmodifiedURL = originalURL &&
+      !addressEditState.modified && !addressEditState.rejected &&
+      address.value === runtime.formatAddressForDisplay(originalURL);
+    if (!selectsWholeAddress || (!unmodifiedURL && !runtime.cleanLinksEnabled)) {
+      return;
     }
-  });
+    const value = unmodifiedURL ? originalURL : address.value;
+    if (runtime.copyAddressLink(value) || (unmodifiedURL && runtime.copyText(value))) {
+      event.preventDefault();
+      if (event.type === "cut") {
+        address.setRangeText("", address.selectionStart, address.selectionEnd, "start");
+        address.dispatchEvent(new InputEvent("input", {bubbles: true, inputType: "deleteByCut"}));
+      }
+    }
+  };
+  address.addEventListener("copy", copyAddressSelection);
+  address.addEventListener("cut", copyAddressSelection);
   address.addEventListener("input", () => {
     addressEditState.updateInput();
     setOmniboxValidity(address);
@@ -4138,6 +4273,25 @@ async function initialize() {
   menuDownloads.addEventListener("click", () =>
     loadProductPage("navis://downloads/"),
   );
+  const printDocument = () => {
+    setAppMenuOpen(false);
+    try { activeRecord?.session.print(); }
+    catch (error) {
+      console.error("Navis could not open printing", error);
+      showTransientStatus(t("documents.failed"));
+    }
+  };
+  const openFile = () => {
+    setAppMenuOpen(false);
+    activeRecord?.session.openFile().catch(error => {
+      console.error("Navis could not open a document", error);
+      showTransientStatus(t("documents.failed"));
+    });
+  };
+  menuPrint.addEventListener("click", printDocument);
+  menuOpenFile.addEventListener("click", openFile);
+  document.getElementById("navis-print-key").addEventListener("command", printDocument);
+  document.getElementById("navis-open-file-key").addEventListener("command", openFile);
   menuSettings.addEventListener("click", () =>
     loadProductPage("navis://settings/"),
   );
@@ -4216,6 +4370,21 @@ async function initialize() {
     activeRecord?.session.restore();
   });
   allowSession.addEventListener("click", () => answerPrompt("allow-session"));
+  stopSiteMedia.addEventListener("click", async () => {
+    const session = activeRecord?.session;
+    if (!session) {
+      return;
+    }
+    try {
+      await runtime.stopSiteDevices(session, {
+        navigationId: session.state.navigationId, kind: "camera",
+      });
+    } catch (error) {
+      console.error("Could not stop media capture", error);
+      showTransientStatus(t("sitePermissions.failed"));
+    }
+    renderSiteInfo();
+  });
   allowAlways.addEventListener("click", () => answerPrompt("allow-always"));
   blockPermission.addEventListener("click", () => answerPrompt("block"));
   document
@@ -4454,6 +4623,7 @@ async function initialize() {
       document.documentElement.style.setProperty("--navis-user-accent", state.accent);
       renderBookmarkBarVisibility();
       libraryToggle.hidden = !state.historyButton;
+      renderActiveSession();
     },
   };
   runtime.addAppearanceDelegate(appearanceDelegate);
@@ -4462,30 +4632,37 @@ async function initialize() {
     window.requestAnimationFrame(layoutBookmarkBarOverflow);
   });
   bookmarkBarResizeObserver.observe(bookmarkBarItems);
-  const commandLineUris = runtime.getStartupURIs({ window, fallbackURI: null });
-  const restoredState = privateMode ? [] : await runtime.loadSessionState();
-  let startupEntries;
-  if (commandLineUris.length) {
-    startupEntries = commandLineUris.map((url, index) => ({
-      url,
-      selected: index === 0,
-    }));
-  } else if (restoredState.length) {
-    startupEntries = restoredState;
+  if (initialSession) {
+    // Preserve the engine-created document, opener and pending navigation.
+    // A content-created window must not restore another window's saved tabs.
+    adoptSession(initialSession);
+    restoringSessions = false;
   } else {
-    startupEntries = [{ url: DEFAULT_URI, selected: true }];
+    const commandLineUris = runtime.getStartupURIs({ window, fallbackURI: null });
+    const restoredState = privateMode ? [] : await runtime.loadSessionState();
+    let startupEntries;
+    if (commandLineUris.length) {
+      startupEntries = commandLineUris.map((url, index) => ({
+        url,
+        selected: index === 0,
+      }));
+    } else if (restoredState.length) {
+      startupEntries = restoredState;
+    } else {
+      startupEntries = [{ url: DEFAULT_URI, selected: true }];
+    }
+    const startupRecords = startupEntries.map((entry, index) => ({
+      entry,
+      record: createSession(entry.url, { activate: false, view: index === 0 ? initialView : createView() }),
+    }));
+    restoringSessions = false;
+    selectSession(
+      startupRecords.find(({ entry }) => entry.selected)?.record ??
+        startupRecords[0].record,
+      { focusContent: true },
+    );
+    persistSessionState({ immediate: true });
   }
-  const startupRecords = startupEntries.map((entry) => ({
-    entry,
-    record: createSession(entry.url, { activate: false }),
-  }));
-  restoringSessions = false;
-  selectSession(
-    startupRecords.find(({ entry }) => entry.selected)?.record ??
-      startupRecords[0].record,
-    { focusContent: true },
-  );
-  persistSessionState({ immediate: true });
   window.addEventListener(
     "unload",
     () => {
@@ -4505,7 +4682,7 @@ async function initialize() {
       }
       bookmarkBarResizeObserver.disconnect();
       runtime.removeAppearanceDelegate(appearanceDelegate);
-      if (!privateMode && records.size && activeRecord) {
+      if (!privateMode && !initialContentWindow && records.size && activeRecord) {
         saveCurrentSessionState().catch(console.error);
       }
       runtime.close();

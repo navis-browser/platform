@@ -10,7 +10,7 @@ import org.junit.Test
 
 class EngineProjectionMatrixTest {
     @Test
-    fun firstDirectSliceAdvertisesOnlyImplementedProjections() {
+    fun directRuntimeAdvertisesOnlyImplementedProjections() {
         val matrix = EngineProjectionMatrix.DIRECT_RUNTIME_V1
 
         assertEquals(
@@ -33,8 +33,11 @@ class EngineProjectionMatrixTest {
                 EngineProjection.NEW_WINDOW,
                 EngineProjection.CONTENT_CRASH,
                 EngineProjection.MEDIA_CAPTURE,
+                EngineProjection.PLATFORM_WEB_AUTHN,
                 EngineProjection.DEVELOPER_SETTINGS,
                 EngineProjection.IN_APP_DEVTOOLS,
+                EngineProjection.PDF_DOCUMENTS,
+                EngineProjection.PRINTING,
             ),
             matrix.available,
         )

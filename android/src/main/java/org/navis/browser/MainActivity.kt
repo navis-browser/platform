@@ -106,7 +106,10 @@ open class MainActivity : AppCompatActivity() {
 
     override fun attachBaseContext(newBase: Context) {
         val application = newBase.applicationContext as? NavisApplication
-        super.attachBaseContext(application?.localizedContext(newBase) ?: newBase)
+        // Keep the original Activity service context (including PrintManager).
+        // A configuration ContextImpl has no Activity as its outer owner.
+        if (application != null) applyOverrideConfiguration(application.localizedConfiguration())
+        super.attachBaseContext(newBase)
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {

@@ -23,11 +23,19 @@ export const NAVIS_MARK = deepFreeze({
     "y": 22,
     "width": 176,
     "height": 176,
-    "rx": 40
+    "rx": 88
   },
   "contourVariants": {
-    "rounded": 40,
     "circle": 88
+  },
+  "tabIcon": {
+    "viewBox": [
+      16,
+      16,
+      188,
+      188
+    ],
+    "seamStrokeWidth": 11.75
   },
   "transform": {
     "rotate": 42,
@@ -491,7 +499,7 @@ export const NAVIS_MARK = deepFreeze({
   }
 });
 export const geometry = deepFreeze(Object.fromEntries(
-  ["viewBox", "contour", "contourVariants", "transform", "channel", "seams"]
+  ["viewBox", "contour", "contourVariants", "tabIcon", "transform", "channel", "seams"]
     .map(key => [key, NAVIS_MARK[key]])
 ));
 export const colors = deepFreeze({ gradients: NAVIS_MARK.gradients, effects: NAVIS_MARK.effects });

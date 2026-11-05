@@ -2,6 +2,8 @@
  * License, v. 2.0. If a copy of the MPL was not distributed with this
  * file, You can obtain one at https://mozilla.org/MPL/2.0/. */
 
+@import url("document-tokens.css");
+
 @namespace xul url("http://www.mozilla.org/keymaster/gatekeeper/there.is.only.xul");
 
 :root {
@@ -65,6 +67,7 @@
   --navis-size-icon: 20px;
   --navis-size-icon-small: 16px;
   --navis-size-field: 34px;
+  --navis-size-print-settings: 360px;
   --navis-space-1: 2px;
   --navis-space-2: 4px;
   --navis-space-3: 6px;
@@ -242,7 +245,8 @@ button {
   stroke: none;
 }
 
-.navis-icon[data-icon="navis"] {
+.navis-icon[data-icon="navis"],
+.navis-icon[data-icon="navisTab"] {
   stroke: none;
 }
 

@@ -1,0 +1,194 @@
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/. */
+
+@import url("document-tokens.css") screen;
+
+/* Presentation only: PDF.js still owns controls, responsive overflow, input,
+ * focus, localization and document rendering. Never style page/canvas/text or
+ * annotation layers here; their geometry and printed output belong to Gecko. */
+@media screen {
+  :root,
+  :root[data-toolbar-density] {
+    --toolbar-height: var(--navis-document-toolbar-height);
+    --toolbar-horizontal-padding: var(--navis-document-space-large);
+    --toolbar-vertical-padding: 0px;
+    --icon-size: var(--navis-document-icon-size);
+    --main-color: var(--navis-document-text);
+    --body-bg-color: var(--navis-document-background);
+    --toolbar-bg-color: var(--navis-document-toolbar);
+    --toolbar-icon-opacity: 1;
+    --toolbar-icon-bg-color: var(--navis-document-text);
+    --toolbar-icon-hover-bg-color: var(--navis-document-text);
+    --toolbar-border-color: var(--navis-document-border);
+    --toolbar-box-shadow: var(--navis-document-shadow);
+    --button-hover-color: var(--navis-document-hover);
+    --toggled-btn-color: var(--navis-document-text);
+    --toggled-btn-bg-color: var(--navis-document-selected);
+    --toggled-hover-active-btn-color: var(--navis-document-selected);
+    --dropdown-btn-bg-color: var(--navis-document-field);
+    --field-color: var(--navis-document-text);
+    --field-bg-color: var(--navis-document-field);
+    --field-border-color: transparent;
+    --doorhanger-bg-color: var(--navis-document-toolbar);
+    --doorhanger-border-color: var(--navis-document-border);
+    --doorhanger-hover-color: var(--navis-document-text);
+    --doorhanger-separator-color: var(--navis-document-border);
+    --separator-color: var(--navis-document-border);
+    --progressBar-color: var(--navis-document-accent);
+  }
+
+  #toolbarContainer {
+    --menuitem-height: var(--navis-document-control-size);
+  }
+
+  #toolbarContainer,
+  #toolbarContainer #toolbarViewer :is(input, select),
+  #secondaryToolbar,
+  #viewsManager {
+    font: var(--navis-document-font);
+  }
+
+  #toolbarContainer #toolbarViewer,
+  #toolbarViewer > .toolbarHorizontalGroup,
+  #editorModeButtons {
+    align-items: center;
+    gap: var(--navis-document-space-small);
+  }
+
+  #toolbarContainer #toolbarViewer #toolbarViewerLeft {
+    margin-inline-start: 0;
+  }
+
+  #toolbarViewer :is(#toolbarViewerLeft, #toolbarViewerMiddle, #toolbarViewerRight) {
+    height: var(--navis-document-control-size);
+  }
+
+  #toolbarContainer .toolbarButton:not(.labeled, .viewsManagerButton) {
+    width: var(--navis-document-control-size);
+    height: var(--navis-document-control-size);
+    border-radius: 50%;
+  }
+
+  #toolbarContainer :is(.toolbarButton, input, select):focus-visible,
+  #secondaryToolbar .toolbarButton:focus-visible {
+    outline: 2px solid var(--navis-document-accent);
+    outline-offset: 1px;
+  }
+
+  #toolbarContainer :is(.toolbarField, .dropdownToolbarButton, .dropdownToolbarButton > select) {
+    box-sizing: border-box;
+    height: var(--navis-document-field-height);
+    border-radius: var(--navis-document-radius);
+  }
+
+  #pageNumber {
+    width: var(--navis-document-page-field-width);
+  }
+
+  #scaleSelectContainer {
+    min-width: 112px;
+  }
+
+  #toolbarContainer .verticalToolbarSeparator {
+    height: var(--navis-document-icon-size);
+    margin-inline: var(--navis-document-space);
+  }
+
+  #secondaryToolbar {
+    border-radius: var(--navis-document-menu-radius);
+  }
+
+  #viewsManager.sidebar {
+    --sidebar-width: var(--navis-document-sidebar-width);
+    --sidebar-block-padding: 0px;
+    --sidebar-padding: 0px;
+    --sidebar-border-radius: 0px;
+    --sidebar-box-shadow: none;
+    --sidebar-backdrop-filter: none;
+    --sidebar-bg-color: var(--navis-document-sidebar);
+    --sidebar-border-color: var(--navis-document-border);
+    --text-color: var(--navis-document-text);
+    --header-bg: var(--navis-document-sidebar);
+    --header-shadow: none;
+    --button-bg: transparent;
+    --button-hover-bg: var(--navis-document-hover);
+    --button-active-bg: var(--navis-document-selected);
+    --button-focus-outline-color: var(--navis-document-accent);
+    --image-border-width: 3px;
+    --image-border-color: transparent;
+    --image-hover-border-color: var(--navis-document-border);
+    --image-current-border-color: var(--navis-document-accent);
+    --image-page-number-bg: transparent;
+    --image-current-page-number-fg: var(--navis-document-on-accent);
+    inset-block-start: 100%;
+    border-block: 0;
+    border-inline-start: 0;
+  }
+
+  #outerContainer.viewsManagerOpen #viewsManager {
+    inset-inline-start: 0;
+  }
+
+  .popupMenu {
+    --menu-bg: var(--navis-document-toolbar);
+    --menu-text-color: var(--navis-document-text);
+    --menu-border-color: var(--navis-document-border);
+    --menu-box-shadow: var(--navis-document-shadow);
+    border-radius: var(--navis-document-menu-radius);
+  }
+}
+
+@media screen and (forced-colors: none) {
+  #toolbarContainer,
+  #secondaryToolbar,
+  #viewsManager {
+    color-scheme: dark;
+  }
+}
+
+@media screen and (forced-colors: active) {
+  :root {
+    --field-border-color: FieldText;
+    --toolbar-icon-hover-bg-color: HighlightText;
+    --toggled-btn-color: HighlightText;
+    --doorhanger-hover-color: HighlightText;
+  }
+}
+
+@media screen and (max-width: 900px) {
+  :root,
+  :root[data-toolbar-density] {
+    --toolbar-horizontal-padding: var(--navis-document-space-small);
+  }
+  #toolbarContainer .verticalToolbarSeparator {
+    margin-inline: var(--navis-document-space-small);
+  }
+}
+
+/* Keep editing, paging and zoom reachable on constrained viewports. PDF.js
+ * owns which commands move into its overflow; the remaining controls use a
+ * second row instead of clipping or removing an editing capability. */
+@media screen and (max-width: 900px) {
+  :root,
+  :root[data-toolbar-density] {
+    --toolbar-height: var(--navis-document-toolbar-height-narrow);
+    --toolbar-vertical-padding: var(--navis-document-space-small);
+  }
+  #toolbarContainer #toolbarViewer {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    grid-template-rows: 1fr 1fr;
+  }
+  #toolbarViewerLeft {
+    grid-area: 1 / 1;
+    justify-self: start;
+  }
+  #toolbarViewerMiddle {
+    grid-area: 1 / 2;
+  }
+  #toolbarViewerRight {
+    grid-area: 2 / 1 / 3 / -1;
+    justify-self: end;
+  }
+}

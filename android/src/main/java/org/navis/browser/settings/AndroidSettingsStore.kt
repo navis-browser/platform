@@ -38,6 +38,7 @@ internal object AndroidSettingsKeys {
     const val CLEAN_LINKS_ENABLED = "clean_links_enabled"
     const val BOOKMARK_BAR_VISIBLE = "bookmark_bar_visible"
     const val HISTORY_BUTTON_VISIBLE = "history_button_visible"
+    const val SHOW_CERTIFICATE_ORGANIZATION = "show_certificate_organization"
     // Read-only fallback for profiles created before shortcut and sheet state were separated.
     const val LEGACY_HISTORY_SIDEBAR_VISIBLE = "history_sidebar_visible"
 
@@ -52,6 +53,7 @@ internal object AndroidSettingsKeys {
         CLEAN_LINKS_ENABLED,
         BOOKMARK_BAR_VISIBLE,
         HISTORY_BUTTON_VISIBLE,
+        SHOW_CERTIFICATE_ORGANIZATION,
         LEGACY_HISTORY_SIDEBAR_VISIBLE,
     )
 }
@@ -163,6 +165,13 @@ internal class AndroidSettingsStore(
             key = AndroidSettingsKeys.HISTORY_BUTTON_VISIBLE,
             value = visible,
             unchanged = { it.historyButton == visible },
+        )
+
+    override fun setShowCertificateOrganization(visible: Boolean): AndroidSettingsUpdateResult =
+        updateBoolean(
+            key = AndroidSettingsKeys.SHOW_CERTIFICATE_ORGANIZATION,
+            value = visible,
+            unchanged = { it.showCertificateOrganization == visible },
         )
 
     override fun confirmDisplayLanguageApplied(setting: String): AndroidSettingsUpdateResult {
@@ -300,6 +309,7 @@ internal class AndroidSettingsStore(
             openWhenComplete = storage.readBoolean(AndroidSettingsKeys.OPEN_WHEN_COMPLETE) ?: false,
             historyButton = storage.readBoolean(AndroidSettingsKeys.HISTORY_BUTTON_VISIBLE)
                 ?: storage.readBoolean(AndroidSettingsKeys.LEGACY_HISTORY_SIDEBAR_VISIBLE) ?: false,
+            showCertificateOrganization = storage.readBoolean(AndroidSettingsKeys.SHOW_CERTIFICATE_ORGANIZATION) ?: true,
         )
     }
 

@@ -9,6 +9,7 @@ import org.navis.browser.persistence.BookmarkDraft
 import org.navis.browser.persistence.BookmarkEntry
 import org.navis.browser.persistence.HistoryEntry
 import org.navis.browser.persistence.PasswordEntry
+import java.util.concurrent.CompletionStage
 
 /** A product window facade, never a second Core or engine owner. */
 internal class AndroidWindowRuntime(
@@ -23,6 +24,8 @@ internal class AndroidWindowRuntime(
     val product by lazy { shared.productForWindow(windowId) }
     val extensions get() = shared.extensionsForWindow(windowId)
     val downloads get() = shared.downloads
+    var onPrintFailure: ((String) -> Unit)? = null
+    fun print() = state.activeSessionId?.let { id -> session(id) { shared.onPrintRequested(id) } }
     override val state get() = if (retired) BrowserState() else shared.stateForWindow(windowId)
     override val targetState get() = shared.targetStateForWindow(windowId)
 
@@ -55,6 +58,7 @@ internal class AndroidWindowRuntime(
     internal fun retire() {
         if (retired) return
         retired = true
+        onPrintFailure = null
         observers.keys.toList().forEach { it.onBrowserStateChanged(state) }
     }
 
@@ -96,6 +100,14 @@ internal class AndroidWindowRuntime(
     }
     override fun respondToSitePermission(id: TargetRequestId, decision: SitePermissionDecision) {
         if (targetState.sitePermission?.id == id) shared.respondToSitePermission(id, decision)
+    }
+
+    override fun respondToMediaPlatformPermission(id: TargetRequestId, granted: Boolean) {
+        if (targetState.sitePermission?.id == id) shared.respondToMediaPlatformPermission(id, granted)
+    }
+
+    override fun respondToMediaPermission(id: TargetRequestId, decision: SitePermissionDecision, video: String?, audio: String?) {
+        if (targetState.sitePermission?.id == id) shared.respondToMediaPermission(id, decision, video, audio)
     }
     override fun respondToPlatformPermission(id: TargetRequestId, granted: Boolean) {
         if (targetState.platformPermission?.id == id) shared.respondToPlatformPermission(id, granted)

@@ -4,6 +4,8 @@
 
 package org.navis.browser.ui
 
+import androidx.compose.runtime.saveable.rememberSaveable
+
 import android.text.format.Formatter
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -66,7 +68,7 @@ internal fun DownloadsSurface(
     onOpenSource: (String) -> Unit,
 ) {
     var entries by remember(manager, privateMode) { mutableStateOf(emptyList<DownloadEntry>()) }
-    var query by remember(manager, privateMode) { mutableStateOf("") }
+    var query by rememberSaveable(privateMode) { mutableStateOf("") }
     val listState = rememberProductListState(manager to privateMode, query)
     var confirmClear by remember(manager, privateMode) { mutableStateOf(false) }
     val snackbar = remember(manager, privateMode) { SnackbarHostState() }

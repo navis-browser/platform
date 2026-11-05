@@ -121,7 +121,6 @@
     <string name="permission_location">访问您的位置信息</string>
     <string name="permission_notifications">发送通知</string>
     <string name="permission_persistent_storage">永久存储数据</string>
-    <string name="permission_xr">使用沉浸式 XR 设备</string>
     <string name="permission_autoplay_audio">自动播放有声媒体</string>
     <string name="permission_autoplay_silent">自动播放静音媒体</string>
     <string name="permission_protected_media">访问受保护媒体密钥</string>

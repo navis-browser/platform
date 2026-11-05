@@ -24,7 +24,6 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.AlertDialog
@@ -213,7 +212,7 @@ internal fun ExtensionPopupSheet(host: ExtensionHost) {
     }
     val popup = state.popup
     if (popup == null && state.pendingActionId == null) return
-    ModalBottomSheet(onDismissRequest = host::dismissExtensionPopup) {
+    NavisModalBottomSheet(onDismissRequest = host::dismissExtensionPopup) {
         Column(modifier = Modifier.fillMaxWidth()) {
             Row(
                 modifier = Modifier

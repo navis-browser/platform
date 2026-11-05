@@ -1,6 +1,13 @@
 // SPDX-License-Identifier: MPL-2.0
 import groovy.json.JsonOutput
 import org.gradle.api.artifacts.component.ModuleComponentIdentifier
+import org.gradle.api.file.DirectoryProperty
+import org.gradle.api.tasks.OutputDirectory
+
+abstract class NavisLicenseAssetsTask extends DefaultTask {
+    @OutputDirectory
+    abstract DirectoryProperty getAssetsDirectory()
+}
 
 def licenseScriptDirectory = file(buildscript.getSourceFile()).parentFile
 
@@ -8,11 +15,11 @@ def licenseScriptDirectory = file(buildscript.getSourceFile()).parentFile
 androidComponents.onVariants(androidComponents.selector().all()) { variant ->
     def capitalized = variant.name.capitalize()
     def output = layout.buildDirectory.dir("generated/navis-licenses/${variant.name}/assets")
-    def generate = tasks.register("generate${capitalized}NavisLicenses") {
+    def generate = tasks.register("generate${capitalized}NavisLicenses", NavisLicenseAssetsTask) {
         notCompatibleWithConfigurationCache('Resolves the reviewed runtime artifact graph at execution time')
         // Always resolve and verify: a changed graph may never reuse a stale notice file.
         outputs.upToDateWhen { false }
-        outputs.dir(output)
+        assetsDirectory.set(output)
         doLast {
             def runtime = configurations.getByName("${variant.name}RuntimeClasspath")
             def artifacts = runtime.incoming.artifactView {
@@ -31,6 +38,5 @@ androidComponents.onVariants(androidComponents.selector().all()) { variant ->
             }.result.get().assertNormalExitValue()
         }
     }
-    android.sourceSets.getByName(variant.name).assets.srcDir(output)
-    tasks.matching { it.name == "merge${capitalized}Assets" }.configureEach { dependsOn generate }
+    variant.sources.assets.addGeneratedSourceDirectory(generate) { it.assetsDirectory }
 }

@@ -130,6 +130,10 @@ internal class AndroidTargetDelegate(
         val (windowId, current) = findRequest { it.sitePermission?.id == id } ?: return
         val request = current.sitePermission ?: return
         if (closed || !isSessionLive(request.sessionId)) return
+        if (request is SitePermissionRequest.Media) {
+            if (!decision.allows) completeSitePermission(request, decision)
+            return
+        }
         if (decision.allows && request is SitePermissionRequest.Content &&
             request.kind == SitePermissionKind.NOTIFICATIONS && !notificationsAllowed()
         ) {
@@ -148,6 +152,30 @@ internal class AndroidTargetDelegate(
         completeSitePermission(request, decision)
     }
 
+    fun respondToMediaPlatformPermission(id: TargetRequestId, granted: Boolean) {
+        val (windowId, current) = findRequest { it.sitePermission?.id == id } ?: return
+        val request = current.sitePermission as? SitePermissionRequest.Media ?: return
+        if (closed || !isSessionLive(request.sessionId)) return
+        if (granted) update(windowId, current.copy(mediaPlatformGranted = true))
+        else completeSitePermission(request, SitePermissionDecision.DISMISS)
+    }
+
+    fun respondToMediaPermission(id: TargetRequestId, decision: SitePermissionDecision, video: String?, audio: String?) {
+        val (windowId, current) = findRequest { it.sitePermission?.id == id } ?: return
+        val request = current.sitePermission as? SitePermissionRequest.Media ?: return
+        if (closed || !isSessionLive(request.sessionId)) return
+        if (!decision.allows) {
+            completeSitePermission(request, decision)
+            return
+        }
+        if (!current.mediaPlatformGranted || decision != SitePermissionDecision.ALLOW_SESSION) return
+        fun offered(sources: List<org.navis.browser.api.MediaSourceDescriptor>, id: String?) =
+            if (sources.isEmpty()) id == null else sources.any { it.id == id }
+        if (!offered(request.videoSources, video) || !offered(request.audioSources, audio)) return
+        update(windowId, current.copy(sitePermission = null, mediaPlatformGranted = false, sitePermissionSaveFailed = false))
+        enginePort?.respondToMediaPermission(id, decision, video, audio)
+    }
+
     private fun completeSitePermission(request: SitePermissionRequest, decision: SitePermissionDecision) {
         val (windowId, current) = findRequest { it.sitePermission === request } ?: return
         if (request is SitePermissionRequest.Content &&
@@ -157,7 +185,7 @@ internal class AndroidTargetDelegate(
             return // Keep the real engine request pending so the user can retry or dismiss.
         }
         notificationPermissionRequests.remove(request.id)
-        update(windowId, current.copy(sitePermission = null, sitePermissionSaveFailed = false))
+        update(windowId, current.copy(sitePermission = null, mediaPlatformGranted = false, sitePermissionSaveFailed = false))
         enginePort?.respondToSitePermission(request.id, decision)
     }
 
@@ -245,7 +273,7 @@ internal class AndroidTargetDelegate(
                 ?.takeUnless { it.id == request.id }
                 ?.id
                 ?.let(::cancelEngineRequest)
-            update(windowId, current.copy(sitePermission = request, sitePermissionSaveFailed = false))
+            update(windowId, current.copy(sitePermission = request, mediaPlatformGranted = false, sitePermissionSaveFailed = false))
         }
     }
 
