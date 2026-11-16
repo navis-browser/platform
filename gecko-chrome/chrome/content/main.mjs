@@ -148,6 +148,7 @@ async function initialize() {
   const certificateFields = document.getElementById("certificate-fields");
   const certificateChain = document.getElementById("certificate-chain");
   const loadingState = document.getElementById("loading-state");
+  const linkStatus = document.getElementById("link-status");
   const fullscreenHint = document.getElementById("fullscreen-hint");
   const fullscreenOrigin = document.getElementById("fullscreen-origin");
   const fullscreenInstruction = document.getElementById(
@@ -649,9 +650,15 @@ async function initialize() {
     }
   };
 
+  const renderLinkStatus = (url = "") => {
+    linkStatus.textContent = url ? runtime.formatAddressForDisplay(url) : "";
+    linkStatus.hidden = !url;
+  };
+
   const updateSessionPresentation = (session) => {
     const record = records.get(session.id);
     if (!record) return;
+    if (record === activeRecord && (session.state.closed || session.state.crashed)) renderLinkStatus();
     if (session.state.closed) { forgetClosedSession(record); return; }
     restoreQueue.update(session);
     const navigationChanged =
@@ -662,6 +669,7 @@ async function initialize() {
       record.memoryMeasuredAt = 0;
     }
     if (navigationChanged && record === activeRecord) {
+      renderLinkStatus();
       if (!addressEditState.editing) {
         addressEditState.reset();
       }
@@ -688,6 +696,9 @@ async function initialize() {
   runtime.setSessionDelegateFactory((session) => ({
     content: {
       onStateChanged: () => updateSessionPresentation(session),
+      onLinkHovered: ({ url }) => {
+        if (!closingWindow && records.get(session.id) === activeRecord) renderLinkStatus(url);
+      },
       onInteraction: () => {
         if (records.get(session.id) === activeRecord) {
           closeCompetingTransientSurfaces(
@@ -2947,6 +2958,7 @@ async function initialize() {
     }
     restoreQueue.activate(record.session);
     if (record !== activeRecord) {
+      renderLinkStatus();
       closeCompetingTransientSurfaces(null, "session-changed");
       addressEditState.reset();
       runtime.activateSession(record.session);

@@ -12,7 +12,7 @@ test("Core terminal Session state removes its UI record instead of retaining a d
   const record = { session };
   const removed = [];
   const context = vm.createContext({ records: new Map([[session.id, record]]),
-    forgetClosedSession: value => removed.push(value), session });
+    forgetClosedSession: value => removed.push(value), session, activeRecord: record, renderLinkStatus() {} });
   vm.runInContext(update + "\nupdateSessionPresentation(session);", context);
   assert.deepEqual(removed, [record]);
 });

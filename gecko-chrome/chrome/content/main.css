@@ -1990,6 +1990,23 @@ html[data-browser-fullscreen] #session-host {
   pointer-events: none;
 }
 
+#link-status {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  max-width: calc(100% - 2 * var(--navis-space-2));
+  max-height: 50%;
+  overflow: hidden;
+  padding: var(--navis-space-1) var(--navis-space-3);
+  border: 1px solid var(--navis-color-outline);
+  border-start-end-radius: var(--navis-space-2);
+  background: var(--navis-color-surface);
+  color: var(--navis-color-text);
+  font: var(--navis-font-label);
+  overflow-wrap: anywhere;
+  unicode-bidi: plaintext;
+}
+
 .status-toast {
   position: absolute;
   bottom: var(--navis-space-4);
