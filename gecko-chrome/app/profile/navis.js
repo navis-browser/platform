@@ -179,6 +179,10 @@ pref("toolkit.coverage.enabled", false, locked);
 pref("toolkit.coverage.opt-out", true, locked);
 pref("toolkit.coverage.endpoint.base", "", locked);
 
+// The upstream certificate-error action expects this Firefox-owned default.
+// Explicitly accepted exceptions persist; private-window exceptions stay temporary.
+pref("security.certerrors.permanentOverride", true);
+
 // Security data is supplied by reviewed application packages only. Old profile
 // values cannot turn CT off or revive download-only revocation consumers.
 pref("security.certerrors.mitm.priming.enabled", false, locked);

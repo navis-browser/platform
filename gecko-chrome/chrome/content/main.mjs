@@ -141,6 +141,7 @@ async function initialize() {
   const siteDataSection = document.getElementById("site-data-section");
   const closeSiteInfo = document.getElementById("close-site-info");
   const certificateDetails = document.getElementById("certificate-details");
+  const revokeCertificateException = document.getElementById("revoke-certificate-exception");
   const certificatePanel = document.getElementById("certificate-panel");
   const certificateBack = document.getElementById("certificate-back");
   const certificateFields = document.getElementById("certificate-fields");
@@ -388,6 +389,7 @@ async function initialize() {
   let clearPasswordsTimer = null;
   let fullscreenHintTimer = null;
   let siteInfoNavigationId = null;
+  let siteCertificateException = null;
   let contextMenuOwner = null;
   let bookmarkBarRenderIdentity = 0;
   let bookmarkBarEntries = [];
@@ -2701,6 +2703,16 @@ async function initialize() {
     siteInfoDescription.textContent = presentation.description;
 
     const session = activeRecord.session;
+    const exception = runtime.getCertificateExceptionState(session);
+    siteCertificateException = exception.available ? {session, ...exception} : null;
+    revokeCertificateException.hidden = !exception.available;
+    if (exception.available) {
+      siteInfoStatus.textContent = t("siteInfo.certificateRiskAccepted");
+      siteInfoStatus.setAttribute("aria-label", siteInfoStatus.textContent);
+      siteInfoDescription.textContent = t(exception.sharedWithRegularBrowsing
+        ? "siteInfo.certificateExceptionShared" : exception.temporary
+          ? "siteInfo.certificateExceptionTemporary" : "siteInfo.certificateExceptionDescription");
+    }
     const sitePermissions = runtime.getSitePermissionState(session);
     sitePermissionsSection.hidden = !sitePermissions.available;
     stopSiteMedia.hidden = !(state.media?.camera || state.media?.microphone);
@@ -2793,6 +2805,7 @@ async function initialize() {
       certificatePanel.hidden = true;
       siteInfoSummary.hidden = false;
       siteInfoNavigationId = null;
+      siteCertificateException = null;
       return;
     }
     closeCompetingTransientSurfaces("site-info", "competing-surface");
@@ -4357,6 +4370,22 @@ async function initialize() {
     await runtime.clearCredentials();
     await renderCredentials();
     showTransientStatus(t("passwords.cleared"));
+  });
+  revokeCertificateException.addEventListener("click", () => {
+    const offer = siteCertificateException;
+    if (!offer || offer.session !== activeRecord?.session) return;
+    try {
+      runtime.revokeCertificateExceptionForSession(offer.session, {
+        navigationId: offer.navigationId, fingerprint: offer.fingerprint,
+        sharedWithRegularBrowsing: offer.sharedWithRegularBrowsing,
+      });
+      setSiteInfoOpen(false);
+      showTransientStatus(t("siteInfo.certificateExceptionRevoked"));
+    } catch (error) {
+      console.error("Navis certificate-exception revocation failed", error);
+      showTransientStatus(t("siteInfo.certificateExceptionFailed"));
+      renderSiteInfo();
+    }
   });
   clearSiteData.addEventListener("click", async () => {
     const record = activeRecord;

@@ -1218,6 +1218,7 @@ html[data-browser-fullscreen] #session-host {
 
 #site-info-summary[hidden],
 #certificate-panel[hidden],
+#revoke-certificate-exception[hidden],
 #certificate-details[hidden] {
   display: none;
 }

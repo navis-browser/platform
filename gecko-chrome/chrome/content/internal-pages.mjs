@@ -125,6 +125,8 @@ const SETTINGS_SCRIPT = String.raw`
   const noResults = document.getElementById("settings-no-results");
   const status = document.getElementById("settings-status");
   const clearButton = document.getElementById("clear-site-data");
+  const certificateExceptions = document.getElementById("certificate-exceptions");
+  const certificateExceptionsEmpty = document.getElementById("certificate-exceptions-empty");
   const searchProvider = document.getElementById("search-provider");
   const remoteSuggestionsToggle = document.getElementById("remote-suggestions-toggle");
   const language = document.getElementById("display-language");
@@ -197,6 +199,9 @@ const SETTINGS_SCRIPT = String.raw`
       (accentDraft?.value ?? confirmedAccent) === defaultAccent;
     for (const control of providerList?.querySelectorAll("button") || []) {
       control.disabled = disabled || control.dataset.unavailable === "true";
+    }
+    for (const control of certificateExceptions?.querySelectorAll("button") || []) {
+      control.disabled = disabled;
     }
     if (providerForm) {
       for (const control of providerForm.elements) {
@@ -582,6 +587,41 @@ const SETTINGS_SCRIPT = String.raw`
     }
   });
 
+  const renderCertificateExceptions = (entries, focusId = null) => {
+    if (!certificateExceptions) return;
+    const previous = [...certificateExceptions.querySelectorAll("button")];
+    const focusIndex = previous.findIndex(button => button.dataset.certificateExceptionId === focusId);
+    certificateExceptions.replaceChildren();
+    certificateExceptionsEmpty.hidden = entries.length > 0;
+    for (const entry of entries) {
+      const row = document.createElement("div");
+      row.className = "settings-row";
+      const copy = document.createElement("div");
+      copy.className = "settings-row-copy";
+      const host = document.createElement("strong");
+      host.textContent = entry.hostPort;
+      const fingerprint = document.createElement("p");
+      fingerprint.className = "settings-feature-detail";
+      fingerprint.textContent = window.NavisL10n.text("settings.certificateFingerprint", {fingerprint: entry.fingerprint});
+      const revoke = document.createElement("button");
+      revoke.type = "button";
+      revoke.className = "settings-action";
+      revoke.textContent = window.NavisL10n.text("settings.revokeCertificateException");
+      revoke.setAttribute("aria-label", window.NavisL10n.text("settings.revokeCertificateExceptionFor", {site: entry.hostPort}));
+      revoke.dataset.certificateExceptionId = entry.id;
+      revoke.addEventListener("click", () => {
+        if (!revoke.disabled) dispatchCommand("settings:revoke-certificate-exception", entry.id);
+      });
+      copy.append(host, fingerprint);
+      row.append(copy, revoke);
+      certificateExceptions.append(row);
+    }
+    if (focusIndex >= 0) {
+      const buttons = certificateExceptions.querySelectorAll("button");
+      (buttons[Math.min(focusIndex, buttons.length - 1)] || certificateExceptionsEmpty).focus();
+    }
+  };
+
   clearButton?.addEventListener("click", () => {
     if (clearButton.dataset.confirm !== "true") {
       clearButton.dataset.confirm = "true";
@@ -620,6 +660,10 @@ const SETTINGS_SCRIPT = String.raw`
       return;
     }
     settingsLoaded = true;
+    if (state.certificateExceptions) {
+      renderCertificateExceptions(state.certificateExceptions,
+        completedRequest.command === "settings:revoke-certificate-exception" ? completedRequest.value : null);
+    }
     if (remoteSuggestionsToggle && typeof state.search?.remoteSuggestionsEnabled === "boolean") {
       remoteSuggestionsToggle.setAttribute("aria-checked", String(state.search.remoteSuggestionsEnabled));
     }
@@ -705,6 +749,8 @@ const SETTINGS_SCRIPT = String.raw`
     renderControls();
     if (state.outcome === "site-data-cleared") {
       setStatus(window.NavisL10n.text("settings.siteDataCleared"));
+    } else if (state.outcome === "certificate-exception-revoked") {
+      setStatus(window.NavisL10n.text("settings.certificateExceptionRevoked"));
     } else if (state.outcome === "search-provider-updated") {
       providerDialog.close();
       setStatus(window.NavisL10n.text("settings.searchUpdated"));
@@ -2206,6 +2252,14 @@ function settingsRoot(t) {
         </button>
       </div>
     </section>
+    <section class="settings-card" data-settings-card data-search="certificate exceptions security privacy revoke 证书 例外 安全 隐私 撤回">
+      <div class="settings-row"><div class="settings-row-copy">
+        <h2>${escapeHTML(t("settings.certificateExceptions"))}</h2>
+        <p>${escapeHTML(t("settings.certificateExceptionsDescription"))}</p>
+      </div></div>
+      <p id="certificate-exceptions-empty" class="settings-row" tabindex="-1">${escapeHTML(t("settings.certificateExceptionsEmpty"))}</p>
+      <div id="certificate-exceptions"></div>
+    </section>
     <section class="settings-card" data-settings-card data-search="clear cookies site data privacy storage">
       <div class="settings-row settings-row-stacked">
         <div class="settings-row-copy">
@@ -2761,6 +2815,7 @@ export function renderNavisInternalPage({
       .settings-card { padding: 0; overflow: hidden; }
       .settings-card > h2 { padding: 20px 24px 4px; }
       .settings-row { display: flex; min-height: 88px; align-items: center; justify-content: space-between; gap: 24px; padding: 20px 24px; }
+      #certificate-exceptions > .settings-row { border-top: 1px solid var(--line); }
       .settings-row-stacked { align-items: flex-start; flex-direction: column; }
       .settings-row-copy { min-width: 0; }
       .settings-row-copy h2 { margin-bottom: 4px; }
