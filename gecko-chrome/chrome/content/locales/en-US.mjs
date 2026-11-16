@@ -425,6 +425,7 @@ export const EN_US_MESSAGES = Object.freeze({
   "menu.back": "Back",
   "menu.forward": "Forward",
   "menu.reload": "Reload",
+  "menu.openSelectionNewTab": "Open in new tab",
   "menu.openLinkNewTab": "Open link in new tab",
   "menu.copyLinkAddress": "Copy link address",
   "menu.openImageNewTab": "Open image in new tab",

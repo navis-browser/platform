@@ -416,6 +416,7 @@ export const ZH_CN_MESSAGES = Object.freeze({
   "menu.back": "后退",
   "menu.forward": "前进",
   "menu.reload": "重新加载",
+  "menu.openSelectionNewTab": "在新标签页中打开",
   "menu.openLinkNewTab": "在新标签页中打开链接",
   "menu.copyLinkAddress": "复制链接地址",
   "menu.openImageNewTab": "在新标签页中打开图片",

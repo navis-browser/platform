@@ -2614,13 +2614,15 @@ internal class AndroidBrowserRuntime private constructor(
         }
     }
 
-    private fun acceptPendingNewWindow(session: AndroidSession) {
+    private fun acceptPendingNewWindow(session: AndroidSession, openerId: SessionId) {
         check(pendingNewWindowSessions.remove(session.id) === session) {
             "New-window child Session is no longer pending"
         }
         check(session.renderSession.isOpen) { "New-window child engine did not open" }
         sessions[session.id] = session
         windowRegistry.publishSession(session.id)
+        val sourceIndex = stateForWindow(checkNotNull(windowIdForSession(openerId))).sessions.indexOfFirst { it.id == openerId }
+        if (sourceIndex >= 0) reorderSession(session.id, sourceIndex + 1)
         session.setActive(false)
         activateSession(session.id)
     }

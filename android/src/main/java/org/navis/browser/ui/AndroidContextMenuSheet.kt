@@ -254,6 +254,7 @@ internal fun AndroidContextMenuSheet(
 }
 
 private fun contextPageActionLabel(id: String): Int? = when (id) {
+    "open-selection-new-tab" -> R.string.context_open_selection_tab
     "play-media" -> R.string.context_play_media
     "pause-media" -> R.string.context_pause_media
     "mute-media" -> R.string.context_mute_media

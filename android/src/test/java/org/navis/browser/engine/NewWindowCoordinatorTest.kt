@@ -173,7 +173,10 @@ class NewWindowCoordinatorTest {
             isOpenerLive = liveOpeners::contains,
             isChildLive = Child::open,
             scheduler = scheduler,
-            onAccepted = { events += "accept:${it.id}" },
+            onAccepted = { child, openerId ->
+                assertEquals(SessionId(1), openerId)
+                events += "accept:${child.id}"
+            },
             onRejected = { events += "reject:${it.id}" },
         )
     }

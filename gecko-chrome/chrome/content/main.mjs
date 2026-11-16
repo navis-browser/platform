@@ -42,6 +42,7 @@ const CONTEXT_MENU_PRESENTATION = Object.freeze({
   back: Object.freeze({ label: t("menu.back"), shortcut: "Alt+Left" }),
   forward: Object.freeze({ label: t("menu.forward"), shortcut: "Alt+Right" }),
   reload: Object.freeze({ label: t("menu.reload"), shortcut: "Ctrl+R" }),
+  "open-selection-new-tab": Object.freeze({ label: t("menu.openSelectionNewTab") }),
   "open-link-new-tab": Object.freeze({ label: t("menu.openLinkNewTab") }),
   "copy-link-address": Object.freeze({ label: t("menu.copyLinkAddress") }),
   "open-image-new-tab": Object.freeze({ label: t("menu.openImageNewTab") }),
@@ -584,8 +585,14 @@ async function initialize() {
       activate: request.disposition !== "background",
       view: createView(),
     }),
-    onSessionCreated: ({ session, activate }) => {
-      adoptSession(session, { activate });
+    onSessionCreated: ({ session, activate, openerSessionId }) => {
+      const source = records.get(openerSessionId);
+      const record = adoptSession(session, { activate: false });
+      if (source) {
+        sessionTabs.insertBefore(record.tab, source.tab.nextSibling);
+        synchronizeSessionOrder();
+      }
+      if (activate) selectSession(record);
     },
     onPopupBlocked: (request) => {
       showTransientStatus(t("chrome.popupBlocked", { reason: request.reason }));
@@ -3030,7 +3037,7 @@ async function initialize() {
       ],
       onSelect: (command) => {
         if (command === "tab-new") {
-          openNewTab();
+          openNewTab(record);
         } else if (command === "tab-reload") {
           if (!restoreQueue.load(record.session)) record.session.reload();
         } else if (command === "tab-duplicate") {
@@ -3942,6 +3949,9 @@ async function initialize() {
     }
     const hasSelection = Boolean(selectedText);
     const canSearch = hasSelection && textControl?.type !== "password" && selectedText.length <= 8192;
+    const selectionUrl = textControl?.type !== "password" ? runtime.selectedTextURL(selectedText) : null;
+    const sourceRecord = activeRecord;
+    const sourceNavigationId = sourceRecord?.session.state.navigationId;
     const searchProvider = runtime.searchProviders.find(item => item.id === runtime.defaultSearchProvider);
     event.preventDefault();
     event.stopPropagation();
@@ -3953,6 +3963,7 @@ async function initialize() {
       label: t("menu.textContext"),
       items: [
         { id: "product-copy", group: "product-edit", enabled: hasSelection },
+        ...(selectionUrl ? [{id: "open-selection-new-tab", group: "selection", enabled: true}] : []),
         ...(canSearch ? [{id: "search-selection", group: "selection", enabled: true,
           providerName: searchProvider.name,
           excerpt: Array.from(selectedText.trim().replace(/\s+/gu, " ")).slice(0, 40).join("")}] : []),
@@ -3965,6 +3976,10 @@ async function initialize() {
       onSelect: (command) => {
         if (command === "product-copy") {
           runtime.copyText(selectedText);
+        } else if (command === "open-selection-new-tab" && selectionUrl && sourceRecord &&
+            records.get(sourceRecord.session.id) === sourceRecord &&
+            sourceRecord.session.state.navigationId === sourceNavigationId) {
+          runtime.openSelectedText(sourceRecord.session, selectionUrl);
         } else if (command === "search-selection" && canSearch && activeRecord) {
           runtime.searchSelectedText(activeRecord.session, selectedText, searchProvider.id);
         } else if (command === "product-select-all") {
@@ -3987,8 +4002,16 @@ async function initialize() {
   window.addEventListener("focus", scheduleDownloadsRender);
   document.addEventListener("visibilitychange", scheduleDownloadsRender);
 
-  const openNewTab = () => {
-    createSession();
+  const openNewTab = (afterRecord = null) => {
+    if (afterRecord && records.get(afterRecord.session.id) !== afterRecord) {
+      return;
+    }
+    const record = createSession(DEFAULT_URI, { activate: !afterRecord });
+    if (afterRecord) {
+      sessionTabs.insertBefore(record.tab, afterRecord.tab.nextSibling);
+      synchronizeSessionOrder();
+      selectSession(record);
+    }
     address.focus();
     address.select();
   };

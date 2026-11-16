@@ -28,7 +28,7 @@ internal class NewWindowCoordinator<Child>(
     private val isOpenerLive: (SessionId) -> Boolean,
     private val isChildLive: (Child) -> Boolean,
     private val scheduler: NewWindowDeadlineScheduler,
-    private val onAccepted: (Child) -> Unit,
+    private val onAccepted: (Child, SessionId) -> Unit,
     private val onRejected: (Child) -> Unit,
     private val timeoutMillis: Long = DEFAULT_TIMEOUT_MS,
 ) : AutoCloseable {
@@ -129,7 +129,7 @@ internal class NewWindowCoordinator<Child>(
 
         if (accepted && isOpenerLive(pending.openerId) && isChildLive(pending.child)) {
             try {
-                onAccepted(pending.child)
+                onAccepted(pending.child, pending.openerId)
                 pending.result.complete(true)
                 return
             } catch (acceptError: Throwable) {

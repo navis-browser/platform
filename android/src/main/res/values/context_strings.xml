@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <string name="context_open_selection_tab">Open in new tab</string>
     <string name="context_open_link_tab">Open link in new tab</string>
     <string name="context_open_link_private">Open link in private tab</string>
     <string name="context_copy_link_text">Copy link text</string>

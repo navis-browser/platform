@@ -113,6 +113,9 @@ For this document, “omnibox toolbar” means the row containing navigation con
 
 Ctrl+T opens a new tab. Ctrl+Shift+T restores and selects the most recently closed normal tab at its saved position; repeated presses work backward through the bounded recently closed list. An empty list and private windows make restoration a no-op. Native key bindings remain active with focus in the omnibox or remote Web content and dispatch each action once.
 
+When selected text is a complete web address, the context menu offers “Open in new tab” (“在新标签页中打开”) alongside copy and selection search. Runtime owns recognition and the saved full target; Platform owns the label and positions the new tab immediately to its source tab’s right. Invalid selections and passwords omit the action, and real links do not acquire a duplicate row. Desktop content, trusted product text surfaces and Android selection menus use the same recognition policy. Android projects touch selection through its ordinary context-menu sheet and executes the existing engine action token.
+
+New tab in a tab's context menu inserts and selects the new tab immediately to the right of that tab, including an inactive tab, and focuses the omnibox. It uses the current visual order after tab reordering; a closed source tab invalidates the action. Ctrl+T and the new-tab button continue appending at the end of the strip.
 
 ## Design-system implementation
 
