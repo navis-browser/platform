@@ -31,6 +31,14 @@
   --navis-document-shadow: 0 2px 6px rgb(0 0 0 / 32%);
 }
 
+/* Only document controls consume this role. PDF page/text/annotation geometry
+ * and the viewer root font remain owned by the engine. */
+@media (-moz-platform: linux) {
+  :root {
+    --navis-document-font: message-box;
+  }
+}
+
 @media (forced-colors: active) {
   :root {
     --navis-document-toolbar: Canvas;

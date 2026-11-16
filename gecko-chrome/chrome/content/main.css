@@ -58,6 +58,12 @@ html[data-l10n-ready="false"] body {
   max-width: 100%;
   flex: 0 1 auto;
   align-items: stretch;
+}
+
+/* Keep empty strip padding in the native titlebar region. Only interactive
+ * targets suppress dragging and the system's titlebar mouse actions. */
+.session-tab,
+#new-session {
   -moz-window-dragging: no-drag;
 }
 
@@ -370,20 +376,12 @@ html[data-l10n-ready="false"] body {
   height: var(--navis-size-icon-small);
 }
 
-/* Gecko exposes the GTK CSD layout and the active desktop theme's symbolic
- * window artwork.  Keep Navis' SVG controls as the Windows fallback, while
- * making Linux follow the host desktop in the same way native Chromium and
- * Firefox frames do. */
+/* GTK owns Linux titlebutton artwork, native size, spacing and state. Gecko's
+ * chrome-only window appearances consume that rendering; the shared buttons
+ * keep their existing commands and accessible names. */
 @media (-moz-platform: linux) {
-  #window-controls {
-    --navis-window-button-size: 24px;
-    --navis-window-button-spacing: 6.5px;
-    --navis-window-button-end-spacing: 10px;
-    --navis-window-button-max-position: max(
-      env(-moz-gtk-csd-maximize-button-position),
-      env(-moz-gtk-csd-minimize-button-position),
-      env(-moz-gtk-csd-close-button-position)
-    );
+  .session-title {
+    font: caption;
   }
 
   #window-minimize {
@@ -401,16 +399,11 @@ html[data-l10n-ready="false"] body {
   .window-control {
     width: auto;
     min-width: 0;
-    padding-inline: var(--navis-window-button-spacing);
-    padding-inline-end: max(
-      var(--navis-window-button-spacing),
-      var(--navis-window-button-end-spacing) *
-        (
-          var(--navis-window-button-position) -
-            var(--navis-window-button-max-position) + 1
-        )
-    );
+    height: auto;
+    min-height: 40px;
+    padding: 0;
     order: var(--navis-window-button-position);
+    appearance: auto;
   }
 
   .window-control:hover,
@@ -425,83 +418,25 @@ html[data-l10n-ready="false"] body {
     display: none;
   }
 
-  .window-control::before {
-    display: block;
-    width: var(--navis-window-button-size);
-    height: var(--navis-window-button-size);
-    border-radius: 50%;
-    background-position: center;
-    background-repeat: no-repeat;
-    background-size: min(
-      16px,
-      var(--navis-window-button-size) - 2 * env(hairline)
-    );
-    content: "";
-    -moz-context-properties: stroke;
-    stroke: currentColor;
+  #window-minimize {
+    -moz-default-appearance: -moz-window-button-minimize;
   }
 
-  #window-minimize::before {
-    background-image: -moz-symbolic-icon(window-minimize-symbolic);
+  #window-maximize[data-platform-icon="maximize"] {
+    -moz-default-appearance: -moz-window-button-maximize;
   }
 
-  #window-maximize[data-platform-icon="maximize"]::before {
-    background-image: -moz-symbolic-icon(window-maximize-symbolic);
+  #window-maximize[data-platform-icon="restore"] {
+    -moz-default-appearance: -moz-window-button-restore;
   }
 
-  #window-maximize[data-platform-icon="restore"]::before {
-    background-image: -moz-symbolic-icon(window-restore-symbolic);
+  #window-close {
+    -moz-default-appearance: -moz-window-button-close;
   }
 
-  #window-close::before {
-    background-image: -moz-symbolic-icon(window-close-symbolic);
-  }
-
-  .window-control:hover::before,
-  .window-control:focus-visible::before {
-    background-color: color-mix(in srgb, currentColor 15%, transparent);
-  }
-
-  .window-control:active::before {
-    background-color: color-mix(in srgb, currentColor 30%, transparent);
-  }
-
-  .window-control:focus-visible::before {
+  .window-control:focus-visible {
     outline: var(--navis-focus-ring);
     outline-offset: -2px;
-  }
-
-  .window-control.window-close:hover::before,
-  .window-control.window-close:focus-visible::before {
-    background-color: var(--navis-color-window-close);
-    color: var(--navis-color-on-window-close);
-  }
-
-  @media (-moz-gtk-theme-family: adwaita) or
-    (-moz-gtk-theme-family: yaru) {
-    .window-control::before {
-      background-color: color-mix(in srgb, currentColor 10%, transparent);
-    }
-  }
-
-  @media (-moz-gtk-theme-family: breeze) {
-    #window-controls {
-      --navis-window-button-size: round(1.3em, 2 * env(hairline));
-      --navis-window-button-spacing: calc(
-        var(--navis-window-button-size) / 4
-      );
-      --navis-window-button-end-spacing: calc(
-        2 *
-          max(
-            2px,
-            round(
-              down,
-              var(--navis-window-button-size) / 4,
-              env(hairline)
-            )
-          )
-      );
-    }
   }
 
   @media not (-moz-gtk-csd-minimize-button) {
@@ -645,7 +580,7 @@ html[data-l10n-ready="false"] body {
   display: flex;
   min-width: 0;
   max-width: 190px;
-  height: 28px;
+  height: var(--navis-size-compact-text-control, 28px);
   flex: 0 0 auto;
   align-items: center;
   gap: var(--navis-space-2);
@@ -722,13 +657,13 @@ html[data-l10n-ready="false"] body {
   display: grid;
   min-width: 14px;
   max-width: 28px;
-  height: 14px;
+  height: var(--navis-size-toolbar-badge, 14px);
   padding-inline: 3px;
   overflow: hidden;
   border: 1px solid var(--navis-color-toolbar);
   border-radius: 7px;
   font: var(--navis-font-badge);
-  line-height: 12px;
+  line-height: calc(12 * var(--navis-font-unit, 1px));
   place-items: center;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -774,7 +709,7 @@ html[data-l10n-ready="false"] body {
   flex: 0 1 auto;
   min-width: 28px;
   max-width: calc(100% - min(12rem, 50%) - var(--navis-space-1));
-  height: 28px;
+  height: var(--navis-size-compact-text-control, 28px);
   align-items: center;
   gap: var(--navis-space-2);
   margin-inline-start: var(--navis-space-1);
@@ -941,7 +876,7 @@ html[data-l10n-ready="false"] body {
   right: 0;
   display: grid;
   min-width: 15px;
-  height: 15px;
+  height: var(--navis-size-toolbar-badge, 15px);
   padding-inline: 3px;
   border: 2px solid var(--navis-color-toolbar);
   border-radius: 8px;

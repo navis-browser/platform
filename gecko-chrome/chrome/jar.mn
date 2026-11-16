@@ -10,6 +10,7 @@ navis.jar:
   content/brand-geometry.mjs  (content/brand-geometry.mjs)
   content/clean-links-policy.json  (content/clean-links-policy.json)
   content/design-system.css  (content/design-system.css)
+* content/system-font.css  (content/system-font.css)
   content/documents.css  (content/documents.css)
   content/document-tokens.css  (content/document-tokens.css)
   content/pdf-reader.css  (content/pdf-reader.css)

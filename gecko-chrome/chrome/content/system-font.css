@@ -1,0 +1,30 @@
+/* This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, You can obtain one at https://mozilla.org/MPL/2.0/. */
+
+:root {
+  --navis-font-unit: 1px;
+}
+
+/* Content documents cannot evaluate Gecko's chrome-only platform media
+ * feature. Select the target when packaging, retaining native font updates. */
+%ifdef XP_LINUX
+/* Keep the native font authoritative over individual page root styles.
+ * Typography roles retain their proportions relative to a 14px body. */
+:root:root {
+  font: message-box;
+  line-height: 1.5;
+  --navis-font-unit: calc(1rem / 14);
+  --navis-font-body: inherit;
+  --navis-font-omnibox: inherit;
+  --navis-size-tab-strip: max(40px, calc(1.5rem + 12px));
+  --navis-size-tab: max(34px, calc(1.5rem + 6px));
+  --navis-size-toolbar-control: max(34px, calc(1.5rem + 12px));
+  --navis-size-field: max(34px, calc(1.5rem + 12px));
+  --navis-size-compact-text-control: max(28px, calc(20rem / 14 + 4px));
+  --navis-size-toolbar-badge: max(15px, calc(11rem / 14 + 4px));
+  --navis-menu-row-min-height: max(36px, calc(20rem / 14 + 16px));
+  --navis-context-menu-row-min-height: max(30px, calc(20rem / 14 + 6px));
+  --navis-picker-menu-row-min-height: max(34px, calc(20rem / 14 + 8px));
+}
+%endif

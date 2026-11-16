@@ -7,8 +7,31 @@ import {
   resolveNavisInternalPageURI,
 } from "resource://gre/modules/DesktopInternalPages.sys.mjs";
 import { AppConstants } from "resource://gre/modules/AppConstants.sys.mjs";
+import { NetUtil } from "resource://gre/modules/NetUtil.sys.mjs";
 import { getDesktopLocaleState } from "resource://gre/modules/DesktopLocale.sys.mjs";
 import { renderNavisInternalPage } from "chrome://navis/content/internal-pages.mjs";
+
+// Internal pages keep content principals. Project only these fixed packaged
+// styles through their nonce-protected markup instead of exposing chrome URLs.
+let internalStyles;
+function getInternalStyles() {
+  if (!internalStyles) {
+    internalStyles = Object.fromEntries(
+      ["system-font", "profile-ui"].map(name => {
+        const stream = NetUtil.newChannel({
+          uri: `chrome://navis/content/${name}.css`,
+          loadUsingSystemPrincipal: true,
+        }).open();
+        try {
+          return [name, NetUtil.readInputStreamToString(stream, stream.available(), { charset: "UTF-8" })];
+        } finally {
+          stream.close();
+        }
+      })
+    );
+  }
+  return internalStyles;
+}
 
 const DYNAMIC_DIAGNOSTIC = Object.freeze({
   messageId: "common.loading",
@@ -257,6 +280,7 @@ DesktopNavisProtocolHandler.prototype = {
       diagnostics: diagnostics(),
       locale: getDesktopLocaleState().active,
       nonce,
+      styles: getInternalStyles(),
     });
     return newInputStreamChannel(uri, loadInfo, body);
   },

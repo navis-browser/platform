@@ -61,7 +61,7 @@
   }
 
   #toolbarViewer :is(#toolbarViewerLeft, #toolbarViewerMiddle, #toolbarViewerRight) {
-    height: var(--navis-document-control-size);
+    height: max(var(--navis-document-control-size), calc(1lh + 8px));
   }
 
   #toolbarContainer .toolbarButton:not(.labeled, .viewsManagerButton) {
@@ -78,7 +78,7 @@
 
   #toolbarContainer :is(.toolbarField, .dropdownToolbarButton, .dropdownToolbarButton > select) {
     box-sizing: border-box;
-    height: var(--navis-document-field-height);
+    height: max(var(--navis-document-field-height), calc(1lh + 8px));
     border-radius: var(--navis-document-radius);
   }
 

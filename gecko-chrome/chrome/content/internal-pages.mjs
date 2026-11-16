@@ -2583,6 +2583,7 @@ export function renderNavisInternalPage({
   diagnostics,
   locale = "en-US",
   nonce,
+  styles = {},
 }) {
   const localizer = createNavisLocalizer(locale);
   const t = localizer.text;
@@ -2666,9 +2667,8 @@ export function renderNavisInternalPage({
     <meta charset="utf-8">
     <meta name="color-scheme" content="light dark">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'nonce-${escapeHTML(nonce)}'${page.key === "profiles" ? " chrome://navis/content/profile-ui.css" : ""}; ${imagePolicy}; ${scriptPolicy}; connect-src 'none'; object-src 'none'; frame-src 'none'; base-uri 'none'; form-action 'none'">
+    <meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'nonce-${escapeHTML(nonce)}'; ${imagePolicy}; ${scriptPolicy}; connect-src 'none'; object-src 'none'; frame-src 'none'; base-uri 'none'; form-action 'none'">
     <title>${title}</title>
-    ${page.key === "profiles" ? '<link rel="stylesheet" href="chrome://navis/content/profile-ui.css">' : ""}
     <style nonce="${escapeHTML(nonce)}">
       ${PRODUCT_PAGES_STYLE}
       ${NAVIS_BRAND_STYLE}
@@ -2686,12 +2686,12 @@ export function renderNavisInternalPage({
       :focus-visible { outline: 3px solid color-mix(in srgb, var(--focus) 35%, transparent); outline-offset: 2px; }
       .internal-content { width: min(880px, calc(100% - 32px)); margin: 0 auto; padding: 56px 0 80px; }
       .internal-heading { margin: 0 0 32px; }
-      .product { display: flex; align-items: center; gap: 8px; margin: 0 0 8px; color: var(--text); font-size: 13px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; }
+      .product { display: flex; align-items: center; gap: 8px; margin: 0 0 8px; color: var(--text); font-size: calc(13 * var(--navis-font-unit, 1px)); font-weight: 600; letter-spacing: .04em; text-transform: uppercase; }
       .product .navis-brand-mark { width: 24px; height: 24px; }
-      h1 { margin: 0; font-size: clamp(28px, 4vw, 40px); font-weight: 500; letter-spacing: -.02em; }
-      .internal-heading > p:last-child { max-width: 680px; margin: 12px 0 0; color: var(--muted); font-size: 16px; }
+      h1 { margin: 0; font-size: clamp(calc(28 * var(--navis-font-unit, 1px)), 4vw, calc(40 * var(--navis-font-unit, 1px))); font-weight: 500; letter-spacing: -.02em; }
+      .internal-heading > p:last-child { max-width: 680px; margin: 12px 0 0; color: var(--muted); font-size: calc(16 * var(--navis-font-unit, 1px)); }
       .card, .settings-card { margin: 16px 0; padding: 24px; border: 1px solid var(--line); border-radius: 16px; background: var(--surface); box-shadow: 0 1px 2px rgb(60 64 67 / 8%); }
-      h2 { margin: 0 0 16px; font-size: 18px; font-weight: 500; }
+      h2 { margin: 0 0 16px; font-size: calc(18 * var(--navis-font-unit, 1px)); font-weight: 500; }
       dl { margin: 0; }
       .diagnostics-actions { display: flex; min-height: 48px; align-items: center; gap: 16px; margin: 0 0 8px; }
       .diagnostics-copy { min-height: 40px; padding: 0 18px; border: 1px solid var(--accent); border-radius: 20px; background: var(--accent); color: white; font-weight: 600; cursor: pointer; }
@@ -2706,14 +2706,14 @@ export function renderNavisInternalPage({
       .page-list { margin: 0; padding: 0; list-style: none; }
       .page-list li { display: grid; gap: 4px; padding: 16px 0; border-top: 1px solid var(--line); }
       .page-list li:first-child { padding-top: 0; border-top: 0; }
-      .page-list a { width: fit-content; font: 600 15px ui-monospace, monospace; text-decoration: none; }
+      .page-list a { width: fit-content; font: 600 calc(15 * var(--navis-font-unit, 1px)) ui-monospace, monospace; text-decoration: none; }
       a:hover { text-decoration: underline; }
       .page-list span, .note p { color: var(--muted); }
       .note p { margin: 0; }
       .sr-only { position: absolute !important; width: 1px !important; height: 1px !important; padding: 0 !important; overflow: hidden !important; clip: rect(0, 0, 0, 0) !important; white-space: nowrap !important; border: 0 !important; }
       .newtab-content { display: grid; width: min(720px, calc(100% - 40px)); min-height: 75vh; margin: 0 auto; align-content: center; justify-items: center; }
       .newtab-mark { width: 90px; height: 90px; margin-bottom: 12px; }
-      .newtab-content h1 { font-size: 36px; }
+      .newtab-content h1 { font-size: calc(36 * var(--navis-font-unit, 1px)); }
       .newtab-search { width: min(620px, 100%); margin: 28px 0 20px; }
       .newtab-search input { width: 100%; min-height: 48px; padding: 0 22px; border: 1px solid transparent; border-radius: 24px; outline: 0; background: var(--surface); box-shadow: 0 2px 8px rgb(60 64 67 / 20%); color: var(--text); }
       .newtab-search input:focus { border-color: var(--accent); box-shadow: 0 2px 8px rgb(60 64 67 / 20%), 0 0 0 2px color-mix(in srgb, var(--focus) 25%, transparent); }
@@ -2734,7 +2734,7 @@ export function renderNavisInternalPage({
       .management-action:disabled { color: var(--muted); cursor: default; opacity: .55; }
       .management-add-card { display: grid; grid-template-columns: 140px minmax(180px, 1fr) minmax(240px, 2fr) auto; align-items: end; gap: 16px; margin-bottom: 20px; padding: 20px; border: 1px solid var(--line); border-radius: 16px; background: var(--surface); }
       .management-add-card h2 { grid-column: 1 / -1; margin-bottom: 0; }
-      .management-add-card label { display: grid; gap: 6px; color: var(--muted); font-size: 13px; }
+      .management-add-card label { display: grid; gap: 6px; color: var(--muted); font-size: calc(13 * var(--navis-font-unit, 1px)); }
       .management-list { overflow: hidden; border: 1px solid var(--line); border-radius: 16px; background: var(--surface); }
       .management-list:empty::before { display: block; min-height: 112px; content: ""; }
       .management-row { display: grid; min-height: 70px; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 20px; padding: 12px 18px; border-top: 1px solid var(--line); }
@@ -2763,21 +2763,21 @@ export function renderNavisInternalPage({
       .extension-group > h2 { margin: 0 0 14px 4px; }
       .extension-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
       .extension-card { display: grid; min-height: 236px; grid-template-columns: 48px minmax(0, 1fr) auto; grid-template-rows: auto 1fr auto; align-items: start; gap: 16px; padding: 20px; border: 1px solid var(--line); border-radius: 16px; background: var(--surface); box-shadow: 0 1px 2px rgb(60 64 67 / 8%); }
-      .extension-mark { display: grid; width: 48px; height: 48px; flex: 0 0 48px; border-radius: 14px; background: color-mix(in srgb, var(--accent) 16%, var(--surface)); color: var(--accent); font-size: 22px; font-weight: 650; place-items: center; }
+      .extension-mark { display: grid; width: 48px; height: 48px; flex: 0 0 48px; border-radius: 14px; background: color-mix(in srgb, var(--accent) 16%, var(--surface)); color: var(--accent); font-size: calc(22 * var(--navis-font-unit, 1px)); font-weight: 650; place-items: center; }
       .extension-mark img { width: 32px; height: 32px; object-fit: contain; }
       .extension-card-copy { min-width: 0; }
       .extension-card-heading { display: flex; min-width: 0; align-items: center; flex-wrap: wrap; gap: 8px; }
-      .extension-card h3 { min-width: 0; margin: 0; overflow: hidden; font-size: 17px; font-weight: 600; text-overflow: ellipsis; white-space: nowrap; }
+      .extension-card h3 { min-width: 0; margin: 0; overflow: hidden; font-size: calc(17 * var(--navis-font-unit, 1px)); font-weight: 600; text-overflow: ellipsis; white-space: nowrap; }
       .extension-badges { display: flex; flex-wrap: wrap; gap: 5px; }
-      .extension-badge { padding: 2px 8px; border-radius: 10px; background: var(--surface-soft); color: var(--muted); font-size: 11px; font-weight: 600; white-space: nowrap; }
-      .extension-meta { margin: 5px 0 0; overflow: hidden; color: var(--muted); font: 12px ui-monospace, monospace; text-overflow: ellipsis; white-space: nowrap; }
+      .extension-badge { padding: 2px 8px; border-radius: 10px; background: var(--surface-soft); color: var(--muted); font-size: calc(11 * var(--navis-font-unit, 1px)); font-weight: 600; white-space: nowrap; }
+      .extension-meta { margin: 5px 0 0; overflow: hidden; color: var(--muted); font: calc(12 * var(--navis-font-unit, 1px)) ui-monospace, monospace; text-overflow: ellipsis; white-space: nowrap; }
       .extension-description { display: -webkit-box; margin: 10px 0 0; overflow: hidden; color: var(--muted); -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
       .extension-card-controls { padding-top: 2px; }
       .extension-toggle { display: block; }
       .extension-permissions { grid-column: 2 / -1; align-self: end; min-width: 0; color: var(--muted); }
-      .extension-permissions summary { width: fit-content; color: var(--accent); cursor: pointer; font-size: 13px; font-weight: 600; }
-      .extension-permission-list { margin: 10px 0 0; padding-left: 20px; overflow-wrap: anywhere; color: var(--muted); font: 12px/1.6 ui-monospace, monospace; }
-      .extension-private-access { display: flex; grid-column: 2 / -1; align-items: center; justify-content: space-between; gap: 16px; color: var(--muted); font-size: 13px; }
+      .extension-permissions summary { width: fit-content; color: var(--accent); cursor: pointer; font-size: calc(13 * var(--navis-font-unit, 1px)); font-weight: 600; }
+      .extension-permission-list { margin: 10px 0 0; padding-left: 20px; overflow-wrap: anywhere; color: var(--muted); font: calc(12 * var(--navis-font-unit, 1px))/1.6 ui-monospace, monospace; }
+      .extension-private-access { display: flex; grid-column: 2 / -1; align-items: center; justify-content: space-between; gap: 16px; color: var(--muted); font-size: calc(13 * var(--navis-font-unit, 1px)); }
       .extension-actions { display: flex; grid-column: 1 / -1; align-items: center; flex-wrap: wrap; justify-content: flex-end; gap: 8px; padding-top: 14px; border-top: 1px solid var(--line); }
       .management-action.danger { border-color: var(--danger); color: var(--danger); }
       .extension-empty { min-height: 112px; margin: 0; padding: 44px 20px; border: 1px dashed var(--line); border-radius: 16px; color: var(--muted); text-align: center; }
@@ -2788,14 +2788,14 @@ export function renderNavisInternalPage({
       .extension-review-card h2, .extension-review-card header p { margin: 0; }
       .extension-review-card header p { margin-top: 4px; color: var(--muted); }
       .extension-review-details { display: grid; max-height: 380px; gap: 18px; overflow: auto; }
-      .extension-review-details h3 { margin: 0 0 8px; font-size: 14px; font-weight: 600; }
+      .extension-review-details h3 { margin: 0 0 8px; font-size: calc(14 * var(--navis-font-unit, 1px)); font-weight: 600; }
       .extension-review-identity { padding: 14px 16px; border-radius: 12px; background: var(--surface-soft); }
-      .extension-review-identity p { margin: 3px 0; overflow-wrap: anywhere; color: var(--muted); font: 12px/1.5 ui-monospace, monospace; }
+      .extension-review-identity p { margin: 3px 0; overflow-wrap: anywhere; color: var(--muted); font: calc(12 * var(--navis-font-unit, 1px))/1.5 ui-monospace, monospace; }
       .extension-compatibility { margin: 0; padding: 12px 14px; border-radius: 12px; background: color-mix(in srgb, var(--accent) 10%, var(--surface)); color: var(--accent); }
       .extension-compatibility[data-incompatible] { background: color-mix(in srgb, var(--danger) 10%, var(--surface)); color: var(--danger); }
       .extension-review-card > footer { display: flex; justify-content: flex-end; gap: 10px; }
       .settings-toolbar { position: sticky; z-index: 3; top: 0; display: grid; min-height: 64px; grid-template-columns: 266px minmax(280px, 680px) 1fr; align-items: center; padding: 0 24px; border-bottom: 1px solid var(--line); background: color-mix(in srgb, var(--background) 94%, transparent); backdrop-filter: blur(12px); }
-      .settings-brand { display: inline-flex; align-items: center; gap: 8px; color: var(--text); font-size: 21px; font-weight: 500; text-decoration: none; }
+      .settings-brand { display: inline-flex; align-items: center; gap: 8px; color: var(--text); font-size: calc(21 * var(--navis-font-unit, 1px)); font-weight: 500; text-decoration: none; }
       .settings-brand .navis-brand-mark { width: 36px; height: 36px; }
       .settings-search { display: flex; min-height: 40px; align-items: center; gap: 10px; padding: 0 16px; border-radius: 20px; background: var(--surface-soft); box-shadow: 0 1px 2px rgb(60 64 67 / 12%); color: var(--muted); }
       .settings-search:focus-within { box-shadow: 0 1px 2px rgb(60 64 67 / 12%), 0 0 0 2px color-mix(in srgb, var(--focus) 30%, transparent); }
@@ -2810,7 +2810,7 @@ export function renderNavisInternalPage({
       .settings-nav-separator { height: 1px; margin: 8px 0; background: var(--line); }
       .settings-content { min-width: 0; padding: 40px 0 80px; }
       .settings-page-heading { padding: 0 4px 12px; }
-      .settings-page-heading h1 { font-size: 28px; }
+      .settings-page-heading h1 { font-size: calc(28 * var(--navis-font-unit, 1px)); }
       .settings-page-heading p { margin: 8px 0 0; color: var(--muted); }
       .settings-card { padding: 0; overflow: hidden; }
       .settings-card > h2 { padding: 20px 24px 4px; }
@@ -2820,7 +2820,7 @@ export function renderNavisInternalPage({
       .settings-row-copy { min-width: 0; }
       .settings-row-copy h2 { margin-bottom: 4px; }
       .settings-row-copy p { margin: 0; overflow-wrap: anywhere; color: var(--muted); }
-      .settings-row-copy .settings-feature-detail { max-width: 540px; margin-top: 8px; font-size: 13px; line-height: 1.55; }
+      .settings-row-copy .settings-feature-detail { max-width: 540px; margin-top: 8px; font-size: calc(13 * var(--navis-font-unit, 1px)); line-height: 1.55; }
       .settings-language-controls { display: flex; flex: none; flex-direction: column; align-items: flex-end; gap: 10px; }
       .settings-choice-group { display: grid; width: 100%; gap: 8px; margin: 0; padding: 0; border: 0; }
       .settings-choice { position: relative; display: grid; min-height: 72px; grid-template-columns: 20px minmax(0, 1fr) auto; align-items: center; gap: 14px; padding: 12px 16px; border-radius: 12px; cursor: pointer; }
@@ -2833,8 +2833,8 @@ export function renderNavisInternalPage({
       .settings-choice input:focus-visible + .settings-choice-indicator { box-shadow: 0 0 0 3px color-mix(in srgb, var(--focus) 28%, transparent); }
       .settings-choice-copy { display: grid; gap: 3px; }
       .settings-choice-copy strong { font-weight: 600; }
-      .settings-choice-copy small, .settings-relaunch-row p { color: var(--muted); font-size: 13px; line-height: 1.45; }
-      .settings-recommended { padding: 3px 9px; border-radius: 10px; background: color-mix(in srgb, var(--accent) 14%, var(--surface)); color: var(--accent); font-size: 11px; font-weight: 600; }
+      .settings-choice-copy small, .settings-relaunch-row p { color: var(--muted); font-size: calc(13 * var(--navis-font-unit, 1px)); line-height: 1.45; }
+      .settings-recommended { padding: 3px 9px; border-radius: 10px; background: color-mix(in srgb, var(--accent) 14%, var(--surface)); color: var(--accent); font-size: calc(11 * var(--navis-font-unit, 1px)); font-weight: 600; }
       .settings-choice-group:disabled { opacity: .55; }
       .settings-choice-group:disabled .settings-choice { cursor: default; }
       .settings-relaunch-row { display: flex; width: 100%; min-height: 36px; align-items: center; justify-content: space-between; gap: 16px; padding: 0 16px; }
@@ -2902,13 +2902,13 @@ export function renderNavisInternalPage({
       .about-product p { color: var(--muted); font-family: ui-monospace, monospace; }
       .about-mark { width: 65px; height: 65px; flex: 0 0 auto; }
       .about-card dl, .settings-card > dl { padding: 0 24px 20px; }
-      .about-footer { margin: 44px 4px 0; padding: 24px 0 0; border-top: 1px solid var(--line); color: var(--muted); font-size: 13px; line-height: 1.55; }
+      .about-footer { margin: 44px 4px 0; padding: 24px 0 0; border-top: 1px solid var(--line); color: var(--muted); font-size: calc(13 * var(--navis-font-unit, 1px)); line-height: 1.55; }
       .about-footer p { margin: 3px 0; }
-      .about-footer-product { color: var(--text); font-size: 14px; font-weight: 600; }
+      .about-footer-product { color: var(--text); font-size: calc(14 * var(--navis-font-unit, 1px)); font-weight: 600; }
       .settings-link-row { display: flex; min-height: 64px; align-items: center; justify-content: space-between; gap: 16px; padding: 12px 24px; border-top: 1px solid var(--line); color: var(--text); text-decoration: none; }
       .settings-link-row:hover { background: color-mix(in srgb, var(--text) 6%, transparent); text-decoration: none; }
       .settings-link-row span:first-child { display: grid; gap: 2px; }
-      .settings-link-row small { color: var(--muted); font-size: 13px; }
+      .settings-link-row small { color: var(--muted); font-size: calc(13 * var(--navis-font-unit, 1px)); }
       @keyframes settings-spin { to { transform: rotate(360deg); } }
       @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --background: #202124; --surface: #292a2d; --surface-soft: #303134; --text: #e8eaed; --muted: #bdc1c6; --line: #3c4043; --accent: #8ab4f8; --focus: #8ab4f8; --danger: #f2b8b5; } }
       :root[data-theme="dark"] { --background: #202124; --surface: #292a2d; --surface-soft: #303134; --text: #e8eaed; --muted: #bdc1c6; --line: #3c4043; --danger: #f2b8b5; }
@@ -2918,6 +2918,8 @@ export function renderNavisInternalPage({
       @media (max-width: 560px) { .internal-content { padding-top: 32px; } .card { padding: 20px; } .diagnostic-row { grid-template-columns: 1fr; gap: 4px; } .settings-row { align-items: flex-start; } }
       @media (prefers-reduced-motion: reduce) { .settings-switch-thumb, .settings-choice-indicator::after { transition: none; } .settings-status[data-pending]::before, .management-status[data-pending]::before { animation-duration: 1400ms; } }
       @media (forced-colors: active) { .card, .settings-card { border: 1px solid CanvasText; box-shadow: none; } .settings-switch { border: 1px solid ButtonText; } .settings-nav a[aria-current="page"] { outline: 1px solid Highlight; } }
+      ${page.key === "profiles" ? styles["profile-ui"] || "" : ""}
+      ${styles["system-font"] || ""}
     </style>
   </head>
   <body class="${isSettings ? "settings-body" : "internal-body"}">
