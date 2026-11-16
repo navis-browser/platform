@@ -104,8 +104,12 @@ The following behaviors are part of the acceptance contract:
 16. A browser-owned context menu preserves the originating page's hover state throughout its open lifetime, including when the pointer leaves the popup bounds and moves over other content. Closing or cancelling restores normal pointer hit testing. Open in New Tab and Copy Address use the address captured when the menu opened, even if page script subsequently removes the target; navigation and request expiration still invalidate the menu.
 17. The address bar displays Chinese and other safe Unicode readably, using lossless decoding and the engine's IDN policy. Copying or cutting the complete unmodified address uses the original canonical encoded URL and the selected Clean Links policy. Partial selections and user-edited text keep ordinary text-copy behavior; Escape and blur restore the readable Session URL without overwriting rejected input.
 18. The authenticated internal-page identity uses a small functional shield in the toolbar and site-information summary. Appearance includes a persistent “Show certificate organization” switch, enabled by default and applied immediately across windows. When enabled, a valid current certificate's Organization is displayed in full whenever it fits alongside the address and active controls; only actual space constraints cause ellipsis. The full value remains the accessible name and tooltip where available. Fixed short name caps and viewport-only label hiding do not decide truncation. When disabled, the HTTPS control shows only its existing site-information icon; certificate details remain available. Internal, extension, insecure and error identity labels and warnings retain their own semantics.
+19. DevTools child-document loading/unloading must not close the browser Runtime or consume the main window's final session-save listener.
 
 For this document, “omnibox toolbar” means the row containing navigation controls and the address/search field. The tab strip is the row above it, and the requested active-tab shoulders visually bridge those two rows.
+
+Ctrl+T opens a new tab. Ctrl+Shift+T restores and selects the most recently closed normal tab at its saved position; repeated presses work backward through the bounded recently closed list. An empty list and private windows make restoration a no-op. Native key bindings remain active with focus in the omnibox or remote Web content and dispatch each action once.
+
 
 ## Design-system implementation
 

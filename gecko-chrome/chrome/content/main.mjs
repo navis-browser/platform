@@ -19,6 +19,7 @@ import {
 import { OmniboxEditState } from "chrome://navis/content/omnibox-edit-state.mjs";
 import { OmniboxSuggestions } from "chrome://navis/content/omnibox-suggestions.mjs";
 import { setOmniboxValidity } from "chrome://navis/content/omnibox-validity.mjs";
+import { SessionRestoreQueue } from "chrome://navis/content/session-restore-queue.mjs";
 import { mountProfileMenu } from "chrome://navis/content/profile-ui.mjs";
 import {
   DESKTOP_EMBEDDER_API_VERSION,
@@ -374,6 +375,8 @@ async function initialize() {
   const addressEditState = new OmniboxEditState();
   let transientStatusTimer = null;
   let restoringSessions = true;
+  let closingWindow = false;
+  const restoreQueue = new SessionRestoreQueue({ hardwareConcurrency: navigator.hardwareConcurrency });
   let initialContentWindow = false;
   let sessionPersistenceTimer = null;
   let historyRenderIdentity = 0;
@@ -622,7 +625,7 @@ async function initialize() {
   };
 
   const persistSessionState = ({ immediate = false } = {}) => {
-    if (privateMode || initialContentWindow || restoringSessions || !records.size || !activeRecord) {
+    if (closingWindow || privateMode || initialContentWindow || restoringSessions || !records.size || !activeRecord) {
       return;
     }
     clearTimeout(sessionPersistenceTimer);
@@ -643,6 +646,7 @@ async function initialize() {
     const record = records.get(session.id);
     if (!record) return;
     if (session.state.closed) { forgetClosedSession(record); return; }
+    restoreQueue.update(session);
     const navigationChanged =
       record.navigationId !== session.state.navigationId;
     record.navigationId = session.state.navigationId;
@@ -1851,9 +1855,10 @@ async function initialize() {
 
   const renderTabHoverCard = (record) => {
     const { state } = record.session;
-    tabHoverTitle.textContent = state.title || t("chrome.newTab");
+    const pendingURL = restoreQueue.pendingURL(record.session);
+    tabHoverTitle.textContent = pendingURL || state.title || t("chrome.newTab");
     tabHoverDomain.textContent =
-      state.baseDomain || state.url || t("common.unavailable");
+      pendingURL || state.baseDomain || state.url || t("common.unavailable");
     tabHoverMemory.textContent = record.memoryUsage
       ? tabMemoryText(record.memoryUsage)
       : t("tabs.memoryCalculating");
@@ -1917,7 +1922,8 @@ async function initialize() {
     const sharing = Object.entries(record.media).some(
       ([key, active]) => key !== "sessionId" && active,
     );
-    record.title.textContent = state.title || t("chrome.newTab");
+    const title = restoreQueue.pendingURL(record.session) || state.title || t("chrome.newTab");
+    record.title.textContent = title;
     record.tab.classList.toggle("is-loading", hasVisibleLoading(state));
     record.tab.classList.toggle("is-crashed", state.crashed);
     record.tab.classList.toggle("has-prompt", Boolean(state.prompt));
@@ -1960,7 +1966,7 @@ async function initialize() {
     record.indicatorHost.setAttribute("aria-label", indicatorTitle);
     record.tab.removeAttribute("title");
     const tabLabel = [
-      state.title || t("chrome.newTab"),
+      title,
       hasVisibleLoading(state) ? t("tabs.loading") : "",
       state.crashed ? t("tabs.crashed") : "",
     ]
@@ -2910,6 +2916,7 @@ async function initialize() {
     if (!record) {
       return;
     }
+    restoreQueue.activate(record.session);
     if (record !== activeRecord) {
       closeCompetingTransientSurfaces(null, "session-changed");
       addressEditState.reset();
@@ -2933,7 +2940,8 @@ async function initialize() {
   // Runtime can close a Session through window or content lifecycle.
   // Project that terminal fact; never issue another user command to a dead tab.
   const forgetClosedSession = (record) => {
-    if (records.get(record?.session.id) !== record) return;
+    if (closingWindow || records.get(record?.session.id) !== record) return;
+    restoreQueue.remove(record.session);
     if (tabHoverRecord === record) {
       hideTabHoverCard();
     }
@@ -3002,9 +3010,9 @@ async function initialize() {
         if (command === "tab-new") {
           openNewTab();
         } else if (command === "tab-reload") {
-          record.session.reload();
+          if (!restoreQueue.load(record.session)) record.session.reload();
         } else if (command === "tab-duplicate") {
-          createSession(record.session.state.url);
+          createSession(restoreQueue.pendingURL(record.session) ?? record.session.state.url);
         } else if (command === "tab-close") {
           closeSession(record);
         } else if (command === "tab-close-others") {
@@ -3374,16 +3382,42 @@ async function initialize() {
     return record;
   }
 
-  function createSession(uri = DEFAULT_URI, { activate = true, view = createView() } = {}) {
+  function createSession(uri = DEFAULT_URI, { activate = true, view = createView(), defer = false } = {}) {
     const session = runtime.createSession({ view });
     const record = adoptSession(session, { activate: false });
-    session.open(uri);
+    session.open(uri, { defer });
     if (activate) {
       selectSession(record);
     }
     renderSessionTab(record);
     return record;
   }
+
+  const reopenClosedTab = async () => {
+    if (privateMode || closingWindow) {
+      return;
+    }
+    const view = createView();
+    try {
+      const restored = await runtime.restoreClosedTab({ view });
+      if (!restored || closingWindow) {
+        return;
+      }
+      const record = adoptSession(restored.session, { activate: false });
+      const before = orderedSessionRecords().filter(item => item !== record)[restored.index];
+      sessionTabs.insertBefore(record.tab, before?.tab ?? null);
+      synchronizeSessionOrder();
+      selectSession(record, { focusContent: true });
+    } catch (error) {
+      console.error("Navis could not restore the closed tab", error);
+      showTransientStatus(error.message);
+    } finally {
+      if (!view.session) {
+        viewPanels.get(view).remove();
+        viewPanels.delete(view);
+      }
+    }
+  };
 
   const loadAddress = () => {
     if (!activeRecord) {
@@ -4430,6 +4464,14 @@ async function initialize() {
       toggleActiveDeveloperTools(toolId);
     });
   }
+  document.getElementById("navis-new-tab-key").addEventListener("command", (event) => {
+    event.preventDefault();
+    openNewTab();
+  });
+  document.getElementById("navis-reopen-tab-key").addEventListener("command", (event) => {
+    event.preventDefault();
+    void reopenClosedTab();
+  });
   // This is the single keyboard-routing table for chrome and Session actions.
   // eslint-disable-next-line complexity
   window.addEventListener("keydown", (event) => {
@@ -4563,9 +4605,6 @@ async function initialize() {
       event.preventDefault();
       address.focus();
       address.select();
-    } else if (key === "t") {
-      event.preventDefault();
-      openNewTab();
     } else if (key === "w") {
       event.preventDefault();
       closeSession(activeRecord);
@@ -4653,8 +4692,13 @@ async function initialize() {
     }
     const startupRecords = startupEntries.map((entry, index) => ({
       entry,
-      record: createSession(entry.url, { activate: false, view: index === 0 ? initialView : createView() }),
+      record: createSession(entry.url, { activate: false, view: index === 0 ? initialView : createView(),
+        defer: !commandLineUris.length && restoredState.length > 0 }),
     }));
+    if (!commandLineUris.length && restoredState.length) {
+      restoreQueue.enqueue(startupRecords.map(({ record }) => record.session));
+      for (const { record } of startupRecords) renderSessionTab(record);
+    }
     restoringSessions = false;
     selectSession(
       startupRecords.find(({ entry }) => entry.selected)?.record ??
@@ -4665,7 +4709,13 @@ async function initialize() {
   }
   window.addEventListener(
     "unload",
-    () => {
+    function onWindowUnload(event) {
+      // Capturing also sees DevTools and other descendant documents unload.
+      // Only the shell document owns this Runtime's final shutdown.
+      if (event.target !== document) return;
+      window.removeEventListener("unload", onWindowUnload, true);
+      closingWindow = true;
+      restoreQueue.close();
       clearTimeout(sessionPersistenceTimer);
       clearTimeout(clearSiteDataTimer);
       clearTimeout(clearPasswordsTimer);
@@ -4687,7 +4737,9 @@ async function initialize() {
       }
       runtime.close();
     },
-    { once: true },
+    // Save the complete window before Runtime's ordinary unload listener
+    // closes Sessions. Those teardown notifications must not save fewer tabs.
+    { capture: true },
   );
 }
 

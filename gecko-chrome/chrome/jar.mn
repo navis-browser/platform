@@ -30,6 +30,7 @@ navis.jar:
   content/omnibox-edit-state.mjs  (content/omnibox-edit-state.mjs)
   content/omnibox-suggestions.mjs  (content/omnibox-suggestions.mjs)
   content/omnibox-validity.mjs  (content/omnibox-validity.mjs)
+  content/session-restore-queue.mjs (content/session-restore-queue.mjs)
   content/platform-api.mjs  (content/platform-api.mjs)
   content/webextension/extension.css  (/browser/components/extensions/extension.css)
   content/webextension/extension-popup-panel.css  (/browser/components/extensions/extension-popup-panel.css)

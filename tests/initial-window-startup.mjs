@@ -55,7 +55,11 @@ function fixture({pending = false, urls = [], restored = [], privateMode = false
     runtime, window, privateMode, viewPanels, DEFAULT_URI: "navis://newtab",
     createView() { const view = {}; views.push(view); viewPanels.set(view, {hidden: true}); return view; },
     adoptSession(value) { assert.equal(value, session); events.push("present-native"); },
-    createSession(url, options) { const record = {url, options}; records.push(record); return record; },
+    createSession(url, options) { const record = {url, options, session: {}}; records.push(record); return record; },
+    restoreQueue: { enqueue(sessions) {
+      assert.deepEqual([...sessions], records.map(record => record.session)); events.push("queue");
+    } },
+    renderSessionTab(record) { assert.ok(records.includes(record)); },
     selectSession(record) { events.push(["select", records.indexOf(record)]); },
     persistSessionState() { events.push("persist"); },
   });
@@ -78,6 +82,7 @@ function fixture({pending = false, urls = [], restored = [], privateMode = false
 for (const options of [
   {}, {urls: ["https://a.invalid", "https://b.invalid"]},
   {restored: [{url: "https://a.invalid"}, {url: "https://b.invalid", selected: true}]},
+  {urls: ["https://explicit.invalid/"], restored: [{url: "ignored"}]},
   {privateMode: true, restored: [{url: "private-must-not-restore"}]},
 ]) {
   const f = fixture(options);
@@ -89,6 +94,11 @@ for (const options of [
   assert.deepEqual(f.records.map(row => row.url), expected);
   assert.equal(f.views.length, expected.length);
   for (let i = 0; i < expected.length; ++i) assert.equal(f.records[i].options.view, f.views[i]);
+  const restored = !options.urls?.length && !options.privateMode && Boolean(options.restored?.length);
+  assert.ok(f.records.every(record => record.options.defer === restored));
+  assert.equal(f.events.includes("queue"), restored);
+  const selected = restored ? options.restored.findIndex(row => row.selected) : 0;
+  assert.ok(f.events.some(event => Array.isArray(event) && event[0] === "select" && event[1] === Math.max(0, selected)));
   if (options.privateMode) assert.ok(!f.events.includes("restore"));
   assert.equal(result.initialContentWindow, false);
   assert.equal(result.restoringSessions, false);

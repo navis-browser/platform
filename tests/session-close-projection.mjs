@@ -28,6 +28,7 @@ test("terminal projection never invokes user close or DevTools commands on a dea
   const other = { session: { id: "live", state: { closed: false } } };
   const records = new Map([["closed", first], ["live", other]]);
   const context = vm.createContext({ records, tabHoverRecord: first, activeRecord: first,
+    closingWindow: false, restoreQueue: { remove() {} },
     hideTabHoverCard: () => calls.push("hover"), closeCompetingTransientSurfaces: () => {},
     orderedSessionRecords: () => [...records.values()], selectSession: value => calls.push(value),
     renderSessionCount: () => {}, persistSessionState: () => {}, first,
