@@ -59,6 +59,7 @@ Navis keeps its own:
 
 The desktop application menu omits a manual Open file entry. Ctrl+O, address entry and operating-system file opening retain their existing local-document navigation, and PDF documents automatically enter the reader when loaded.
 
+Desktop management entry points preserve the current webpage. History, bookmarks, passwords, downloads, settings, processes, profiles, support and extension management first select an already open matching management page in the same window and normal/private context without reloading its current subpage or state. Otherwise they open and focus a foreground tab; only the selected authenticated new-tab page without back/forward history, pending navigation, loading/failure or an address draft may be reused. Menus, shortcuts, compact-panel expansion and profile/bookmark/extension management actions share this policy. Ordinary bookmark/history/address navigation, current-document commands and management-page subnavigation retain their own behavior.
 
 Icons copied or adapted from an external source require recorded provenance and compatible licensing. A visually similar open icon does not authorize use of a Chrome trademark asset.
 

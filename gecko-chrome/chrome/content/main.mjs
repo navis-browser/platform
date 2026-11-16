@@ -4347,10 +4347,42 @@ async function initialize() {
     });
   });
   const loadProductPage = (uri) => {
-    setAppMenuOpen(false);
+    if (closingWindow) return;
+    closeCompetingTransientSurfaces(null, "management-page-opened");
     setLibraryOpen(false);
-    activeRecord?.session.loadUri(uri);
-    activeRecord?.session.view?.focus();
+    const destination = new URL(uri);
+    const available = record => {
+      const state = record?.session.state;
+      return state && records.get(record.session.id) === record &&
+        state.private === privateMode && !state.closed && !state.crashed && !state.failureCode;
+    };
+    const existing = [activeRecord, ...orderedSessionRecords()].find(record => {
+      if (!available(record)) return false;
+      try {
+        const url = new URL(restoreQueue.pendingURL(record.session) ?? record.session.state.url);
+        // Keep the selected subpage, search and scroll state of an existing
+        // manager. A deferred restoration still owns its pending address.
+        return url.protocol === "navis:" && url.host === destination.host &&
+          !url.username && !url.password;
+      } catch {
+        return false;
+      }
+    });
+    if (existing) {
+      selectSession(existing, { focusContent: true });
+      return;
+    }
+    const state = activeRecord?.session.state;
+    if (available(activeRecord) && state.url === DEFAULT_URI &&
+        state.identity === "internal-page" && state.identityKey === "newtab" &&
+        !state.canGoBack && !state.canGoForward && !state.loading &&
+        restoreQueue.pendingURL(activeRecord.session) === null &&
+        !addressEditState.modified && !addressEditState.rejected) {
+      activeRecord.session.loadUri(uri);
+      activeRecord.session.view?.focus();
+      return;
+    }
+    selectSession(createSession(uri, { activate: false }), { focusContent: true });
   };
   menuHistory.addEventListener("click", () =>
     loadProductPage("navis://history/"),
