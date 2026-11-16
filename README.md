@@ -40,6 +40,7 @@ The [UI contract](docs/navis-ui-standard.md) and [localization contract](docs/na
 
 ```sh
 node tests/omnibox-edit-state.mjs
+node tests/omnibox-pointer-selection.mjs
 node tests/localization-core.mjs
 ```
 

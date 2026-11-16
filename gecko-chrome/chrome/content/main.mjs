@@ -4194,9 +4194,17 @@ async function initialize() {
       document.activeElement !== address;
   });
   address.addEventListener("click", (event) => {
-    if (selectAddressOnActivationClick && event.button === 0) {
+    if (
+      selectAddressOnActivationClick &&
+      event.button === 0 &&
+      event.detail === 1 &&
+      address.selectionStart === address.selectionEnd
+    ) {
       address.select();
     }
+    selectAddressOnActivationClick = false;
+  });
+  address.addEventListener("pointercancel", () => {
     selectAddressOnActivationClick = false;
   });
   address.addEventListener("focus", () => {
@@ -4238,6 +4246,7 @@ async function initialize() {
     updateExtensionOmnibox();
   });
   address.addEventListener("blur", () => {
+    selectAddressOnActivationClick = false;
     cancelExtensionOmnibox();
     if (!addressEditState.blur()) {
       return;
