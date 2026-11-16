@@ -53,6 +53,9 @@ Navis keeps its own:
 - capability-accurate labels and help text; and
 - settings and menu contents derived from the Navis capability matrix.
 
+The desktop application menu omits a manual Open file entry. Ctrl+O, address entry and operating-system file opening retain their existing local-document navigation, and PDF documents automatically enter the reader when loaded.
+
+
 Icons copied or adapted from an external source require recorded provenance and compatible licensing. A visually similar open icon does not authorize use of a Chrome trademark asset.
 
 ## Desktop reference scope
@@ -87,7 +90,7 @@ Safe Browsing, Web Push and EME/Widevine are explicit exclusions. Notification p
 The following behaviors are part of the acceptance contract:
 
 1. Anchored bubbles, menus and other transient browser popups are mutually exclusive. A click or context-menu action in content, a tab switch, navigation, focus transfer or another popup closes an unrelated transient surface. Persistent side panels are not classified as transient popups.
-2. The site-information surface treats authenticated `localhost`, `127.0.0.0/8` and IPv6 loopback as a trustworthy local page and explains: “This page is stored on your computer.” This identity is principal/URI-derived and cannot be obtained by display-string spoofing.
+2. The site-information surface treats authenticated `localhost`, `127.0.0.0/8` and IPv6 loopback as a trustworthy local page and explains: “This page is stored on your computer.” A file document authenticated by the backend instead uses the shared file icon and localized “Local file” identity in both toolbar and site information, explaining that HTTPS connection and website certificate details do not apply. These identities are principal/URI-derived, cannot be obtained by display-string spoofing and do not change document permissions or TLS facts.
 3. The tab strip is integrated into the browser frame; there is no separate system title bar above it. Native window behavior remains intact, and the new-tab affordance follows immediately after the final visible tab.
 4. Select, Date, Time and comparable browser-owned anchored popups close when their content anchor scrolls, navigates, disappears or otherwise loses its interaction context.
 5. Gecko-owned form popup and media-control presentation, including video controls, is translated toward the frozen Chrome reference without replacing Gecko value, event, media, focus or accessibility semantics.

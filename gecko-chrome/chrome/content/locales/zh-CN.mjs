@@ -218,6 +218,11 @@ export const ZH_CN_MESSAGES = Object.freeze({
   "siteInfo.local.status": "此页面存储在您的计算机上",
   "siteInfo.local.description":
     "Navis 已确认此页面来自 localhost 或回环地址，其连接不会离开本机。",
+  "siteInfo.file.toolbarLabel": "本地文件",
+  "siteInfo.file.toolbarTitle": "本地文件信息",
+  "siteInfo.file.status": "此页面通过文件打开",
+  "siteInfo.file.description":
+    "此页面通过文件协议加载，HTTPS 连接和网站证书信息不适用。",
   "siteInfo.error.toolbarLabel": "页面错误",
   "siteInfo.error.title": "Navis 错误页面",
   "siteInfo.error.status": "无法加载请求的页面",
@@ -396,7 +401,6 @@ export const ZH_CN_MESSAGES = Object.freeze({
   "menu.bookmarks": "书签",
   "menu.passwordManager": "密码管理器",
   "menu.developerTools": "开发者工具",
-  "menu.openFile": "打开文件…",
   "menu.print": "打印…",
   "documents.failed": "无法打开文档操作。",
   "menu.settings": "设置",

@@ -813,6 +813,7 @@ html[data-l10n-ready="false"] body {
 .omnibox-identity[data-identity="internal-page"],
 .omnibox-identity[data-identity="built-in-extension"],
 .omnibox-identity[data-identity-key="local-page"],
+.omnibox-identity[data-identity-key="local-file"],
 .omnibox-identity[data-certificate-organization="true"] {
   background: color-mix(in srgb, var(--navis-color-accent) 12%, transparent);
   color: var(--navis-color-accent);
@@ -1185,14 +1186,15 @@ html[data-browser-fullscreen] #session-host {
 
 #site-info-panel[data-identity="internal-page"] #site-info-icon,
 #site-info-panel[data-identity="built-in-extension"] #site-info-icon,
-#site-info-panel[data-identity-key="local-page"] #site-info-icon {
+#site-info-panel[data-identity-key="local-page"] #site-info-icon,
+#site-info-panel[data-identity-key="local-file"] #site-info-icon {
   background: var(--navis-color-accent-container);
   color: var(--navis-color-accent);
 }
 
 #site-info-panel[data-identity="internal-error"] #site-info-icon,
-#site-info-panel:not([data-identity-key="local-page"])[data-security="broken"] #site-info-icon,
-#site-info-panel:not([data-identity-key="local-page"])[data-security="insecure"] #site-info-icon {
+#site-info-panel:not([data-identity-key="local-page"], [data-identity-key="local-file"])[data-security="broken"] #site-info-icon,
+#site-info-panel:not([data-identity-key="local-page"], [data-identity-key="local-file"])[data-security="insecure"] #site-info-icon {
   background: color-mix(in srgb, var(--navis-color-danger) 12%, transparent);
   color: var(--navis-color-danger);
 }

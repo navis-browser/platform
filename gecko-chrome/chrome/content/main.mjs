@@ -264,7 +264,6 @@ async function initialize() {
   const menuPasswords = document.getElementById("menu-passwords");
   const menuDownloads = document.getElementById("menu-downloads");
   const menuPrint = document.getElementById("menu-print");
-  const menuOpenFile = document.getElementById("menu-open-file");
   const menuProcesses = document.getElementById("menu-processes");
   const menuProfiles = document.getElementById("menu-profiles");
   const menuSupport = document.getElementById("menu-support");
@@ -454,7 +453,6 @@ async function initialize() {
     [menuPasswords, "password"],
     [menuDownloads, "downloads"],
     [menuPrint, "print"],
-    [menuOpenFile, "openFile"],
     [menuProcesses, "processes"],
     [menuProfiles, "profile"],
     [menuSupport, "info"],
@@ -2501,6 +2499,16 @@ async function initialize() {
         description: t("siteInfo.local.description"),
       };
     }
+    if (state.identity === "web" && state.identityKey === "local-file") {
+      return {
+        icon: "file",
+        toolbarLabel: t("siteInfo.file.toolbarLabel"),
+        toolbarTitle: t("siteInfo.file.toolbarTitle"),
+        panelTitle: t("siteInfo.file.toolbarTitle"),
+        status: t("siteInfo.file.status"),
+        description: t("siteInfo.file.description"),
+      };
+    }
     if (state.identity === "internal-error") {
       return {
         icon: "warning",
@@ -2869,7 +2877,8 @@ async function initialize() {
     );
 
     security.dataset.state =
-      state.identity === "web" && state.identityKey === "local-page"
+      state.identity === "web" &&
+      ["local-page", "local-file"].includes(state.identityKey)
         ? "local"
         : state.security;
     security.dataset.identity = state.identity;
@@ -4336,7 +4345,6 @@ async function initialize() {
     });
   };
   menuPrint.addEventListener("click", printDocument);
-  menuOpenFile.addEventListener("click", openFile);
   document.getElementById("navis-print-key").addEventListener("command", printDocument);
   document.getElementById("navis-open-file-key").addEventListener("command", openFile);
   menuSettings.addEventListener("click", () =>

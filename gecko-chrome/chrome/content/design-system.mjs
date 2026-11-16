@@ -30,8 +30,8 @@ const ICONS = Object.freeze({
     ["path", { d: "M5 6V2.5h10V6M5 14H3V7h14v7h-2M5 11h10v6.5H5z" }],
     ["circle", { cx: "14.5", cy: "8.5", r: ".5" }],
   ],
-  openFile: [
-    ["path", { d: "M2.5 16V4h6l2 2h7v10zM3 8h14" }],
+  file: [
+    ["path", { d: "M11 2.5H4.5v15h11v-10L11 2.5Zm0 0v5h4.5M7 11h6M7 14h6" }],
   ],
   profile: [
     ["circle", { cx: "10", cy: "6.5", r: "3" }],

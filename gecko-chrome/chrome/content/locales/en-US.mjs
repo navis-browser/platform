@@ -218,6 +218,11 @@ export const EN_US_MESSAGES = Object.freeze({
   "siteInfo.local.status": "This page is stored on your computer",
   "siteInfo.local.description":
     "Navis authenticated this page as localhost or a loopback address. Its connection stays on this computer.",
+  "siteInfo.file.toolbarLabel": "Local file",
+  "siteInfo.file.toolbarTitle": "Local file information",
+  "siteInfo.file.status": "This page was opened from a file",
+  "siteInfo.file.description":
+    "This page was loaded using the file protocol. HTTPS connection and website certificate details do not apply.",
   "siteInfo.error.toolbarLabel": "Page error",
   "siteInfo.error.title": "Navis error page",
   "siteInfo.error.status": "The requested page could not be loaded",
@@ -405,7 +410,6 @@ export const EN_US_MESSAGES = Object.freeze({
   "menu.bookmarks": "Bookmarks",
   "menu.passwordManager": "Password manager",
   "menu.developerTools": "Developer tools",
-  "menu.openFile": "Open file…",
   "menu.print": "Print…",
   "documents.failed": "Could not open the document operation.",
   "menu.settings": "Settings",
