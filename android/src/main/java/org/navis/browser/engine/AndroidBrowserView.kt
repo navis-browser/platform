@@ -67,6 +67,10 @@ internal class AndroidBrowserView(context: Context) : FrameLayout(context), Brow
         attachCurrentSurface(renderView.holder)
     }
 
+    /** Product commands must focus the real Android input owner before DOM focus. */
+    fun focusContent(session: EngineSessionPort): Boolean =
+        sessionGate.isBoundTo(session) && isShown && renderView.requestFocus()
+
     fun release() {
         sessionGate.clear()?.let(::detachBoundSession)
     }

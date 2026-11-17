@@ -58,7 +58,7 @@ function fixture({ privateMode = false, initialContentWindow = false } = {}) {
     removeAppearanceDelegate() {}, close: release,
   };
   context = vm.createContext({
-    records, activeRecord: order[1], closingWindow: false,
+    findInPage: { sync() {}, forget() {}, select() {} }, records, activeRecord: order[1], closingWindow: false,
     privateMode, initialContentWindow, restoringSessions: false,
     sessionPersistenceTimer: null, clearSiteDataTimer: null, clearPasswordsTimer: null,
     fullscreenHintTimer: null, tabWheelResetTimer: null, downloadsRenderFrame: 0, downloadsSeenFrame: 0,

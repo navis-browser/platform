@@ -3,6 +3,13 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 export const ZH_CN_MESSAGES = Object.freeze({
+  "find.title": "在页面中查找",
+  "find.previous": "上一处匹配（Shift+Enter）",
+  "find.next": "下一处匹配（Enter）",
+  "find.close": "关闭查找（Esc）",
+  "find.count": "{current}/{total}",
+  "find.countLimit": "超过 {limit} 处匹配",
+  "find.unavailable": "无法查找此页面",
 
   "processes.description": "CPU 按采样间隔统计（100% 表示一个逻辑处理器）。结束内容进程会终止其中的所有页面；浏览器、GPU 和网络服务受到保护。",
   "processes.refresh": "刷新",

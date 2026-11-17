@@ -16,6 +16,9 @@ internal sealed interface BrowserKeyboardAction {
     data object NextTab : BrowserKeyboardAction
     data object PreviousTab : BrowserKeyboardAction
     data object ToggleDevTools : BrowserKeyboardAction
+    data object Find : BrowserKeyboardAction
+    data object FindNext : BrowserKeyboardAction
+    data object FindPrevious : BrowserKeyboardAction
     /** Claimed only while the product window/document is fullscreen. */
     data object ExitFullscreen : BrowserKeyboardAction
     /** 1–8 are positions, 9 selects the last tab, as on Navis Desktop. */
@@ -71,6 +74,9 @@ internal class BrowserKeyboardShortcuts : AutoCloseable {
 
     private fun action(event: KeyEvent): BrowserKeyboardAction? {
         if (event.isAltPressed || event.isMetaPressed || event.isSymPressed || event.isFunctionPressed) return null
+        if (event.keyCode == KeyEvent.KEYCODE_F3 && !event.isCtrlPressed) {
+            return if (event.isShiftPressed) BrowserKeyboardAction.FindPrevious else BrowserKeyboardAction.FindNext
+        }
         if (event.keyCode == KeyEvent.KEYCODE_F12 && !event.isCtrlPressed && !event.isShiftPressed) {
             return BrowserKeyboardAction.ToggleDevTools
         }
@@ -78,12 +84,16 @@ internal class BrowserKeyboardShortcuts : AutoCloseable {
             return BrowserKeyboardAction.ExitFullscreen
         }
         if (!event.isCtrlPressed) return null
+        if (event.keyCode == KeyEvent.KEYCODE_G) {
+            return if (event.isShiftPressed) BrowserKeyboardAction.FindPrevious else BrowserKeyboardAction.FindNext
+        }
         if (event.keyCode == KeyEvent.KEYCODE_TAB) return if (event.isShiftPressed) {
             BrowserKeyboardAction.PreviousTab
         } else BrowserKeyboardAction.NextTab
         if (event.isShiftPressed) return null
         return when (event.keyCode) {
             KeyEvent.KEYCODE_L -> BrowserKeyboardAction.FocusAddress
+            KeyEvent.KEYCODE_F -> BrowserKeyboardAction.Find
             KeyEvent.KEYCODE_T -> BrowserKeyboardAction.NewTab
             KeyEvent.KEYCODE_W -> BrowserKeyboardAction.CloseTab
             KeyEvent.KEYCODE_R -> BrowserKeyboardAction.Reload

@@ -26,6 +26,10 @@ export function updateSelectOptions(select, choices, { placeholder = null, fallb
 // Platform surface the same stroke, optical size, and state behavior without
 // depending on Gecko theme artwork or a Chromium asset.
 const ICONS = Object.freeze({
+  search: [
+    ["circle", { cx: "8.5", cy: "8.5", r: "5.5" }],
+    ["path", { d: "m12.5 12.5 4 4" }],
+  ],
   print: [
     ["path", { d: "M5 6V2.5h10V6M5 14H3V7h14v7h-2M5 11h10v6.5H5z" }],
     ["circle", { cx: "14.5", cy: "8.5", r: ".5" }],

@@ -164,4 +164,11 @@
     <string name="browsing_data">浏览数据</string>
     <string name="private_new_tab_title">隐私浏览</string>
     <string name="private_new_tab_summary">Navis 不会把此标签页加入历史记录，也不会在应用关闭后恢复它。您创建的下载和书签仍会保留。</string>
+    <string name="find_on_page">在页面中查找</string>
+    <string name="find_previous">上一处匹配</string>
+    <string name="find_next">下一处匹配</string>
+    <string name="find_close">关闭查找</string>
+    <string name="find_count">%1$d/%2$d</string>
+    <string name="find_count_limit">%1$d+</string>
+    <string name="find_unavailable">无法查找此页面</string>
 </resources>

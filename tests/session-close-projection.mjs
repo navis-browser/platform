@@ -11,7 +11,7 @@ test("Core terminal Session state removes its UI record instead of retaining a d
   const session = { id: "closed", state: { closed: true } };
   const record = { session };
   const removed = [];
-  const context = vm.createContext({ records: new Map([[session.id, record]]),
+  const context = vm.createContext({ findInPage: { sync() {}, forget() {}, select() {} }, records: new Map([[session.id, record]]),
     forgetClosedSession: value => removed.push(value), session, activeRecord: record, renderLinkStatus() {} });
   vm.runInContext(update + "\nupdateSessionPresentation(session);", context);
   assert.deepEqual(removed, [record]);
@@ -27,7 +27,7 @@ test("terminal projection never invokes user close or DevTools commands on a dea
     panel: { remove: () => calls.push("panel") } };
   const other = { session: { id: "live", state: { closed: false } } };
   const records = new Map([["closed", first], ["live", other]]);
-  const context = vm.createContext({ records, tabHoverRecord: first, activeRecord: first,
+  const context = vm.createContext({ findInPage: { sync() {}, forget() {}, select() {} }, records, tabHoverRecord: first, activeRecord: first,
     closingWindow: false, restoreQueue: { remove() {} },
     hideTabHoverCard: () => calls.push("hover"), closeCompetingTransientSurfaces: () => {},
     orderedSessionRecords: () => [...records.values()], selectSession: value => calls.push(value),

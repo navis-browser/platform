@@ -20,6 +20,7 @@ import { OmniboxEditState } from "chrome://navis/content/omnibox-edit-state.mjs"
 import { OmniboxSuggestions } from "chrome://navis/content/omnibox-suggestions.mjs";
 import { setOmniboxValidity } from "chrome://navis/content/omnibox-validity.mjs";
 import { SessionRestoreQueue } from "chrome://navis/content/session-restore-queue.mjs";
+import { FindInPage } from "chrome://navis/content/find-in-page.mjs";
 import { mountProfileMenu } from "chrome://navis/content/profile-ui.mjs";
 import {
   DESKTOP_EMBEDDER_API_VERSION,
@@ -374,6 +375,7 @@ async function initialize() {
   const promptResolvers = new Map();
   const webAuthnResolvers = new Map();
   let activeRecord = null;
+  const findInPage = new FindInPage(document, message => showTransientStatus(message));
   const addressEditState = new OmniboxEditState();
   let transientStatusTimer = null;
   let restoringSessions = true;
@@ -455,6 +457,7 @@ async function initialize() {
     [menuPasswords, "password"],
     [menuDownloads, "downloads"],
     [menuPrint, "print"],
+    [document.getElementById("menu-find"), "search"],
     [menuProcesses, "processes"],
     [menuProfiles, "profile"],
     [menuSupport, "info"],
@@ -658,6 +661,7 @@ async function initialize() {
   const updateSessionPresentation = (session) => {
     const record = records.get(session.id);
     if (!record) return;
+    findInPage.sync(session);
     if (record === activeRecord && (session.state.closed || session.state.crashed)) renderLinkStatus();
     if (session.state.closed) { forgetClosedSession(record); return; }
     restoreQueue.update(session);
@@ -2963,6 +2967,7 @@ async function initialize() {
       addressEditState.reset();
       runtime.activateSession(record.session);
       activeRecord = record;
+      findInPage.select(record.session);
       for (const candidate of records.values()) {
         const selected = candidate === record;
         candidate.tab.setAttribute("aria-selected", String(selected));
@@ -2983,6 +2988,7 @@ async function initialize() {
   const forgetClosedSession = (record) => {
     if (closingWindow || records.get(record?.session.id) !== record) return;
     restoreQueue.remove(record.session);
+    findInPage.forget(record.session);
     if (tabHoverRecord === record) {
       hideTabHoverCard();
     }
@@ -4421,6 +4427,20 @@ async function initialize() {
     });
   };
   menuPrint.addEventListener("click", printDocument);
+  const openFind = options => {
+    closeCompetingTransientSurfaces(null, "find-opened");
+    return findInPage.open(options);
+  };
+  document.getElementById("menu-find").addEventListener("click", () => openFind());
+  document.getElementById("navis-find-key").addEventListener("command", () => openFind());
+  for (const [id, backwards] of [
+    ["navis-find-next-key", false], ["navis-find-previous-key", true],
+    ["navis-find-f3-key", false], ["navis-find-shift-f3-key", true],
+  ]) document.getElementById(id).addEventListener("command", () => findInPage.step(backwards));
+  document.getElementById("navis-close-find-key").addEventListener("command", event => {
+    event.preventDefault();
+    findInPage.close();
+  });
   document.getElementById("navis-print-key").addEventListener("command", printDocument);
   document.getElementById("navis-open-file-key").addEventListener("command", openFile);
   menuSettings.addEventListener("click", () =>

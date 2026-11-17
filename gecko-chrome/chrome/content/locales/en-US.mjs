@@ -3,6 +3,13 @@
  * file, You can obtain one at http://mozilla.org/MPL/2.0/. */
 
 export const EN_US_MESSAGES = Object.freeze({
+  "find.title": "Find on page",
+  "find.previous": "Previous match (Shift+Enter)",
+  "find.next": "Next match (Enter)",
+  "find.close": "Close find (Esc)",
+  "find.count": "{current}/{total}",
+  "find.countLimit": "{limit}+ matches",
+  "find.unavailable": "Could not search this page",
 
   "processes.description": "CPU is measured over time (100% is one logical processor). Ending a content process closes all pages hosted by it; browser, GPU and network services are protected.",
   "processes.refresh": "Refresh",

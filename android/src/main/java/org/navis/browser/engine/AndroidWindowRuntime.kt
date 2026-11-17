@@ -26,6 +26,11 @@ internal class AndroidWindowRuntime(
     val downloads get() = shared.downloads
     var onPrintFailure: ((String) -> Unit)? = null
     fun print() = state.activeSessionId?.let { id -> session(id) { shared.onPrintRequested(id) } }
+    fun openFindInPage(id: SessionId, again: Boolean = false, backwards: Boolean = false) =
+        session(id) { shared.openFindInPage(id, again, backwards) }
+    fun findInPage(id: SessionId, query: String, again: Boolean = false, backwards: Boolean = false) =
+        session(id) { shared.findInPage(id, query, again, backwards) }
+    fun clearFindInPage(id: SessionId) = session(id) { shared.clearFindInPage(id) }
     override val state get() = if (retired) BrowserState() else shared.stateForWindow(windowId)
     override val targetState get() = shared.targetStateForWindow(windowId)
 

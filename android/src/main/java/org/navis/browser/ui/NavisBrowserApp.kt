@@ -52,6 +52,7 @@ import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Refresh
+import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.AlertDialog
@@ -152,6 +153,7 @@ private fun pageSurface(route: String?): AppSurface = when (route) {
 @OptIn(ExperimentalMaterial3Api::class)
 internal fun NavisBrowserApp(runtime: AndroidWindowRuntime) {
     var state by remember(runtime) { mutableStateOf(runtime.state) }
+    val pageFind = rememberPageFind(runtime, state.activeSession)
     var pageFullscreen by remember(runtime) { mutableStateOf(runtime.targetState.fullscreenSessionId != null) }
     val fullscreen = state.windowFullscreen || pageFullscreen
     var showTabs by remember { mutableStateOf(false) }
@@ -210,6 +212,9 @@ internal fun NavisBrowserApp(runtime: AndroidWindowRuntime) {
             val current = runtime.state
             val active = current.activeSession
             if (active == null) false else when (command) {
+                BrowserKeyboardAction.Find -> pageFind.open()
+                BrowserKeyboardAction.FindNext -> pageFind.step()
+                BrowserKeyboardAction.FindPrevious -> pageFind.step(true)
                 BrowserKeyboardAction.FocusAddress -> { focusShortcutAddress(); true }
                 BrowserKeyboardAction.NewTab -> {
                     // Ctrl+T stays in the current normal/private product window.
@@ -241,7 +246,7 @@ internal fun NavisBrowserApp(runtime: AndroidWindowRuntime) {
                 BrowserKeyboardAction.ToggleDevTools -> if (active.nativeNewTab || active.nativeRoute != null ||
                     active.navigation.contentTermination != ContentTermination.NONE) false
                     else { openDevTools(); true }
-                BrowserKeyboardAction.ExitFullscreen -> if (fullscreen) {
+                BrowserKeyboardAction.ExitFullscreen -> if (pageFind.visible) { pageFind.close(); true } else if (fullscreen) {
                     exitFullscreenPresentation(); true
                 } else false
             }
@@ -322,7 +327,7 @@ internal fun NavisBrowserApp(runtime: AndroidWindowRuntime) {
     BackHandler(enabled = fullscreen) { exitFullscreenPresentation() }
     BackHandler(
         enabled = !fullscreen && surface == AppSurface.BROWSER && devToolsTarget == null && !showTabs &&
-            !showSiteInformation && !showHistory && state.activeSession?.navigation?.canGoBack == true,
+            !showSiteInformation && !showHistory && !pageFind.visible && state.activeSession?.navigation?.canGoBack == true,
     ) { state.activeSessionId?.let(runtime::goBack) }
 
     val profileContext = androidx.compose.ui.platform.LocalContext.current
@@ -373,7 +378,7 @@ internal fun NavisBrowserApp(runtime: AndroidWindowRuntime) {
             NativePageHost(
                 active = state.activeSession,
                 backEnabled = !fullscreen && !showTabs && !showHistory && !showSiteInformation &&
-                    !showProfile && contextMenu == null && !showShortcutAddress &&
+                    !showProfile && contextMenu == null && !showShortcutAddress && !pageFind.visible &&
                     state.activeSession?.navigation?.canGoBack == true,
                 currentSession = { runtime.state.activeSession },
                 onBack = runtime::goBack,
@@ -382,6 +387,7 @@ internal fun NavisBrowserApp(runtime: AndroidWindowRuntime) {
                     Box(Modifier.fillMaxSize().pageInputEnabled(browserVisible)) {
                         BrowserSurface(
                         runtime = runtime, state = state, fullscreen = fullscreen, visible = browserVisible,
+                        pageFind = pageFind,
                         omniboxFocusRequest = omniboxFocusRequest,
                         onOmniboxFocusRequestHandled = { request ->
                             if (omniboxFocusRequest == request) omniboxFocusRequest = 0
@@ -551,6 +557,7 @@ private fun BrowserSurface(
     state: BrowserState,
     fullscreen: Boolean,
     visible: Boolean,
+    pageFind: PageFindController,
     omniboxFocusRequest: Long = 0,
     onOmniboxFocusRequestHandled: (Long) -> Unit,
     onShowTabs: () -> Unit,
@@ -590,7 +597,9 @@ private fun BrowserSurface(
     Scaffold(
         topBar = {
             Column {
-            if (!fullscreen) {
+            if (pageFind.visible) {
+                FindOnPageBar(pageFind)
+            } else if (!fullscreen) {
                 BrowserToolbar(
                     runtime = runtime,
                     extensionHost = runtime.extensions,
@@ -618,6 +627,7 @@ private fun BrowserSurface(
                     onShowSiteInformation = onShowSiteInformation,
                     onOpenDevTools = onOpenDevTools,
                     onPrint = onPrint,
+                    onFind = { addressEditing = false; pageFind.open() },
                     onBookmark = { active?.let(onBookmark) },
                     onShowProfile = onShowProfile,
                     avatarName = avatarName,
@@ -743,6 +753,7 @@ private fun BrowserToolbar(
     onShowSiteInformation: () -> Unit,
     onOpenDevTools: () -> Unit,
     onPrint: () -> Unit,
+    onFind: () -> Unit,
     onBookmark: () -> Unit,
     onShowProfile: () -> Unit,
     avatarName: String,
@@ -1118,22 +1129,30 @@ private fun BrowserToolbar(
                                 NavisMenuItem(
                                     text = { Text(stringResource(R.string.new_tab)) },
                                     leadingIcon = { Icon(Icons.Default.Add, null) },
-                                    itemIndex = 0, itemCount = 3,
+                                    itemIndex = 0, itemCount = 4,
                                     onClick = { menuOpen = false; onNewTab() },
                                 )
                                 NavisMenuItem(
                                     text = { Text(stringResource(R.string.new_private_tab)) },
                                     leadingIcon = { Icon(Icons.Default.Lock, null) },
-                                    itemIndex = 1, itemCount = 3,
+                                    itemIndex = 1, itemCount = 4,
                                     onClick = { menuOpen = false; onNewPrivateTab() },
                                 )
                                 NavisMenuItem(
                                     text = { Text(stringResource(R.string.print_document)) },
                                     leadingIcon = { Icon(painterResource(R.drawable.ic_menu_print), null, Modifier.size(24.dp)) },
-                                    itemIndex = 2, itemCount = 3,
+                                    itemIndex = 2, itemCount = 4,
                                     enabled = active != null && !active.nativeNewTab && active.nativeRoute == null &&
                                         active.navigation.contentTermination == ContentTermination.NONE,
                                     onClick = { menuOpen = false; onPrint() },
+                                )
+                                NavisMenuItem(
+                                    text = { Text(stringResource(R.string.find_on_page)) },
+                                    leadingIcon = { Icon(Icons.Default.Search, null) },
+                                    itemIndex = 3, itemCount = 4,
+                                    enabled = active != null && active.nativeRoute == null &&
+                                        active.navigation.contentTermination == ContentTermination.NONE,
+                                    onClick = { menuOpen = false; onFind() },
                                 )
                             }
                             NavisMenuGroup(index = 2, count = groupCount) {

@@ -164,4 +164,11 @@
     <string name="browsing_data">Browsing data</string>
     <string name="private_new_tab_title">Private browsing</string>
     <string name="private_new_tab_summary">Navis will not add this tab to your history or restore it after the app closes. Downloads and bookmarks you create are still kept.</string>
+    <string name="find_on_page">Find on page</string>
+    <string name="find_previous">Previous match</string>
+    <string name="find_next">Next match</string>
+    <string name="find_close">Close find</string>
+    <string name="find_count">%1$d/%2$d</string>
+    <string name="find_count_limit">%1$d+</string>
+    <string name="find_unavailable">Could not search this page</string>
 </resources>

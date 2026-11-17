@@ -28,6 +28,8 @@ navis.jar:
   content/main.css  (content/main.css)
   content/main.mjs  (content/main.mjs)
   content/main.xhtml (content/main.xhtml)
+  content/find-in-page.mjs (content/find-in-page.mjs)
+  content/find-in-page.css (content/find-in-page.css)
   content/omnibox-edit-state.mjs  (content/omnibox-edit-state.mjs)
   content/omnibox-suggestions.mjs  (content/omnibox-suggestions.mjs)
   content/omnibox-validity.mjs  (content/omnibox-validity.mjs)

@@ -1,0 +1,45 @@
+/* SPDX-License-Identifier: MPL-2.0 */
+#find-in-page {
+  position: absolute;
+  inset-block-start: 0;
+  inset-inline-end: var(--navis-space-6);
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  gap: var(--navis-space-2);
+  box-sizing: border-box;
+  inline-size: min(var(--navis-size-find-bar), calc(100% - var(--navis-space-6) * 2));
+  padding: var(--navis-space-4);
+  color: var(--navis-color-text);
+  background: var(--navis-color-surface);
+  border: 1px solid var(--navis-color-divider);
+  border-radius: 0 0 var(--navis-radius-card) var(--navis-radius-card);
+  box-shadow: var(--navis-elevation-3);
+  font: var(--navis-font-body);
+}
+#find-in-page[hidden] { display: none; }
+#find-query {
+  flex: 1;
+  min-inline-size: 0;
+  inline-size: 20ch;
+  border: 0;
+  border-radius: 0;
+  padding: var(--navis-space-3);
+  color: inherit;
+  background: transparent;
+  font: inherit;
+}
+#find-query:focus-visible { outline-offset: 0; }
+#find-query[aria-invalid="true"] { color: var(--navis-color-danger); }
+#find-count {
+  white-space: nowrap;
+  color: var(--navis-color-text-secondary);
+  font: var(--navis-font-label);
+  font-variant-numeric: tabular-nums;
+  padding-inline-end: var(--navis-space-4);
+}
+#find-separator { align-self: stretch; border-inline-start: 1px solid var(--navis-color-divider); }
+@media (forced-colors: active) {
+  #find-in-page { border-color: CanvasText; }
+  #find-query[aria-invalid="true"] { outline: 1px solid Mark; }
+}

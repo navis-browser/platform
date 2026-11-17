@@ -42,6 +42,43 @@ import org.navis.browser.engine.runtime.EngineTargetObserver
 import org.navis.browser.engine.runtime.EngineTargetPort
 
 class AndroidSessionTest {
+    @Test fun findUsesTheOwnedSessionTransportAndRejectsUnavailablePresentations() {
+        val f = Fixture()
+        assertTrue(f.session.openFindInPage().toCompletableFuture().isCompletedExceptionally)
+        f.session.open(null, "https://a.example/")
+        f.engine.session.observer.onHostReady()
+        f.engine.session.commit(listOf(1L to "https://a.example/"), 0)
+        f.engine.session.findReply = CompletableFuture.completedFuture("{\"presentation\":\"browser\",\"selection\":\"中文\"}")
+        assertEquals("中文", f.session.openFindInPage().toCompletableFuture().join().selection)
+        f.engine.session.findReply = CompletableFuture.completedFuture("{\"query\":\"中文\",\"current\":2,\"total\":3,\"limit\":1000,\"wrapped\":true}")
+        val result = f.session.findInPage("中文", again = true, backwards = true).toCompletableFuture().join()
+        assertEquals(2, result.current)
+        assertTrue(result.wrapped)
+        val payload = JSONObject(f.engine.session.findOperations.last().second)
+        assertTrue(payload.getBoolean("again"))
+        assertTrue(payload.getBoolean("backwards"))
+        f.session.load("navis://history/")
+        val count = f.engine.session.findOperations.size
+        assertTrue(f.session.findInPage("secret").toCompletableFuture().isCompletedExceptionally)
+        assertEquals(count, f.engine.session.findOperations.size)
+    }
+
+    @Test fun lateFindRepliesCannotEscapeTheirNavigationOrSessionLifetime() {
+        for (close in listOf(false, true)) {
+            val f = Fixture()
+            f.session.open(null, "https://a.example/")
+            val engine = f.engine.session
+            engine.observer.onHostReady()
+            engine.commit(listOf(1L to "https://a.example/"), 0)
+            val reply = CompletableFuture<String>()
+            engine.findReply = reply
+            val result = f.session.findInPage("term").toCompletableFuture()
+            if (close) f.session.close() else f.session.load("https://b.example/")
+            reply.complete("{\"query\":\"term\",\"current\":1,\"total\":3,\"limit\":1000,\"wrapped\":false}")
+            assertTrue(result.isCompletedExceptionally)
+        }
+    }
+
     @Test fun aLateSourceSnapshotCannotStealThePendingNativeToWebBranch() {
         val fixture = Fixture()
         fixture.session.open(null, "https://a.example/")
@@ -684,6 +721,8 @@ class AndroidSessionTest {
         val realTraversals = mutableListOf<Int>()
         val historyIndexWhenLoaded = mutableListOf<Int>()
         var rootReplacements = 0
+        var findReply: CompletionStage<String>? = null
+        val findOperations = mutableListOf<Pair<String, String>>()
         private var nativePresentation = true
         private var historyState: String? = null
         private var generation = 0L
@@ -716,7 +755,15 @@ class AndroidSessionTest {
                 .put("uri", uri).put("title", "Page $uri").put("security", 3))
         }
 
-        override fun querySession(operation: String, payload: String): CompletionStage<String> = try {
+        override fun querySession(operation: String, payload: String): CompletionStage<String> {
+            if (operation.startsWith("find:")) {
+                findOperations += operation to payload
+                return checkNotNull(findReply)
+            }
+            return queryProduct(operation, payload)
+        }
+
+        private fun queryProduct(operation: String, payload: String): CompletionStage<String> = try {
             val data = JSONObject(payload)
             val result = when (operation) {
                 "session:presentation" -> {

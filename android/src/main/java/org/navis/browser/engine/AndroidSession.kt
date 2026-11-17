@@ -415,6 +415,44 @@ internal class AndroidSession(
         }
     }
 
+    fun openFindInPage(again: Boolean = false, backwards: Boolean = false) =
+        findQuery("find:open", JSONObject().put("again", again).put("backwards", backwards)) {
+            org.navis.browser.api.FindOpenResult(it.getString("presentation") == "document", it.getString("selection"))
+        }
+
+    fun findInPage(query: String, again: Boolean = false, backwards: Boolean = false):
+        CompletionStage<org.navis.browser.api.FindResult> {
+        require(query.length <= 8192)
+        return findQuery("find:search", JSONObject().put("query", query).put("again", again).put("backwards", backwards)) {
+            org.navis.browser.api.FindResult(it.getString("query"), it.getInt("current"), it.getInt("total"),
+                it.getInt("limit"), it.getBoolean("wrapped"))
+        }
+    }
+
+    fun clearFindInPage(): CompletionStage<Boolean> {
+        if (!isLive() || !hostReady || nativeRoute != null) return CompletableFuture.completedFuture(false)
+        return findQuery("find:clear", JSONObject()) { it.getBoolean("cleared") }
+    }
+
+    private fun <T> findQuery(operation: String, payload: JSONObject, decode: (JSONObject) -> T): CompletionStage<T> {
+        val future = CompletableFuture<T>()
+        if (!isLive() || !hostReady || nativeRoute != null || contentTermination != ContentTermination.NONE) {
+            future.completeExceptionally(java.util.concurrent.CancellationException("Find document is unavailable"))
+            return future
+        }
+        val peer = engineSession
+        val navigation = currentNavigationId
+        val epoch = presentationEpoch
+        peer.querySession(operation, payload.toString()).whenComplete { reply, error -> owner.dispatchSessionTask {
+            if (!isLive() || engineSession !== peer || currentNavigationId != navigation || epoch != presentationEpoch) {
+                future.completeExceptionally(java.util.concurrent.CancellationException("Find document changed"))
+            } else if (error != null) future.completeExceptionally(error)
+            else try { future.complete(decode(JSONObject(reply))) }
+            catch (failure: Exception) { future.completeExceptionally(failure) }
+        } }
+        return future
+    }
+
     fun close() {
         if (closing) {
             return
@@ -456,6 +494,7 @@ internal class AndroidSession(
             nativeRoute = nativeRoute,
             devices = devices,
             presentationIndex = nativeHistory.position,
+            navigationId = currentNavigationId ?: 0,
         )
     }
 

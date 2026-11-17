@@ -27,6 +27,7 @@
     <link rel="stylesheet" href="chrome://global/skin/global.css" />
     <link rel="stylesheet" href="chrome://navis/content/design-system.css" />
     <link rel="stylesheet" href="chrome://navis/content/main.css" />
+    <link rel="stylesheet" href="chrome://navis/content/find-in-page.css" />
     <link rel="stylesheet" href="chrome://navis/content/documents.css" />
     <link rel="stylesheet" href="chrome://navis/content/profile-ui.css" />
     <script type="module" src="chrome://navis/content/bootstrap.mjs"></script>
@@ -36,6 +37,12 @@
       <xul:key id="navis-new-tab-key" key="T" modifiers="accel" />
       <xul:key id="navis-reopen-tab-key" key="T" modifiers="accel,shift" />
       <xul:key id="navis-print-key" key="P" modifiers="accel" />
+      <xul:key id="navis-find-key" key="F" modifiers="accel" />
+      <xul:key id="navis-find-next-key" key="G" modifiers="accel" />
+      <xul:key id="navis-find-previous-key" key="G" modifiers="accel,shift" />
+      <xul:key id="navis-find-f3-key" keycode="VK_F3" />
+      <xul:key id="navis-find-shift-f3-key" keycode="VK_F3" modifiers="shift" />
+      <xul:key id="navis-close-find-key" keycode="VK_ESCAPE" disabled="true" />
       <xul:key id="navis-open-file-key" key="O" modifiers="accel" />
       <xul:key id="navis-toggle-devtools-key" keycode="VK_F12" />
       <!-- Keep the Linux/Windows page-tool bindings aligned with
@@ -372,6 +379,15 @@
 
     <main id="view-stack">
       <div id="session-host"></div>
+      <section id="find-in-page" role="search" data-l10n-aria-label="find.title" hidden="hidden">
+        <input id="find-query" type="text" maxlength="8192" autocomplete="off" spellcheck="false"
+          data-l10n-aria-label="find.title" data-l10n-placeholder="find.title" aria-describedby="find-count" />
+        <span id="find-count" role="status" aria-live="polite" aria-atomic="true"></span>
+        <span id="find-separator" aria-hidden="true"></span>
+        <button id="find-previous" class="ui-icon-button" data-l10n-title="find.previous" data-l10n-aria-label="find.previous"></button>
+        <button id="find-next" class="ui-icon-button" data-l10n-title="find.next" data-l10n-aria-label="find.next"></button>
+        <button id="find-close" class="ui-icon-button" data-l10n-title="find.close" data-l10n-aria-label="find.close"></button>
+      </section>
 
       <div id="fullscreen-hint" role="status" hidden="hidden">
         <span id="fullscreen-origin"></span>
@@ -758,6 +774,10 @@
         <button id="menu-print" class="menu-item" role="menuitem" data-l10n-aria-label="menu.print">
           <span class="menu-item-label" data-l10n-id="menu.print">Print</span>
           <kbd>Ctrl+P</kbd>
+        </button>
+        <button id="menu-find" class="menu-item" role="menuitem" data-l10n-aria-label="find.title">
+          <span class="menu-item-label" data-l10n-id="find.title">Find on page</span>
+          <kbd>Ctrl+F</kbd>
         </button>
         <button id="menu-processes" class="menu-item" role="menuitem"
           data-l10n-aria-label="menu.processes">

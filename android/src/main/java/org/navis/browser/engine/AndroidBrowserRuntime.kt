@@ -1968,6 +1968,13 @@ internal class AndroidBrowserRuntime private constructor(
 
     override fun reload(sessionId: SessionId) = session(sessionId).reload()
 
+    internal fun openFindInPage(id: SessionId, again: Boolean, backwards: Boolean) = session(id).let {
+        if (id == activeSessionId) boundView.get()?.focusContent(it.renderSession)
+        it.openFindInPage(again, backwards)
+    }
+    internal fun findInPage(id: SessionId, query: String, again: Boolean, backwards: Boolean) = session(id).findInPage(query, again, backwards)
+    internal fun clearFindInPage(id: SessionId) = session(id).clearFindInPage()
+
     override fun stop(sessionId: SessionId) = session(sessionId).stop()
 
     override fun goBack(sessionId: SessionId) {

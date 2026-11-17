@@ -68,7 +68,12 @@ data class BrowserSessionState(
     val devices: DeviceUseState = DeviceUseState(),
     /** Position in Runtime's mixed page history; presentation only, never a second UI stack. */
     val presentationIndex: Int = -1,
+    /** Opaque navigation identity used to discard stale document operations. */
+    val navigationId: Long = 0,
 )
+
+data class FindOpenResult(val documentOwned: Boolean, val selection: String)
+data class FindResult(val query: String, val current: Int, val total: Int, val limit: Int, val wrapped: Boolean)
 
 data class BrowserState(
     val sessions: List<BrowserSessionState> = emptyList(),
