@@ -58,6 +58,20 @@
       "purpose": "Site-specific password-generation constraints"
     },
     {
+      "identifier": "main/translations-models-v2",
+      "packaged_bootstrap": true,
+      "remote_sync": false,
+      "signer": "remote-settings.content-signature.mozilla.org",
+      "purpose": "Packaged catalog for explicit local page translation; only catalog-owned hash-checked attachments may download"
+    },
+    {
+      "identifier": "main/translations-wasm-v2",
+      "packaged_bootstrap": true,
+      "remote_sync": false,
+      "signer": "remote-settings.content-signature.mozilla.org",
+      "purpose": "Packaged catalog for explicit local page translation; only catalog-owned hash-checked attachments may download"
+    },
+    {
       "identifier": "main/url-parser-default-unknown-schemes-interventions",
       "packaged_bootstrap": true,
       "remote_sync": false,

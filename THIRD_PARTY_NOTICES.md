@@ -1,5 +1,7 @@
 # Third-party source and notices
 
+The Android translation glyph in `android/src/main/res/drawable/ic_translate.xml` adapts Google's [Material Design Icons translate glyph](https://github.com/google/material-design-icons/tree/master/src/action/translate) under Apache-2.0. The Android offline license report includes the Apache-2.0 license alongside the existing Material dependencies.
+
 Navis-owned source is MPL-2.0 unless otherwise marked; see LICENSE. Upstream files retain their own notices. Repository publication includes the following unmodified third-party archives; their licenses are not replaced by MPL.
 
 ## uBlock Origin 1.74.0

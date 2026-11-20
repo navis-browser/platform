@@ -101,6 +101,13 @@ const ICONS = Object.freeze({
     ["path", { d: "M16 10a6 6 0 1 1-2-4.5" }],
     ["path", { d: "M14 2.8v3.4h3.4" }],
   ],
+  volumeOn: [
+    ["path", { d: "M3 7h3l4-3v12l-4-3H3V7Z" }],
+    ["path", { d: "M13 7a4 4 0 0 1 0 6M15 4.5a7 7 0 0 1 0 11" }],
+  ],
+  volumeOff: [
+    ["path", { d: "M3 7h3l4-3v12l-4-3H3V7ZM13 7l5 6M18 7l-5 6" }],
+  ],
   siteControls: [
     ["path", { d: "M3 5h5M12 5h5M3 10h9M16 10h1M3 15h2M9 15h8" }],
     ["circle", { cx: "10", cy: "5", r: "2" }],

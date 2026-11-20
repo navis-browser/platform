@@ -6,7 +6,7 @@ Navis ships every Navis-owned surface in `en-US` and `zh-CN`. This covers the de
 
 This contract does not make natural-language text part of Navis Core. Core and its Delegates continue to expose stable state, enum/command identifiers, numbers and immutable data. Navis Platform selects and formats the message shown for that state.
 
-Web content is not translated by Navis. Operating-system-owned pickers and consent surfaces follow the operating-system language. The unmodified upstream uBlock Origin dashboard retains its own upstream localization. Website `Accept-Language`, spellcheck dictionaries and future page translation are separate capabilities from the Navis display language.
+Web content is not translated by Navis. Operating-system-owned pickers and consent surfaces follow the operating-system language. The unmodified upstream uBlock Origin dashboard retains its own upstream localization. Website `Accept-Language` and future page translation are independent of the Navis display language. Built-in browser spellchecking is excluded; native input methods retain their own language behavior.
 
 When Navis supplies explanatory text inside an operating-system surface, such as the reason shown by native password reauthentication, Platform localizes that text before passing it through the Binding. Storage and Core never own an English fallback for it. Website-provided prompt titles, messages, choices and button labels remain website data and are displayed safely without translation.
 

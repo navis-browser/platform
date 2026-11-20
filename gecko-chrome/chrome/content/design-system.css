@@ -314,6 +314,14 @@ button {
   color: var(--navis-color-on-accent);
 }
 
+.ui-button.primary:hover:not(:disabled) {
+  background: linear-gradient(var(--navis-color-state-hover), var(--navis-color-state-hover)), var(--navis-color-accent);
+}
+
+.ui-button.primary:active:not(:disabled) {
+  background: linear-gradient(var(--navis-color-state-pressed), var(--navis-color-state-pressed)), var(--navis-color-accent);
+}
+
 .ui-field {
   min-height: 36px;
   padding-inline: var(--navis-space-5);

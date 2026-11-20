@@ -96,13 +96,13 @@ export class FindInPage {
     }
   }
 
-  close() {
+  close({ focus = true } = {}) {
     const state = this.#state();
     if (!state?.open) return false;
     ++this.#serial;
     state.open = false;
     state.result = null;
-    this.#session.clearFindInPage({ focus: true });
+    this.#session.clearFindInPage({ focus });
     this.#render();
     return true;
   }

@@ -459,6 +459,10 @@ internal class DirectEngineRuntimeAdapter private constructor(
             if (accepts(sessionId)) observer.onTitleChanged(title, uri, generation)
         }
 
+        override fun onTranslationChanged(sessionId: Long, uri: String, generation: Long, state: String) {
+            if (accepts(sessionId)) observer.onTranslationChanged(uri, generation, state)
+        }
+
         override fun onFaviconChanged(sessionId: Long, pageUri: String, png: String) {
             if (accepts(sessionId)) observer.onFaviconChanged(pageUri, png)
         }

@@ -5,7 +5,6 @@
 #filter substitution
 
 [@AB_CD@]
-@RESPATH@/dictionaries/*
 @RESPATH@/localization/*
 @RESPATH@/hyphenation/*
 @RESPATH@/default.locale

@@ -31,6 +31,9 @@ internal class AndroidWindowRuntime(
     fun findInPage(id: SessionId, query: String, again: Boolean = false, backwards: Boolean = false) =
         session(id) { shared.findInPage(id, query, again, backwards) }
     fun clearFindInPage(id: SessionId) = session(id) { shared.clearFindInPage(id) }
+    fun prepareTranslation(id: SessionId) = session(id) { shared.prepareTranslation(id) }
+    fun translatePage(id: SessionId, source: String, target: String) = session(id) { shared.translatePage(id, source, target) }
+    fun restoreOriginalPage(id: SessionId) = session(id) { shared.restoreOriginalPage(id) }
     override val state get() = if (retired) BrowserState() else shared.stateForWindow(windowId)
     override val targetState get() = shared.targetStateForWindow(windowId)
 

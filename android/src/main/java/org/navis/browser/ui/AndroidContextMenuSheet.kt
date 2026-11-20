@@ -15,6 +15,7 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.Icon
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
@@ -25,6 +26,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextOverflow
@@ -44,6 +46,7 @@ internal fun AndroidContextMenuSheet(
     request: AndroidContextMenuRequest,
     onDismiss: () -> Unit,
     onInspect: (() -> Unit)? = null,
+    onTranslate: (() -> Unit)? = null,
 ) {
     val context = LocalContext.current
     val dismiss by rememberUpdatedState(onDismiss)
@@ -242,6 +245,12 @@ internal fun AndroidContextMenuSheet(
                         if (accepted) runtime.respondToContextMenu(request, item.id)
                     }
                 }
+            }
+            if (onTranslate != null && request.pageActions.any { it.id == "translate-page" && it.enabled }) {
+                item { HorizontalDivider() }
+                item { NavisMenuItem(text = { Text(stringResource(R.string.translate_menu)) },
+                    leadingIcon = { Icon(painterResource(R.drawable.ic_translate), null) }, enabled = live,
+                    onClick = { ordinary(onTranslate) }) }
             }
             if (onInspect != null && ContextMenuActionPolicy.openableWebAddress(original?.navigation?.url.orEmpty()) != null) {
                 item { HorizontalDivider() }

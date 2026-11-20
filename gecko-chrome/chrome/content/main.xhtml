@@ -28,6 +28,7 @@
     <link rel="stylesheet" href="chrome://navis/content/design-system.css" />
     <link rel="stylesheet" href="chrome://navis/content/main.css" />
     <link rel="stylesheet" href="chrome://navis/content/find-in-page.css" />
+    <link rel="stylesheet" href="chrome://navis/content/page-translation.css" />
     <link rel="stylesheet" href="chrome://navis/content/documents.css" />
     <link rel="stylesheet" href="chrome://navis/content/profile-ui.css" />
     <script type="module" src="chrome://navis/content/bootstrap.mjs"></script>
@@ -43,6 +44,7 @@
       <xul:key id="navis-find-f3-key" keycode="VK_F3" />
       <xul:key id="navis-find-shift-f3-key" keycode="VK_F3" modifiers="shift" />
       <xul:key id="navis-close-find-key" keycode="VK_ESCAPE" disabled="true" />
+      <xul:key id="navis-close-translation-key" keycode="VK_ESCAPE" disabled="true" />
       <xul:key id="navis-open-file-key" key="O" modifiers="accel" />
       <xul:key id="navis-toggle-devtools-key" keycode="VK_F12" />
       <!-- Keep the Linux/Windows page-tool bindings aligned with
@@ -387,6 +389,24 @@
         <button id="find-previous" class="ui-icon-button" data-l10n-title="find.previous" data-l10n-aria-label="find.previous"></button>
         <button id="find-next" class="ui-icon-button" data-l10n-title="find.next" data-l10n-aria-label="find.next"></button>
         <button id="find-close" class="ui-icon-button" data-l10n-title="find.close" data-l10n-aria-label="find.close"></button>
+      </section>
+
+      <section id="page-translation" role="region" tabindex="-1" aria-labelledby="translation-title" hidden="hidden">
+        <div class="translation-heading">
+          <span id="translation-icon" class="ui-icon" aria-hidden="true"></span>
+          <h2 id="translation-title" data-l10n-id="translate.title"></h2>
+          <button id="translation-close" class="ui-icon-button" data-l10n-title="translate.close" data-l10n-aria-label="translate.close"></button>
+        </div>
+        <div class="translation-languages">
+          <label class="translation-language" for="translation-source"><span data-l10n-id="translate.source"></span><select id="translation-source" class="ui-field"></select></label>
+          <label class="translation-language" for="translation-target"><span data-l10n-id="translate.target"></span><select id="translation-target" class="ui-field"></select></label>
+        </div>
+        <p id="translation-status" role="status" aria-live="polite" aria-atomic="true"></p>
+        <p class="translation-note" data-l10n-id="translate.local"></p>
+        <div class="translation-actions">
+          <button id="translation-original" class="ui-button" data-l10n-id="translate.original" hidden="hidden"></button>
+          <button id="translation-submit" class="ui-button primary" data-l10n-id="translate.action"></button>
+        </div>
       </section>
 
       <div id="fullscreen-hint" role="status" hidden="hidden">

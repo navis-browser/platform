@@ -77,6 +77,7 @@ internal class AndroidSession(
 
     private var active = false
     private var devices = org.navis.browser.api.DeviceUseState()
+    private var translation = org.navis.browser.api.PageTranslationState()
     private var contentTermination = ContentTermination.NONE
     private var nativeNewTab = false
     private var nativeRoute: String? = null
@@ -416,28 +417,37 @@ internal class AndroidSession(
     }
 
     fun openFindInPage(again: Boolean = false, backwards: Boolean = false) =
-        findQuery("find:open", JSONObject().put("again", again).put("backwards", backwards)) {
+        documentQuery("find:open", JSONObject().put("again", again).put("backwards", backwards)) {
             org.navis.browser.api.FindOpenResult(it.getString("presentation") == "document", it.getString("selection"))
         }
 
     fun findInPage(query: String, again: Boolean = false, backwards: Boolean = false):
         CompletionStage<org.navis.browser.api.FindResult> {
         require(query.length <= 8192)
-        return findQuery("find:search", JSONObject().put("query", query).put("again", again).put("backwards", backwards)) {
+        return documentQuery("find:search", JSONObject().put("query", query).put("again", again).put("backwards", backwards)) {
             org.navis.browser.api.FindResult(it.getString("query"), it.getInt("current"), it.getInt("total"),
                 it.getInt("limit"), it.getBoolean("wrapped"))
         }
     }
 
-    fun clearFindInPage(): CompletionStage<Boolean> {
-        if (!isLive() || !hostReady || nativeRoute != null) return CompletableFuture.completedFuture(false)
-        return findQuery("find:clear", JSONObject()) { it.getBoolean("cleared") }
+    fun prepareTranslation() = documentQuery("translation:prepare", JSONObject(), PageTranslationPolicy::choices)
+
+    fun translatePage(source: String, target: String): CompletionStage<org.navis.browser.api.PageTranslationState> {
+        require(source.length <= 80 && target.length in 1..80)
+        return documentQuery("translation:translate", JSONObject().put("sourceLanguage", source).put("targetLanguage", target), PageTranslationPolicy::decode)
     }
 
-    private fun <T> findQuery(operation: String, payload: JSONObject, decode: (JSONObject) -> T): CompletionStage<T> {
+    fun restoreOriginalPage() = documentQuery("translation:restore", JSONObject()) { it.getBoolean("restored") }
+
+    fun clearFindInPage(): CompletionStage<Boolean> {
+        if (!isLive() || !hostReady || nativeRoute != null) return CompletableFuture.completedFuture(false)
+        return documentQuery("find:clear", JSONObject()) { it.getBoolean("cleared") }
+    }
+
+    private fun <T> documentQuery(operation: String, payload: JSONObject, decode: (JSONObject) -> T): CompletionStage<T> {
         val future = CompletableFuture<T>()
         if (!isLive() || !hostReady || nativeRoute != null || contentTermination != ContentTermination.NONE) {
-            future.completeExceptionally(java.util.concurrent.CancellationException("Find document is unavailable"))
+            future.completeExceptionally(java.util.concurrent.CancellationException("Page operation is unavailable"))
             return future
         }
         val peer = engineSession
@@ -445,7 +455,7 @@ internal class AndroidSession(
         val epoch = presentationEpoch
         peer.querySession(operation, payload.toString()).whenComplete { reply, error -> owner.dispatchSessionTask {
             if (!isLive() || engineSession !== peer || currentNavigationId != navigation || epoch != presentationEpoch) {
-                future.completeExceptionally(java.util.concurrent.CancellationException("Find document changed"))
+                future.completeExceptionally(java.util.concurrent.CancellationException("Page operation document changed"))
             } else if (error != null) future.completeExceptionally(error)
             else try { future.complete(decode(JSONObject(reply))) }
             catch (failure: Exception) { future.completeExceptionally(failure) }
@@ -495,6 +505,7 @@ internal class AndroidSession(
             devices = devices,
             presentationIndex = nativeHistory.position,
             navigationId = currentNavigationId ?: 0,
+            translation = if (nativeRoute == null) translation else org.navis.browser.api.PageTranslationState(),
         )
     }
 
@@ -560,6 +571,16 @@ internal class AndroidSession(
         emit(persist = false)
     }
 
+    override fun onTranslationChanged(uri: String, generation: Long, state: String) {
+        if (!isLive() || nativeRoute != null || contentTermination != ContentTermination.NONE ||
+            generation <= 0L || generation != engineGeneration || uri != snapshot().url ||
+            currentNavigationId == null || state.length > 4096) return
+        val next = runCatching { PageTranslationPolicy.decode(JSONObject(state)) }.getOrNull() ?: return
+        if (next == translation) return
+        translation = next
+        emit(persist = false)
+    }
+
     override fun onDeviceUseChanged(camera: Boolean, microphone: Boolean) {
         if (!isLive() || contentTermination != ContentTermination.NONE) return
         val next = org.navis.browser.api.DeviceUseState(camera, microphone)
@@ -586,6 +607,7 @@ internal class AndroidSession(
         }
         engineGeneration = generation
         faviconPng = ""
+        translation = org.navis.browser.api.PageTranslationState()
         loadingNavigationId = observeNavigation(uri.takeIf(String::isNotBlank))
         core.setNavigationTitle(id.value, checkNotNull(loadingNavigationId), "")
         emit(persist = false)

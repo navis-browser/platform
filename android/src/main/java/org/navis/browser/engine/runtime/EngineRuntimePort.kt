@@ -131,6 +131,7 @@ internal interface EngineSessionObserver {
     fun onTitleChanged(title: String, uri: String, generation: Long) = onTitleChanged(title)
 
     fun onFaviconChanged(pageUri: String, png: String) {}
+    fun onTranslationChanged(uri: String, generation: Long, state: String) {}
 
     fun onDeviceUseChanged(camera: Boolean, microphone: Boolean) {}
 

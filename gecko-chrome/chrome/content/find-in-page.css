@@ -1,5 +1,5 @@
 /* SPDX-License-Identifier: MPL-2.0 */
-#find-in-page {
+:is(#find-in-page, #page-translation) {
   position: absolute;
   inset-block-start: 0;
   inset-inline-end: var(--navis-space-6);

@@ -88,7 +88,23 @@ pref("browser.ml.enable", false, locked);
 pref("extensions.ml.enabled", false, locked);
 pref("extensions.formautofill.useml", false, locked);
 pref("places.semanticHistory.featureGate", false, locked);
-pref("browser.translations.enable", false, locked);
+pref("browser.translations.enable", true, locked);
+pref("browser.translations.automaticallyPopup", false, locked);
+pref("browser.translations.alwaysTranslateLanguages", "", locked);
+pref("navis.translations.targetLanguage", "");
+
+// Chrome's desktop Fluent scrollbar presentation, with Gecko retaining the
+// native layout, APZ, hit testing and author scrollbar CSS. Touch Android
+// continues using its native transient indicators.
+pref("widget.non-native-theme.scrollbar.style", 6);
+pref("widget.non-native-theme.scrollbar.size.override", 15);
+pref("widget.non-native-theme.win.scrollbar.use-system-size", false);
+pref("widget.gtk.overlay-scrollbars.enabled", false);
+pref("widget.windows.overlay-scrollbars.enabled", false);
+pref("ui.scrollToClick", 0);
+// LookAndFeel's single native arrow at each end (0x1001), including GTK hosts
+// whose system scrollbar style omits steppers.
+pref("ui.scrollArrowStyle", 4097);
 
 // Navis accepts only the signed Remote Settings policy selected at configure
 // time. AppConstants carries its collection allowlist into the runtime; these
@@ -159,9 +175,9 @@ pref("browser.desktop-embedder.material-error-pages", true, locked);
 // otherwise inherited Firefox/Mozilla help links. Populate this only after
 // Navis owns matching, topic-specific documentation.
 pref("app.support.baseURL", "", locked);
-// Retain Gecko's ordinary inline spellchecking for multiline Web editors.
-// Navis ships a pinned en-US dictionary and no remote dictionary installer.
-pref("layout.spellcheckDefault", 1, locked);
+// Built-in browser spellchecking is excluded at compile time. Keep existing
+// Profiles from requesting inline checks; native input-method services remain.
+pref("layout.spellcheckDefault", 0, locked);
 
 // Navis has no telemetry product capability. These locked preferences are
 // defense in depth in addition to the compile-time no-observability graph.

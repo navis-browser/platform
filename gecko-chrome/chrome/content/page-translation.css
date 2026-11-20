@@ -1,0 +1,21 @@
+/* SPDX-License-Identifier: MPL-2.0 */
+#page-translation {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: var(--navis-space-4);
+}
+#page-translation[hidden] { display: none; }
+.translation-heading, .translation-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--navis-space-3);
+}
+#translation-title { flex: 1; margin: 0; font: var(--navis-font-body); }
+.translation-languages { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: var(--navis-space-4); }
+.translation-language { display: flex; flex-direction: column; gap: var(--navis-space-2); font: var(--navis-font-label); }
+.translation-language select { inline-size: 100%; min-inline-size: 0; font: var(--navis-font-body); }
+#translation-status, .translation-note { margin: 0; font: var(--navis-font-label); color: var(--navis-color-text-secondary); }
+#translation-status[role="alert"] { color: var(--navis-color-danger); }
+.translation-actions { justify-content: flex-end; }
+@media (forced-colors: active) { #translation-status[role="alert"] { color: CanvasText; } }

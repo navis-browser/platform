@@ -42,6 +42,31 @@ import org.navis.browser.engine.runtime.EngineTargetObserver
 import org.navis.browser.engine.runtime.EngineTargetPort
 
 class AndroidSessionTest {
+    @Test fun translationEventsBelongToTheCurrentNativeDocumentAndRejectMalformedState() {
+        val f = Fixture()
+        f.session.open(null, "https://a.example/")
+        val engine = f.engine.session
+        engine.observer.onHostReady()
+        engine.commit(listOf(1L to "https://a.example/"), 0)
+        val state = JSONObject().put("phase", "translated").put("detectedLanguage", "es")
+            .put("sourceLanguage", "es").put("targetLanguage", "en").put("downloadBytes", 0)
+            .put("error", JSONObject.NULL).toString()
+        for ((uri, generation, payload) in listOf(Triple("https://old.example/", 1L, state),
+            Triple("https://a.example/", 2L, state), Triple("https://a.example/", 1L, "{}"))) {
+            engine.observer.onTranslationChanged(uri, generation, payload)
+            assertEquals(org.navis.browser.api.PageTranslationPhase.ORIGINAL, f.session.state().translation.phase)
+        }
+        engine.observer.onTranslationChanged("https://a.example/", 1L, state)
+        assertEquals(org.navis.browser.api.PageTranslationPhase.TRANSLATED, f.session.state().translation.phase)
+        f.session.load("https://b.example/")
+        engine.commit(listOf(1L to "https://a.example/", 2L to "https://b.example/"), 1)
+        engine.observer.onTranslationChanged("https://a.example/", 1L, state)
+        assertEquals(org.navis.browser.api.PageTranslationPhase.ORIGINAL, f.session.state().translation.phase)
+        f.session.load("navis://history/")
+        engine.observer.onTranslationChanged("https://b.example/", 2L, state)
+        assertEquals(org.navis.browser.api.PageTranslationPhase.ORIGINAL, f.session.state().translation.phase)
+    }
+
     @Test fun findUsesTheOwnedSessionTransportAndRejectsUnavailablePresentations() {
         val f = Fixture()
         assertTrue(f.session.openFindInPage().toCompletableFuture().isCompletedExceptionally)

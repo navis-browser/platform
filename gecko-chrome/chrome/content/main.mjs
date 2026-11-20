@@ -21,6 +21,7 @@ import { OmniboxSuggestions } from "chrome://navis/content/omnibox-suggestions.m
 import { setOmniboxValidity } from "chrome://navis/content/omnibox-validity.mjs";
 import { SessionRestoreQueue } from "chrome://navis/content/session-restore-queue.mjs";
 import { FindInPage } from "chrome://navis/content/find-in-page.mjs";
+import { PageTranslation } from "chrome://navis/content/page-translation.mjs";
 import { mountProfileMenu } from "chrome://navis/content/profile-ui.mjs";
 import {
   DESKTOP_EMBEDDER_API_VERSION,
@@ -40,6 +41,7 @@ const TAB_MEMORY_CACHE_MS = 5000;
 const hasVisibleLoading = (state) => state.loadingActivity === "visible";
 
 const CONTEXT_MENU_PRESENTATION = Object.freeze({
+  "translate-page": Object.freeze({ label: t("translate.menu"), icon: "globe" }),
   back: Object.freeze({ label: t("menu.back"), shortcut: "Alt+Left" }),
   forward: Object.freeze({ label: t("menu.forward"), shortcut: "Alt+Right" }),
   reload: Object.freeze({ label: t("menu.reload"), shortcut: "Ctrl+R" }),
@@ -47,6 +49,7 @@ const CONTEXT_MENU_PRESENTATION = Object.freeze({
   "open-link-new-tab": Object.freeze({ label: t("menu.openLinkNewTab") }),
   "copy-link-address": Object.freeze({ label: t("menu.copyLinkAddress") }),
   "open-image-new-tab": Object.freeze({ label: t("menu.openImageNewTab") }),
+  "copy-image": Object.freeze({ label: t("menu.copyImage") }),
   "copy-image-address": Object.freeze({ label: t("menu.copyImageAddress") }),
   "play-media": Object.freeze({ label: t("menu.play") }),
   "pause-media": Object.freeze({ label: t("menu.pause") }),
@@ -75,6 +78,8 @@ const CONTEXT_MENU_PRESENTATION = Object.freeze({
     shortcut: "Ctrl+R",
   }),
   "tab-duplicate": Object.freeze({ label: t("menu.duplicateTab") }),
+  "tab-mute": Object.freeze({ label: t("menu.muteTab") }),
+  "tab-unmute": Object.freeze({ label: t("menu.unmuteTab") }),
   "tab-close": Object.freeze({ label: t("common.close"), shortcut: "Ctrl+W" }),
   "tab-close-others": Object.freeze({ label: t("menu.closeOtherTabs") }),
   "tab-close-right": Object.freeze({ label: t("menu.closeTabsRight") }),
@@ -376,6 +381,10 @@ async function initialize() {
   const webAuthnResolvers = new Map();
   let activeRecord = null;
   const findInPage = new FindInPage(document, message => showTransientStatus(message));
+  const pageTranslation = new PageTranslation(document, () => {
+    findInPage.close({ focus: false });
+    closeCompetingTransientSurfaces(null, "translation-opened");
+  });
   const addressEditState = new OmniboxEditState();
   let transientStatusTimer = null;
   let restoringSessions = true;
@@ -498,11 +507,6 @@ async function initialize() {
             enabled: item.enabled !== false,
             children: presentContextMenuItems(item.children || []),
           },
-        ];
-      }
-      if (item.group === "spelling" && item.suggestion) {
-        return [
-          { ...item, label: item.suggestion, enabled: item.enabled !== false },
         ];
       }
       const presentation = CONTEXT_MENU_PRESENTATION[item.id];
@@ -659,9 +663,11 @@ async function initialize() {
   };
 
   const updateSessionPresentation = (session) => {
+    if (closingWindow || runtime.closed) return;
     const record = records.get(session.id);
     if (!record) return;
     findInPage.sync(session);
+    pageTranslation.sync(session);
     if (record === activeRecord && (session.state.closed || session.state.crashed)) renderLinkStatus();
     if (session.state.closed) { forgetClosedSession(record); return; }
     restoreQueue.update(session);
@@ -726,8 +732,10 @@ async function initialize() {
           label: t("menu.pageContext"),
           items: request.items,
           onSelect: (command) => {
-            session.executeContextMenuCommand(request.id, command);
-            if (activeRecord === record) {
+            const handled = session.executeContextMenuCommand(request.id, command);
+            if (handled && command === "translate-page" && activeRecord === record) {
+              pageTranslation.open();
+            } else if (activeRecord === record) {
               session.view?.focus();
             }
           },
@@ -1950,6 +1958,9 @@ async function initialize() {
     record.tab.classList.toggle("is-crashed", state.crashed);
     record.tab.classList.toggle("has-prompt", Boolean(state.prompt));
     record.tab.classList.toggle("is-sharing", sharing);
+    record.audioIndicator.hidden = !state.audio.audible && !state.audio.muted;
+    setIcon(record.audioIndicator, state.audio.muted ? "volumeOff" : "volumeOn");
+    record.audioIndicator.setAttribute("aria-label", t(state.audio.muted ? "tabs.muted" : "tabs.audible"));
     let icon = "globe";
     let indicatorTitle = "";
     if (sharing) {
@@ -1991,6 +2002,7 @@ async function initialize() {
       title,
       hasVisibleLoading(state) ? t("tabs.loading") : "",
       state.crashed ? t("tabs.crashed") : "",
+      state.audio.muted ? t("tabs.muted") : state.audio.audible ? t("tabs.audible") : "",
     ]
       .filter(Boolean)
       .join(", ");
@@ -2132,6 +2144,9 @@ async function initialize() {
   };
 
   const defaultPromptButtonLabel = (request, button) => {
+    if (["blocked-redirect", "blocked-popup"].includes(request.kind)) {
+      return t(button.role === "accept" ? "prompt.allowOnce" : "prompt.keepBlocked");
+    }
     if (request.category === "credential") {
       if (button.role === "accept") {
         return t(
@@ -2338,6 +2353,15 @@ async function initialize() {
               ? "passwordPrompt.updateAccount"
               : "passwordPrompt.saveAccount",
           );
+    } else if (["blocked-redirect", "blocked-popup"].includes(request.kind)) {
+      const redirect = request.kind === "blocked-redirect";
+      promptTitle.textContent = t(redirect
+        ? "prompt.blockedRedirectTitle" : "prompt.blockedPopupTitle");
+      promptMessage.textContent = t(redirect
+        ? "prompt.blockedRedirectMessage" : "prompt.blockedPopupMessage", {
+        frameOrigin: request.frameOrigin,
+        destinationOrigin: request.destinationOrigin,
+      });
     } else if (request.kind === "before-unload") {
       promptTitle.textContent = t("prompt.beforeUnloadTitle");
       promptMessage.textContent = t("prompt.beforeUnloadMessage");
@@ -2968,6 +2992,7 @@ async function initialize() {
       runtime.activateSession(record.session);
       activeRecord = record;
       findInPage.select(record.session);
+      pageTranslation.select(record.session);
       for (const candidate of records.values()) {
         const selected = candidate === record;
         candidate.tab.setAttribute("aria-selected", String(selected));
@@ -2989,6 +3014,7 @@ async function initialize() {
     if (closingWindow || records.get(record?.session.id) !== record) return;
     restoreQueue.remove(record.session);
     findInPage.forget(record.session);
+    pageTranslation.forget(record.session);
     if (tabHoverRecord === record) {
       hideTabHoverCard();
     }
@@ -3041,6 +3067,11 @@ async function initialize() {
           enabled: !record.session.state.crashed,
         },
         { id: "tab-duplicate", group: "tab-session", enabled: true },
+        {
+          id: record.session.state.audio.muted ? "tab-unmute" : "tab-mute",
+          group: "tab-audio",
+          enabled: true,
+        },
         { id: "tab-close", group: "tab-close", enabled: true },
         {
           id: "tab-close-others",
@@ -3054,12 +3085,15 @@ async function initialize() {
         },
       ],
       onSelect: (command) => {
+        if (closingWindow || runtime.closed || records.get(record.session.id) !== record || record.session.state.closed) return;
         if (command === "tab-new") {
           openNewTab(record);
         } else if (command === "tab-reload") {
           if (!restoreQueue.load(record.session)) record.session.reload();
         } else if (command === "tab-duplicate") {
           createSession(restoreQueue.pendingURL(record.session) ?? record.session.state.url);
+        } else if (command === "tab-mute" || command === "tab-unmute") {
+          record.session.setAudioMuted(command === "tab-mute");
         } else if (command === "tab-close") {
           closeSession(record);
         } else if (command === "tab-close-others") {
@@ -3309,7 +3343,11 @@ async function initialize() {
     });
     closeButton.draggable = false;
 
-    tab.append(indicator, title, closeButton);
+    const audioIndicator = document.createElement("span");
+    audioIndicator.className = "tab-audio";
+    audioIndicator.hidden = true;
+    audioIndicator.setAttribute("role", "img");
+    tab.append(indicator, title, audioIndicator, closeButton);
     tab.addEventListener("pointerenter", () => {
       if (!draggedTabRecord) {
         scheduleTabHoverCard(record);
@@ -3384,6 +3422,7 @@ async function initialize() {
     record.indicatorHost = indicator;
     record.indicator = indicatorFallback;
     record.favicon = favicon;
+    record.audioIndicator = audioIndicator;
     sessionTabs.append(tab);
   };
 
@@ -3404,6 +3443,7 @@ async function initialize() {
       indicator: null,
       indicatorHost: null,
       favicon: null,
+      audioIndicator: null,
       memoryUsage: null,
       memoryMeasuredAt: 0,
       media: {
@@ -4428,6 +4468,7 @@ async function initialize() {
   };
   menuPrint.addEventListener("click", printDocument);
   const openFind = options => {
+    pageTranslation.close({ focus: false });
     closeCompetingTransientSurfaces(null, "find-opened");
     return findInPage.open(options);
   };
@@ -4436,10 +4477,14 @@ async function initialize() {
   for (const [id, backwards] of [
     ["navis-find-next-key", false], ["navis-find-previous-key", true],
     ["navis-find-f3-key", false], ["navis-find-shift-f3-key", true],
-  ]) document.getElementById(id).addEventListener("command", () => findInPage.step(backwards));
+  ]) document.getElementById(id).addEventListener("command", () => { pageTranslation.close({ focus: false }); findInPage.step(backwards); });
   document.getElementById("navis-close-find-key").addEventListener("command", event => {
     event.preventDefault();
     findInPage.close();
+  });
+  document.getElementById("navis-close-translation-key").addEventListener("command", event => {
+    event.preventDefault();
+    pageTranslation.close();
   });
   document.getElementById("navis-print-key").addEventListener("command", printDocument);
   document.getElementById("navis-open-file-key").addEventListener("command", openFile);

@@ -154,6 +154,7 @@ private fun pageSurface(route: String?): AppSurface = when (route) {
 internal fun NavisBrowserApp(runtime: AndroidWindowRuntime) {
     var state by remember(runtime) { mutableStateOf(runtime.state) }
     val pageFind = rememberPageFind(runtime, state.activeSession)
+    val pageTranslation = rememberPageTranslation(runtime, state.activeSession)
     var pageFullscreen by remember(runtime) { mutableStateOf(runtime.targetState.fullscreenSessionId != null) }
     val fullscreen = state.windowFullscreen || pageFullscreen
     var showTabs by remember { mutableStateOf(false) }
@@ -212,9 +213,9 @@ internal fun NavisBrowserApp(runtime: AndroidWindowRuntime) {
             val current = runtime.state
             val active = current.activeSession
             if (active == null) false else when (command) {
-                BrowserKeyboardAction.Find -> pageFind.open()
-                BrowserKeyboardAction.FindNext -> pageFind.step()
-                BrowserKeyboardAction.FindPrevious -> pageFind.step(true)
+                BrowserKeyboardAction.Find -> { pageTranslation.close(); pageFind.open() }
+                BrowserKeyboardAction.FindNext -> { pageTranslation.close(); pageFind.step() }
+                BrowserKeyboardAction.FindPrevious -> { pageTranslation.close(); pageFind.step(true) }
                 BrowserKeyboardAction.FocusAddress -> { focusShortcutAddress(); true }
                 BrowserKeyboardAction.NewTab -> {
                     // Ctrl+T stays in the current normal/private product window.
@@ -246,7 +247,9 @@ internal fun NavisBrowserApp(runtime: AndroidWindowRuntime) {
                 BrowserKeyboardAction.ToggleDevTools -> if (active.nativeNewTab || active.nativeRoute != null ||
                     active.navigation.contentTermination != ContentTermination.NONE) false
                     else { openDevTools(); true }
-                BrowserKeyboardAction.ExitFullscreen -> if (pageFind.visible) { pageFind.close(); true } else if (fullscreen) {
+                BrowserKeyboardAction.ExitFullscreen -> if (pageFind.visible) { pageFind.close(); true } else if (pageTranslation.visible) {
+                    pageTranslation.close(); true
+                } else if (fullscreen) {
                     exitFullscreenPresentation(); true
                 } else false
             }
@@ -327,7 +330,7 @@ internal fun NavisBrowserApp(runtime: AndroidWindowRuntime) {
     BackHandler(enabled = fullscreen) { exitFullscreenPresentation() }
     BackHandler(
         enabled = !fullscreen && surface == AppSurface.BROWSER && devToolsTarget == null && !showTabs &&
-            !showSiteInformation && !showHistory && !pageFind.visible && state.activeSession?.navigation?.canGoBack == true,
+            !showSiteInformation && !showHistory && !pageFind.visible && !pageTranslation.visible && state.activeSession?.navigation?.canGoBack == true,
     ) { state.activeSessionId?.let(runtime::goBack) }
 
     val profileContext = androidx.compose.ui.platform.LocalContext.current
@@ -378,7 +381,7 @@ internal fun NavisBrowserApp(runtime: AndroidWindowRuntime) {
             NativePageHost(
                 active = state.activeSession,
                 backEnabled = !fullscreen && !showTabs && !showHistory && !showSiteInformation &&
-                    !showProfile && contextMenu == null && !showShortcutAddress && !pageFind.visible &&
+                    !showProfile && contextMenu == null && !showShortcutAddress && !pageFind.visible && !pageTranslation.visible &&
                     state.activeSession?.navigation?.canGoBack == true,
                 currentSession = { runtime.state.activeSession },
                 onBack = runtime::goBack,
@@ -388,6 +391,7 @@ internal fun NavisBrowserApp(runtime: AndroidWindowRuntime) {
                         BrowserSurface(
                         runtime = runtime, state = state, fullscreen = fullscreen, visible = browserVisible,
                         pageFind = pageFind,
+                        pageTranslation = pageTranslation,
                         omniboxFocusRequest = omniboxFocusRequest,
                         onOmniboxFocusRequestHandled = { request ->
                             if (omniboxFocusRequest == request) omniboxFocusRequest = 0
@@ -535,7 +539,8 @@ internal fun NavisBrowserApp(runtime: AndroidWindowRuntime) {
         ExtensionPopupSheet(runtime.extensions)
         contextMenu?.let { request ->
             AndroidContextMenuSheet(runtime, request, onDismiss = { contextMenu = null },
-                onInspect = { openDevTools("inspector") })
+                onInspect = { openDevTools("inspector") },
+                onTranslate = { pageFind.close(); pageTranslation.open() })
         }
         if (showShortcutAddress) state.activeSession?.let { active ->
             ShortcutAddressDialog(runtime, active) { showShortcutAddress = false }
@@ -558,6 +563,7 @@ private fun BrowserSurface(
     fullscreen: Boolean,
     visible: Boolean,
     pageFind: PageFindController,
+    pageTranslation: PageTranslationController,
     omniboxFocusRequest: Long = 0,
     onOmniboxFocusRequestHandled: (Long) -> Unit,
     onShowTabs: () -> Unit,
@@ -627,7 +633,7 @@ private fun BrowserSurface(
                     onShowSiteInformation = onShowSiteInformation,
                     onOpenDevTools = onOpenDevTools,
                     onPrint = onPrint,
-                    onFind = { addressEditing = false; pageFind.open() },
+                    onFind = { addressEditing = false; pageTranslation.close(); pageFind.open() },
                     onBookmark = { active?.let(onBookmark) },
                     onShowProfile = onShowProfile,
                     avatarName = avatarName,
@@ -640,6 +646,7 @@ private fun BrowserSurface(
             } else if (active?.devices?.active == true) {
                 ActiveDevicesButton(onShowSiteInformation)
             }
+            if (visible && !pageFind.visible) PageTranslationPanel(pageTranslation, active?.translation ?: org.navis.browser.api.PageTranslationState())
             }
         },
     ) { padding ->

@@ -15,7 +15,7 @@ function fixture() {
   const records = new Map(), tabs = [], saved = [], focus = [];
   let menu = null, selected = "C", serial = 0;
   function add(id) {
-    const record = { session: { id, state: { crashed: false } }, tab: {} };
+    const record = { session: { id, state: { crashed: false, audio: { audible: false, muted: false } } }, tab: {} };
     Object.defineProperty(record.tab, "nextSibling", { get: () => tabs[tabs.indexOf(record.tab) + 1] ?? null });
     records.set(id, record); tabs.push(record.tab);
     return record;
@@ -32,6 +32,7 @@ function fixture() {
   }
   const context = vm.createContext({
     DEFAULT_URI: "navis://newtab/", records,
+    closingWindow: false, runtime: {closed: false},
     orderedSessionRecords: () => [...records.values()],
     synchronizeSessionOrder,
     sessionTabs: { insertBefore(tab, before) {

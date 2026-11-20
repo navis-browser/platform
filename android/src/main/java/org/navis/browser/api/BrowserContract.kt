@@ -70,6 +70,22 @@ data class BrowserSessionState(
     val presentationIndex: Int = -1,
     /** Opaque navigation identity used to discard stale document operations. */
     val navigationId: Long = 0,
+    val translation: PageTranslationState = PageTranslationState(),
+)
+
+enum class PageTranslationPhase { ORIGINAL, DOWNLOADING, TRANSLATING, TRANSLATED, ERROR }
+data class PageTranslationState(
+    val phase: PageTranslationPhase = PageTranslationPhase.ORIGINAL,
+    val detectedLanguage: String = "",
+    val sourceLanguage: String = "",
+    val targetLanguage: String = "",
+    val downloadBytes: Long = 0,
+    val error: String? = null,
+)
+data class PageTranslationChoices(
+    val sourceLanguages: List<String>,
+    val targetLanguages: List<String>,
+    val state: PageTranslationState,
 )
 
 data class FindOpenResult(val documentOwned: Boolean, val selection: String)

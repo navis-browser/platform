@@ -287,6 +287,24 @@ html[data-l10n-ready="false"] body {
   white-space: nowrap;
 }
 
+.tab-audio {
+  display: inline-grid;
+  flex: 0 0 auto;
+  width: var(--navis-size-icon-small);
+  height: var(--navis-size-icon-small);
+  color: var(--navis-color-text-secondary);
+  place-items: center;
+}
+
+.tab-audio[hidden] {
+  display: none;
+}
+
+.tab-audio .navis-icon {
+  width: 100%;
+  height: 100%;
+}
+
 .close-session {
   z-index: 2;
   display: none;
